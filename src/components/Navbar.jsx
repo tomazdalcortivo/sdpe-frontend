@@ -1,14 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { BookOpenText, LogIn } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function Navbar() {
-  
-  {/*Elementos Navbar Scroll*/}
+  const location = useLocation();
+  const isHome = location.pathname === "/";
   const [isScrolled, setIsScrolled] = useState(false);
-  const SubPagesNav = isScrolled ? "text-emerald-700" : "text-white";
-  const logoNav = isScrolled ? "text-emerald-900" : "text-white";
-  const SigninNav = isScrolled ? "text-emerald-700 border-emerald-700" : "text-white bg-emerald-600 rounded-lg";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,54 +15,69 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  //Estilos do NavBar:
+
+  {/* Fundo */}
+  const navBg = isScrolled ? "bg-white shadow-md" : isHome ? "bg-transparent" : "bg-slate-100";
+
+  {/* Textos */}
+  const textColor = isScrolled ? "text-emerald-700" : isHome ? "text-white" : "text-slate-700";
+
+  {/* Logo */}
+  const logoColor = isScrolled ? "text-emerald-900" : isHome ? "text-white": "text-emerald-900";
+
+  {/* Botao Entrar */}
+  const signinStyle = isScrolled ? "text-emerald-700 border border-emerald-700 rounded-lg" : isHome ? "text-white bg-emerald-600 rounded-lg hover:bg-emerald-700" : "text-white bg-emerald-600 rounded-lg hover:bg-emerald-700";
+
   return (
-    <nav
-      className={`fixed w-full z-50 transition-all duration-300 ${
-        isScrolled ? "bg-white shadow-md py-3" : "bg-transparent py-5"
-      }`}
-    >
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center">
-          {/* Logo (mudar?) */}
+    <nav className={`fixed w-full z-50 transition-all duration-300 ${navBg} ${isScrolled ? "py-3" : "py-5"}`}>
+      <div className="px-4 mx-auto max-w-8xl sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
+
+          {/*  */}
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-              <BookOpenText className="w-6 h-6" />
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-600">
+              <BookOpenText className="w-6 h-6 text-white" />
             </div>
 
-            <div className="flex flex-col font-medium text-sm">
-              <span className={`font-bold ${logoNav} leading-none`}>
-                SDPE
-              </span>
+            <div className="flex flex-col text-[15px]">
+              <span className={`font-bold ${logoColor}`}>SDPE</span>
               <span
-                className={`text-[12px] ${logoNav} font-semibold uppercase tracking-wider`}>
+                className={`${logoColor} font-semibold uppercase tracking-wider`}>
                 Divulgação de Projetos
               </span>
             </div>
           </div>
 
-          <div className={`hidden md:flex gap-20 ${SubPagesNav} font-medium text-sm`}>
-            <Link to="/" className="hover:text-emerald-700 transition">
+          {/* Links para subpages */}
+          <div
+            className={`hidden md:flex gap-20 font-medium text-[16px] ${textColor}`}
+          >
+            <Link to="/" className="transition hover:text-emerald-700">
               Início
             </Link>
-            <Link to="/" className="hover:text-emerald-700 transition">
+            <Link to="/" className="transition hover:text-emerald-700">
               Sobre
             </Link>
-            <Link to="/" className="hover:text-emerald-700 transition">
+            <Link to="/" className="transition hover:text-emerald-700">
               Projetos
             </Link>
-            <Link to="/" className="hover:text-emerald-700 transition">
-              Editais
+            <Link to="/" className="transition hover:text-emerald-700">
+              Editais {/*Manter (?)*/}
             </Link>
           </div>
 
-         
-          {<div className="flex justify-end gap-10">
-            <a href="#" className={`px-4 py-3 ${SigninNav} font-medium text-sm transition-all duration-300 flex items-center gap-1`}>
-              Entrar<LogIn size={20} />
+          {/* Botão de login/cadastro */}
+          <div className="flex justify-end gap-10">
+            <a
+              href="#"
+              className={`px-4 py-3 text-[15px] transition-all duration-300 flex items-center gap-1 ${signinStyle}`}>
+              Entrar <LogIn size={20} />
             </a>
-          </div> }
+          </div>
         </div>
       </div>
+      
     </nav>
   );
 }
