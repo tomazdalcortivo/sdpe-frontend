@@ -18,7 +18,9 @@ export default function Navbar() {
   //Estilos do NavBar:
 
   {/* Fundo */}
-  const navBg = isScrolled ? "bg-white shadow-md" : isHome ? "bg-transparent" : "bg-slate-100";
+  //const navBg = isScrolled ? "bg-white shadow-md" : isHome ? "bg-transparent" : "bg-gradient-to-br from-emerald-50 via-white to-orange-50";
+
+  const navBg = isScrolled ? "bg-white/80 backdrop-blur-md shadow-md" : "bg-transparent";
 
   {/* Textos */}
   const textColor = isScrolled ? "text-emerald-700" : isHome ? "text-white" : "text-slate-700";
@@ -69,11 +71,11 @@ export default function Navbar() {
 
           {/* Botão de login/cadastro */}
           <div className="flex justify-end gap-10">
-            <a
-              href="#"
+            <Link
+              to="/Entrar"
               className={`px-4 py-3 text-[15px] transition-all duration-300 flex items-center gap-1 ${signinStyle}`}>
               Entrar <LogIn size={20} />
-            </a>
+            </Link>
           </div>
         </div>
       </div>

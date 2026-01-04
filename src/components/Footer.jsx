@@ -1,4 +1,5 @@
 import { BookOpenText } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
@@ -27,11 +28,11 @@ export default function Footer() {
         <div className="justify-self-center">
           <h4 className="mb-4 font-semibold text-white">Links Rápidos</h4>
           <ul className="space-y-2 text-sm">
-            <li><a href="#" className="hover:text-emerald-400">Início</a></li>
-            <li><a href="#" className="hover:text-emerald-400">Sobre Nós</a></li>
-            <li><a href="#" className="hover:text-emerald-400">Nossos Projetos</a></li>
-            <li><a href="#" className="hover:text-emerald-400">Editais Abertos</a></li>
-            <li><a href="#" className="hover:text-emerald-400">Central de Ajuda</a></li>
+            <li><Link to="/" className="hover:text-emerald-400">Início</Link></li>
+            <li><Link to="/SobreNos" className="hover:text-emerald-400">Sobre Nós</Link></li>
+            <li><Link to="/Projetos" className="hover:text-emerald-400">Nossos Projetos</Link></li>
+            <li><Link to="/Editais" className="hover:text-emerald-400">Editais Abertos</Link></li>
+            <li><Link to="/Ajuda" className="hover:text-emerald-400">Central de Ajuda</Link></li>
           </ul>
         </div>
 
@@ -43,12 +44,12 @@ export default function Footer() {
           </p>
 
           <div className="flex justify-end gap-4">
-            <a className="px-6 py-2 font-medium text-white transition rounded-md bg-emerald-600 hover:bg-emerald-700">
+            <Link to="/Cadastro" className="px-6 py-2 font-medium text-white transition rounded-md bg-emerald-600 hover:bg-emerald-700">
               Inscreva-se
-            </a>
-            <a className="px-6 py-2 font-medium text-white transition border rounded-md border-emerald-600 hover:bg-emerald-700">
+            </Link>
+            <Link to="/Entrar" className="px-6 py-2 font-medium text-white transition border rounded-md border-emerald-700 hover:bg-emerald-700">
               Entrar
-            </a>
+            </Link>
           </div>
         </div>
 

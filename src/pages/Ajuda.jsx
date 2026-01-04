@@ -1,8 +1,8 @@
 export default function Ajuda() {
   return (
-    <section className="px-8 pt-24 pb-24 bg-slate-100">
+    <section className="min-h-screen px-8 pt-24 pb-24 bg-gradient-to-br from-emerald-100 via-white to-amber-100">
       <div className="mt-16 mb-10 text-center">
-        <h1 className="mb-5 text-6xl font-bold leading-normal text-transparent bg-gradient-to-r from-emerald-900 via-emerald-600 to-emerald-900 bg-clip-text">
+        <h1 className="mb-5 text-6xl font-bold leading-normal text-transparent bg-gradient-to-r from-emerald-900 via-emerald-500 to-emerald-900 bg-clip-text">
           Central de Ajuda
         </h1>
         <p className="max-w-2xl mx-auto text-xl text-slate-600">
