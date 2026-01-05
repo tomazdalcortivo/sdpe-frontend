@@ -1,7 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import testee from "../assets/testee.jpg";
-import { Globe, HelpCircle } from "lucide-react";
+import { Globe } from "lucide-react";
 
 export default function Home() {
   return (

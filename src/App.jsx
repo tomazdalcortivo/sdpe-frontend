@@ -4,8 +4,8 @@ import Footer from "./components/Footer.jsx";
 import AjudaButton from "./components/HelpButton.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 
-import Home from "./pages/Inicio.jsx";
-import Help from "./pages/Ajuda.jsx";
+import Inicio from "./pages/Inicio.jsx";
+import Ajuda from "./pages/Ajuda.jsx";
 import Entrar from "./pages/Login.jsx";
 import RecuperarSenha from "./pages/RecuperarSenha.jsx";
 import Cadastro from "./pages/Cadastro.jsx";
@@ -17,11 +17,11 @@ function App() {
       <ScrollToTop />
 
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/Ajuda" element={<Help />} />
-        <Route path="/Entrar" element={<Entrar />} />
-        <Route path="/RecuperarSenha" element={<RecuperarSenha />} />
-        <Route path="/Cadastro" element={<Cadastro />} />
+        <Route path="/" element={<Inicio />} />
+        <Route path="/ajuda" element={<Ajuda />} />
+        <Route path="/entrar" element={<Entrar />} />
+        <Route path="/recuperarsenha" element={<RecuperarSenha />} />
+        <Route path="/cadastro" element={<Cadastro />} />
       </Routes>
 
       <Footer />

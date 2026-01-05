@@ -88,7 +88,6 @@ export default function Cadastro() {
               <option value="">Selecione</option>
               <option value="aluno">Aluno</option>
               <option value="colaborador">Colaborador</option>
-              <option value="comunidade">Comunidade externa</option>
             </select>
           </div>
 

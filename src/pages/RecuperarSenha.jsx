@@ -53,7 +53,7 @@ export default function RecuperarSenha() {
           {/* Voltar */}
           <div className="text-center">
             <Link
-              to="/Entrar"
+              to="/entrar"
               className="inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700"
             >
               <ArrowLeft size={18} />

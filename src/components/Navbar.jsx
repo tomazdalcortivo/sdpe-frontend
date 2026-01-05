@@ -72,7 +72,7 @@ export default function Navbar() {
           {/* Botão de login/cadastro */}
           <div className="flex justify-end gap-10">
             <Link
-              to="/Entrar"
+              to="/entrar"
               className={`px-4 py-3 text-[15px] transition-all duration-300 flex items-center gap-1 ${signinStyle}`}>
               Entrar <LogIn size={20} />
             </Link>

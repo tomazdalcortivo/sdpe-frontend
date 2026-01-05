@@ -28,11 +28,11 @@ export default function Footer() {
         <div className="justify-self-center">
           <h4 className="mb-4 font-semibold text-white">Links Rápidos</h4>
           <ul className="space-y-2 text-sm">
-            <li><Link to="/" className="hover:text-emerald-400">Início</Link></li>
-            <li><Link to="/SobreNos" className="hover:text-emerald-400">Sobre Nós</Link></li>
-            <li><Link to="/Projetos" className="hover:text-emerald-400">Nossos Projetos</Link></li>
-            <li><Link to="/Editais" className="hover:text-emerald-400">Editais Abertos</Link></li>
-            <li><Link to="/Ajuda" className="hover:text-emerald-400">Central de Ajuda</Link></li>
+            <li><Link to="/inicio" className="hover:text-emerald-400">Início</Link></li>
+            <li><Link to="/sobre" className="hover:text-emerald-400">Sobre Nós</Link></li>
+            <li><Link to="/projetos" className="hover:text-emerald-400">Nossos Projetos</Link></li>
+            <li><Link to="/editais" className="hover:text-emerald-400">Editais Abertos</Link></li>
+            <li><Link to="/ajuda" className="hover:text-emerald-400">Central de Ajuda</Link></li>
           </ul>
         </div>
 
@@ -44,10 +44,10 @@ export default function Footer() {
           </p>
 
           <div className="flex justify-end gap-4">
-            <Link to="/Cadastro" className="px-6 py-2 font-medium text-white transition rounded-md bg-emerald-600 hover:bg-emerald-700">
+            <Link to="/cadastro" className="px-6 py-2 font-medium text-white transition rounded-md bg-emerald-600 hover:bg-emerald-700">
               Inscreva-se
             </Link>
-            <Link to="/Entrar" className="px-6 py-2 font-medium text-white transition border rounded-md border-emerald-700 hover:bg-emerald-700">
+            <Link to="/entrar" className="px-6 py-2 font-medium text-white transition border rounded-md border-emerald-700 hover:bg-emerald-700">
               Entrar
             </Link>
           </div>

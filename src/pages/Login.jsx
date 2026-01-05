@@ -62,7 +62,7 @@ export default function Entrar() {
           {/* Esqueceu a sua senha */}
           <div className="text-right">
             <Link
-              to="/RecuperarSenha"
+              to="/recuperarsenha"
               className="text-sm font-medium text-emerald-600 hover:text-emerald-700">
               Esqueceu sua senha?
             </Link>
@@ -88,7 +88,7 @@ export default function Entrar() {
           <p className="text-sm text-center text-slate-600">
             Não tem uma conta?{" "}
             <Link
-              to="/Cadastro"
+              to="/cadastro"
               className="font-medium text-emerald-600 hover:text-emerald-700"
             >
               Criar conta
