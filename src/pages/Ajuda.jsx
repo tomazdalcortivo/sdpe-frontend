@@ -1,4 +1,5 @@
 import { useState } from "react";
+import api from "../services/api";
 
 export default function Ajuda() {
   const [formData, setFormData] = useState({
@@ -11,7 +12,7 @@ export default function Ajuda() {
   const [status, setStatus] = useState({ loading: false, error: "", success: false });
 
   const handleChange = (e) => {
-    const { name, value } = e.target; // "name" deve corresponder às chaves do estado
+    const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -25,37 +26,34 @@ export default function Ajuda() {
     setStatus({ loading: true, error: "", success: false });
 
     if (formData.assunto === "Selecione" || !formData.mensagem || !formData.email || !formData.nome) {
-      setStatus({ loading: false, error: "Por favor, preencha todos os campos.", success: false });
+      setStatus({
+        loading: false,
+        error: "Por favor, preencha todos os campos.",
+        success: false
+      });
       return;
     }
-
 
     const payload = {
       nome: formData.nome,
       email: formData.email,
       mensagem: formData.mensagem,
       tipoContato: mapAssuntoToTipo(formData.assunto),
-      projeto: null                // Importante enviar null para a rota geral
+      projeto: null
     };
 
     try {
-      const response = await fetch("http://localhost:8080/api/contatos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro ao enviar mensagem.");
-      }
+      await api.post("/api/contatos", payload);
 
       setStatus({ loading: false, error: "", success: true });
       setFormData({ nome: "", email: "", assunto: "Selecione", mensagem: "" });
       alert("Mensagem enviada com sucesso!");
 
     } catch (error) {
-      console.error(error);
-      setStatus({ loading: false, error: "Erro de conexão com o servidor.", success: false });
+      console.error("Erro na requisição:", error);
+
+      const errorMessage = error.response?.data?.message || "Erro de conexão com o servidor.";
+      setStatus({ loading: false, error: errorMessage, success: false });
     }
   };
 
