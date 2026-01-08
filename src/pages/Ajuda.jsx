@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../services/api";
+import Alert from "../components/Alert"; // 1. Importar o componente
 
 export default function Ajuda() {
   const [formData, setFormData] = useState({
@@ -23,7 +24,7 @@ export default function Ajuda() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus({ loading: true, error: "", success: false });
+    setStatus({ loading: true, error: "", success: false }); // Limpa status anterior
 
     if (formData.assunto === "Selecione" || !formData.mensagem || !formData.email || !formData.nome) {
       setStatus({
@@ -47,11 +48,14 @@ export default function Ajuda() {
 
       setStatus({ loading: false, error: "", success: true });
       setFormData({ nome: "", email: "", assunto: "Selecione", mensagem: "" });
-      alert("Mensagem enviada com sucesso!");
+
+      // Opcional: Remove a mensagem de sucesso após 5 segundos
+      setTimeout(() => {
+        setStatus(prev => ({ ...prev, success: false }));
+      }, 5000);
 
     } catch (error) {
       console.error("Erro na requisição:", error);
-
       const errorMessage = error.response?.data?.message || "Erro de conexão com o servidor.";
       setStatus({ loading: false, error: errorMessage, success: false });
     }
@@ -71,10 +75,14 @@ export default function Ajuda() {
       <div className="h-px mx-auto my-10 bg-gray-300 w-lg"></div>
 
       <div className="flex justify-center">
-        <form onSubmit={handleSubmit} className="w-full max-w-xl p-8 space-y-2 bg-white rounded-lg shadow">
+        <form onSubmit={handleSubmit} className="w-full max-w-xl p-8 space-y-4 bg-white rounded-lg shadow-lg transition-all">
 
-          {status.error && <div className="p-3 text-red-700 bg-red-100 rounded">{status.error}</div>}
-          {status.success && <div className="p-3 text-green-700 bg-green-100 rounded">Mensagem enviada!</div>}
+          {/* 4. Componentes Alert baseados no objeto 'status' */}
+          <Alert type="error">{status.error}</Alert>
+
+          {status.success && (
+            <Alert type="success">Mensagem enviada com sucesso! Entraremos em contato em breve.</Alert>
+          )}
 
           {/* Nome */}
           <div>
@@ -85,7 +93,7 @@ export default function Ajuda() {
               value={formData.nome}
               onChange={handleChange}
               placeholder="Seu nome completo"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
 
@@ -98,7 +106,7 @@ export default function Ajuda() {
               value={formData.email}
               onChange={handleChange}
               placeholder="nome@email.com"
-              className="w-full px-4 py-2 rounded-md outline-none border-slate-300 focus:border-emerald-500 border-3"
+              className="w-full px-4 py-2 rounded-md outline-none border-slate-300 focus:border-emerald-500 border-3 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
 
@@ -109,7 +117,7 @@ export default function Ajuda() {
               name="assunto"
               value={formData.assunto}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
             >
               <option value="Selecione" disabled>Selecione</option>
               <option>Dúvida</option>
@@ -128,16 +136,16 @@ export default function Ajuda() {
               onChange={handleChange}
               rows="4"
               placeholder="Descreva sua mensagem"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={status.loading}
-            className={`w-full py-3 font-medium text-white transition rounded-md ${status.loading ? "bg-emerald-400" : "bg-emerald-600 hover:bg-emerald-700"
-              }`}
+            className="w-full py-3 mt-4 font-medium text-white transition-all rounded-md bg-emerald-600 hover:bg-emerald-700 hover:shadow-md disabled:bg-emerald-400 disabled:cursor-not-allowed flex justify-center items-center gap-2"
           >
+            {status.loading && <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
             {status.loading ? "Enviando..." : "Enviar mensagem"}
           </button>
         </form>

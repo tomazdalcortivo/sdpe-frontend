@@ -2,24 +2,35 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, ArrowLeft, Key, Lock } from "lucide-react";
 import api from "../services/api";
+import Alert from "../components/Alert"; // 1. Importar o componente
 
 export default function RecuperarSenha() {
-  const [etapa, setEtapa] = useState(1);
+  const [etapa, setEtapa] = useState(1); // 1: Digitar Email, 2: Digitar Código e Nova Senha
   const [email, setEmail] = useState("");
   const [codigo, setCodigo] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 2. Estados para mensagens
+  const [erro, setErro] = useState("");
+  const [mensagem, setMensagem] = useState("");
+
   const navigate = useNavigate();
 
   const handleEnviarEmail = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErro("");
+    setMensagem("");
+
     try {
       await api.post("/auth/recuperar-senha", { email });
       setEtapa(2);
-      alert("Código enviado para seu e-mail!");
+      // 3. Feedback positivo
+      setMensagem("Código enviado! Verifique seu e-mail (inclusive spam).");
     } catch (error) {
-      alert("Erro ao enviar e-mail. Verifique se o endereço está correto.");
+      console.error(error);
+      setErro("Não foi possível enviar o e-mail. Verifique se o endereço está correto.");
     } finally {
       setLoading(false);
     }
@@ -28,12 +39,23 @@ export default function RecuperarSenha() {
   const handleRedefinirSenha = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErro("");
+    setMensagem("");
+
     try {
       await api.post("/auth/redefinir-senha", { email, codigo, novaSenha });
-      alert("Senha alterada com sucesso!");
-      navigate("/entrar");
+      setMensagem("Senha alterada com sucesso! Redirecionando...");
+
+      setTimeout(() => {
+        navigate("/entrar");
+      }, 2500);
     } catch (error) {
-      alert("Erro ao redefinir senha. Código inválido ou expirado.");
+      console.error(error);
+      if (error.response && error.response.data) {
+        setErro(error.response.data);
+      } else {
+        setErro("Erro ao redefinir senha. Verifique o código e tente novamente.");
+      }
     } finally {
       setLoading(false);
     }
@@ -57,11 +79,17 @@ export default function RecuperarSenha() {
       <div className="flex justify-center">
         <form
           onSubmit={etapa === 1 ? handleEnviarEmail : handleRedefinirSenha}
-          className="w-full max-w-xl p-8 space-y-4 bg-white rounded-lg shadow"
+          className="w-full max-w-xl p-8 space-y-4 bg-white rounded-lg shadow-lg transition-all"
         >
+          {/* 4. Componentes Alert */}
+          <Alert type="error">{erro}</Alert>
+          <Alert type="success">{mensagem}</Alert>
+
           {etapa === 1 && (
-            <div>
-              <label className="block mb-1 text-sm font-medium text-slate-700">E-mail</label>
+            <div className="animate-fadeIn">
+              <label className="block mb-1 text-sm font-medium text-slate-700">
+                E-mail
+              </label>
               <div className="relative">
                 <Mail className="absolute w-5 h-5 -translate-y-1/2 text-slate-400 left-3 top-1/2" />
                 <input
@@ -69,7 +97,7 @@ export default function RecuperarSenha() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nome@email.com"
-                  className="w-full px-4 py-2 pl-10 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+                  className="w-full px-4 py-2 pl-10 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
                   required
                 />
               </div>
@@ -77,23 +105,27 @@ export default function RecuperarSenha() {
           )}
 
           {etapa === 2 && (
-            <>
+            <div className="space-y-4 animate-fadeIn">
               <div>
-                <label className="block mb-1 text-sm font-medium text-slate-700">Código de Verificação</label>
+                <label className="block mb-1 text-sm font-medium text-slate-700">
+                  Código de Verificação
+                </label>
                 <div className="relative">
                   <Key className="absolute w-5 h-5 -translate-y-1/2 text-slate-400 left-3 top-1/2" />
                   <input
                     type="text"
                     value={codigo}
                     onChange={(e) => setCodigo(e.target.value)}
-                    placeholder="123456"
-                    className="w-full px-4 py-2 pl-10 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+                    placeholder="Ex: 123456"
+                    className="w-full px-4 py-2 pl-10 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
                     required
                   />
                 </div>
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium text-slate-700">Nova Senha</label>
+                <label className="block mb-1 text-sm font-medium text-slate-700">
+                  Nova Senha
+                </label>
                 <div className="relative">
                   <Lock className="absolute w-5 h-5 -translate-y-1/2 text-slate-400 left-3 top-1/2" />
                   <input
@@ -101,19 +133,22 @@ export default function RecuperarSenha() {
                     value={novaSenha}
                     onChange={(e) => setNovaSenha(e.target.value)}
                     placeholder="******"
-                    className="w-full px-4 py-2 pl-10 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+                    className="w-full px-4 py-2 pl-10 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
                     required
                   />
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 mt-4 font-medium text-white transition rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400"
+            className="w-full py-3 mt-4 font-medium text-white transition-all rounded-md bg-emerald-600 hover:bg-emerald-700 hover:shadow-md disabled:bg-emerald-400 disabled:cursor-not-allowed flex justify-center items-center gap-2"
           >
+            {loading && (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            )}
             {loading ? "Processando..." : (etapa === 1 ? "Enviar código" : "Redefinir Senha")}
           </button>
 
@@ -126,9 +161,9 @@ export default function RecuperarSenha() {
           <div className="text-center">
             <Link
               to="/entrar"
-              className="inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700"
+              className="inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors group"
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
               Voltar para login
             </Link>
           </div>

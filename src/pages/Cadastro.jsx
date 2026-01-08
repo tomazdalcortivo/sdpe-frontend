@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import Alert from "../components/Alert";
 
 export default function Cadastro() {
   const navigate = useNavigate();
   const [vinculo, setVinculo] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // 2. Estados para mensagens
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -13,7 +19,6 @@ export default function Cadastro() {
     dataNascimento: "",
     cpf: "",
     cidade: "",
-    // Campos condicionais do aluno podem ser tratados separadamente se precisarem ser enviados ao backend num futuro DTO extendido
     instituicao: "",
     curso: "",
     matricula: ""
@@ -25,6 +30,9 @@ export default function Cadastro() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setErro("");    // Limpa mensagens antigas
+    setSucesso("");
 
     let perfilBackend = "PARTICIPANTE";
     if (vinculo === "colaborador") {
@@ -39,16 +47,27 @@ export default function Cadastro() {
       cpf: formData.cpf,
       cidade: formData.cidade,
       perfil: perfilBackend,
-      vinculoInstitucional: true // Assumindo true pois estão selecionando instituição
+      vinculoInstitucional: true
     };
 
     try {
       await api.post("/auth/registrar", payload);
-      alert("Cadastro realizado com sucesso!");
-      navigate("/login");
+
+      setSucesso("Cadastro realizado com sucesso! Redirecionando...");
+
+      setTimeout(() => {
+        navigate("/entrar");
+      }, 2000);
+
     } catch (error) {
       console.error("Erro no cadastro:", error);
-      alert("Erro ao cadastrar. Verifique os dados.");
+      if (error.response?.status === 400) {
+        setErro("Dados inválidos ou e-mail já cadastrado.");
+      } else {
+        setErro("Ocorreu um erro ao criar a conta. Tente novamente.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,7 +83,11 @@ export default function Cadastro() {
       </div>
 
       <div className="flex justify-center">
-        <form onSubmit={handleSubmit} className="w-full max-w-xl p-8 space-y-4 bg-white rounded-lg shadow">
+        <form onSubmit={handleSubmit} className="w-full max-w-xl p-8 space-y-4 bg-white rounded-lg shadow-lg transition-all">
+
+          {/* 4. Componentes visuais controlados pelo estado */}
+          <Alert type="error">{erro}</Alert>
+          <Alert type="success">{sucesso}</Alert>
 
           {/* Nome */}
           <div>
@@ -76,7 +99,7 @@ export default function Cadastro() {
               onChange={handleChange}
               type="text"
               placeholder="Seu nome completo"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
 
@@ -90,11 +113,11 @@ export default function Cadastro() {
               onChange={handleChange}
               type="email"
               placeholder="nome@email.com"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
 
-          {/* Senha (NOVO) */}
+          {/* Senha */}
           <div>
             <label className="block mb-1 text-sm font-medium text-slate-700">Senha</label>
             <input
@@ -104,11 +127,11 @@ export default function Cadastro() {
               onChange={handleChange}
               type="password"
               placeholder="••••••••"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
 
-          {/* CPF (NOVO - Obrigatório no Backend) */}
+          {/* CPF */}
           <div>
             <label className="block mb-1 text-sm font-medium text-slate-700">CPF</label>
             <input
@@ -118,11 +141,11 @@ export default function Cadastro() {
               onChange={handleChange}
               type="text"
               placeholder="000.000.000-00"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
 
-          {/* Cidade (NOVO - Obrigatório no Backend) */}
+          {/* Cidade */}
           <div>
             <label className="block mb-1 text-sm font-medium text-slate-700">Cidade</label>
             <input
@@ -132,11 +155,11 @@ export default function Cadastro() {
               onChange={handleChange}
               type="text"
               placeholder="Sua cidade"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
 
-          {/* Data de Nascimento (Substitui Idade para bater com o DTO Date) */}
+          {/* Data de Nascimento */}
           <div>
             <label className="block mb-1 text-sm font-medium text-slate-700">Data de Nascimento</label>
             <input
@@ -145,7 +168,7 @@ export default function Cadastro() {
               value={formData.dataNascimento}
               onChange={handleChange}
               type="date"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
 
@@ -153,7 +176,7 @@ export default function Cadastro() {
           <div>
             <label className="block mb-1 text-sm font-medium text-slate-700">Vínculo</label>
             <select
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500"
+              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
               value={vinculo}
               onChange={(e) => setVinculo(e.target.value)}
             >
@@ -163,12 +186,13 @@ export default function Cadastro() {
             </select>
           </div>
 
-          {/* Lógica condicional de Aluno/Colaborador mantida igual... */}
           <button
             type="submit"
-            className="w-full py-3 mt-4 font-medium text-white transition rounded-md bg-emerald-600 hover:bg-emerald-700"
+            disabled={loading}
+            className="w-full py-3 mt-4 font-medium text-white transition-all rounded-md bg-emerald-600 hover:bg-emerald-700 hover:shadow-md disabled:bg-emerald-400 disabled:cursor-not-allowed flex justify-center items-center gap-2"
           >
-            Criar conta
+            {loading && <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+            {loading ? "Cadastrando..." : "Criar conta"}
           </button>
         </form>
       </div>
