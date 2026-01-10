@@ -42,12 +42,12 @@ export default function Perfil() {
   };
 
   return (
-    <section className="min-h-screen px-8 pt-24 pb-24 bg-gradient-to-br from-emerald-100 via-white to-amber-100">
+    <section className="min-h-screen px-8 pt-24 pb-24 bg-linear-to-br from-emerald-100 via-white to-amber-100">
       <div className="max-w-6xl mx-auto">
         {/* Card do perfil */}
         <div className="relative mb-10 overflow-hidden bg-white rounded-lg shadow">
           {/* HEADER VERDE */}
-          <div className="h-40 bg-gradient-to-r from-emerald-700 to-emerald-500"></div>
+          <div className="h-40 bg-linear-to-r from-emerald-700 to-emerald-500"></div>
 
           {/* BOTÃO EDITAR (canto direito) */}
           <div className="absolute top-4 right-4">
