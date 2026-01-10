@@ -9,6 +9,7 @@ import Ajuda from "./pages/Ajuda.jsx";
 import Entrar from "./pages/Login.jsx";
 import RecuperarSenha from "./pages/RecuperarSenha.jsx";
 import Cadastro from "./pages/Cadastro.jsx";
+import Perfil from "./pages/Perfil.jsx";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/entrar" element={<Entrar />} />
         <Route path="/recuperarsenha" element={<RecuperarSenha />} />
         <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/perfil" element={<Perfil />} />
       </Routes>
 
       <Footer />
