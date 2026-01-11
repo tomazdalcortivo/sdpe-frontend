@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin, Phone } from "lucide-react"; // Adicionado Phone
+import { Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin, Phone } from "lucide-react"; 
 import { useNavigate } from "react-router-dom";
+import defaultImage from "../assets/imagem_perfil.png";
 import api from "../services/api";
 
 export default function Perfil() {
@@ -10,8 +11,6 @@ export default function Perfil() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [projectTab, setProjectTab] = useState("created");
-
-  const [profileImage, setProfileImage] = useState("src/assets/imagem_perfil.png");
 
   // Estado alinhado com o UsuarioResponseDTO
   const [userData, setUserData] = useState({
@@ -39,6 +38,7 @@ export default function Perfil() {
         const response = await api.get("/auth/perfil");
         const data = response.data;
 
+
         setUserData({
           id: data.id,
           nome: data.nome || "",
@@ -46,18 +46,15 @@ export default function Perfil() {
           telefone: data.telefone || "",
           cidade: data.cidade || "",
           resumo: data.resumo || "",
+
+          fotoPerfil: data.fotoPerfil || null,
         });
 
-        if (data.perfil) {
-          setRole(data.perfil);
-        }
+        if (data.perfil) setRole(data.perfil);
 
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
-        if (error.response?.status === 403 || error.response?.status === 401) {
-          localStorage.removeItem("token");
-          navigate("/entrar");
-        }
+        // ...
       } finally {
         setIsLoading(false);
       }
@@ -93,12 +90,37 @@ export default function Perfil() {
     }
   };
 
-  const handleImageUpload = (e) => {
+
+  const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setProfileImage(reader.result);
-    reader.readAsDataURL(file);
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB
+      alert("A imagem deve ter no máximo 5MB.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file); // "file" deve bater com @RequestParam("file") no Java
+
+    try {
+      setIsLoading(true);
+
+      const response = await api.patch(`/api/participantes/${userData.id}/foto`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setUserData({ ...userData, fotoPerfil: response.data.fotoPerfil });
+      alert("Foto atualizada com sucesso!");
+
+    } catch (error) {
+      console.error("Erro ao enviar imagem", error);
+      setErro("Erro ao enviar a foto. Tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const createdProjects = [];
@@ -155,11 +177,20 @@ export default function Perfil() {
             {/* Foto e Nome */}
             <div className={`flex flex-col items-end gap-6 mb-6 -mt-20 md:flex-row ${isEditing ? "mt-7" : "-mt-20"}`}>
               <div className="relative group">
-                <img src={profileImage} alt="Perfil" className="object-cover w-40 h-40 border-4 border-white rounded-lg shadow bg-white" />
+                <img
+                  src={userData.fotoPerfil ? `${userData.fotoPerfil}?t=${Date.now()}` : defaultImage} 
+                  alt="Perfil"
+                  className="object-cover w-40 h-40 border-4 border-white rounded-lg shadow bg-white"
+
+                  onError={(e) => {
+                    console.error("Erro ao carregar imagem na tela:", e.target.src);
+                    e.target.src = defaultImage; // Volta para a padrão se falhar
+                  }}
+                />
                 {isEditing && (
                   <label className="absolute inset-0 flex items-center justify-center rounded-lg opacity-0 cursor-pointer bg-black/50 group-hover:opacity-100 transition-opacity">
                     <Camera className="text-white" />
-                    <input type="file" hidden onChange={handleImageUpload} />
+                    <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
                   </label>
                 )}
               </div>
