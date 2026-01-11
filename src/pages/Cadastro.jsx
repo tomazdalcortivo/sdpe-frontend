@@ -9,8 +9,10 @@ export default function Cadastro() {
   const [loading, setLoading] = useState(false);
 
   // 2. Estados para mensagens
-  const [erro, setErro] = useState("");
-  const [sucesso, setSucesso] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const inputBase = "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all";
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -24,15 +26,15 @@ export default function Cadastro() {
     matricula: ""
   });
 
-  const handleChange = (e) => {
+  const handleAlteracao = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setErro("");    // Limpa mensagens antigas
-    setSucesso("");
+    setError("");    // Limpa mensagens antigas
+    setSuccess("");
 
     let perfilBackend = "PARTICIPANTE";
     if (vinculo === "colaborador") {
@@ -53,7 +55,7 @@ export default function Cadastro() {
     try {
       await api.post("/auth/registrar", payload);
 
-      setSucesso("Cadastro realizado com sucesso! Redirecionando...");
+      setSuccess("Cadastro realizado com sucesso! Redirecionando...");
 
       setTimeout(() => {
         navigate("/entrar");
@@ -62,9 +64,9 @@ export default function Cadastro() {
     } catch (error) {
       console.error("Erro no cadastro:", error);
       if (error.response?.status === 400) {
-        setErro("Dados inválidos ou e-mail já cadastrado.");
+        setError("Dados inválidos ou e-mail já cadastrado.");
       } else {
-        setErro("Ocorreu um erro ao criar a conta. Tente novamente.");
+        setError("Ocorreu um erro ao criar a conta. Tente novamente.");
       }
     } finally {
       setLoading(false);
@@ -83,11 +85,11 @@ export default function Cadastro() {
       </div>
 
       <div className="flex justify-center">
-        <form onSubmit={handleSubmit} className="w-full max-w-xl p-8 space-y-4 bg-white rounded-lg shadow-lg transition-all">
+        <form onSubmit={handleSubmit} className="w-full max-w-xl p-8 space-y-4 transition-all bg-white rounded-lg shadow-lg">
 
           {/* 4. Componentes visuais controlados pelo estado */}
-          <Alert type="error">{erro}</Alert>
-          <Alert type="success">{sucesso}</Alert>
+          <Alert type="error">{error}</Alert>
+          <Alert type="success">{success}</Alert>
 
           {/* Nome */}
           <div>
@@ -96,10 +98,10 @@ export default function Cadastro() {
               required
               name="nome"
               value={formData.nome}
-              onChange={handleChange}
+              onChange={handleAlteracao}
               type="text"
               placeholder="Seu nome completo"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className={inputBase}
             />
           </div>
 
@@ -110,10 +112,10 @@ export default function Cadastro() {
               required
               name="email"
               value={formData.email}
-              onChange={handleChange}
+              onChange={handleAlteracao}
               type="email"
               placeholder="nome@email.com"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className={inputBase}
             />
           </div>
 
@@ -124,10 +126,10 @@ export default function Cadastro() {
               required
               name="senha"
               value={formData.senha}
-              onChange={handleChange}
+              onChange={handleAlteracao}
               type="password"
               placeholder="••••••••"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className={inputBase}
             />
           </div>
 
@@ -138,10 +140,10 @@ export default function Cadastro() {
               required
               name="cpf"
               value={formData.cpf}
-              onChange={handleChange}
+              onChange={handleAlteracao}
               type="text"
               placeholder="000.000.000-00"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className={inputBase}
             />
           </div>
 
@@ -152,10 +154,10 @@ export default function Cadastro() {
               required
               name="cidade"
               value={formData.cidade}
-              onChange={handleChange}
+              onChange={handleAlteracao}
               type="text"
               placeholder="Sua cidade"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className={inputBase}
             />
           </div>
 
@@ -166,9 +168,9 @@ export default function Cadastro() {
               required
               name="dataNascimento"
               value={formData.dataNascimento}
-              onChange={handleChange}
+              onChange={handleAlteracao}
               type="date"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className={inputBase}
             />
           </div>
 
@@ -176,7 +178,7 @@ export default function Cadastro() {
           <div>
             <label className="block mb-1 text-sm font-medium text-slate-700">Vínculo</label>
             <select
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+            className={inputBase}
               value={vinculo}
               onChange={(e) => setVinculo(e.target.value)}
             >
@@ -189,9 +191,9 @@ export default function Cadastro() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 mt-4 font-medium text-white transition-all rounded-md bg-emerald-600 hover:bg-emerald-700 hover:shadow-md disabled:bg-emerald-400 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+            className="flex items-center justify-center w-full gap-2 py-3 mt-4 font-medium text-white transition-all rounded-md bg-emerald-600 hover:bg-emerald-700 hover:shadow-md disabled:bg-emerald-400 disabled:cursor-not-allowed"
           >
-            {loading && <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+            {loading && <div className="w-5 h-5 border-2 border-white rounded-full border-t-transparent animate-spin"></div>}
             {loading ? "Cadastrando..." : "Criar conta"}
           </button>
         </form>

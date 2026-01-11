@@ -12,21 +12,21 @@ export default function Ajuda() {
 
   const [status, setStatus] = useState({ loading: false, error: "", success: false });
 
-  const handleChange = (e) => {
+  const handleAlteracao = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const mapAssuntoToTipo = (assunto) => {
+  const handleTipoAssunto = (assunto) => {
     if (assunto === "Sugestão") return "FEEDBACK";
     return "CHAMADO";
   };
 
-  const handleSubmit = async (e) => {
+  const handleEnviar = async (e) => {
     e.preventDefault();
     setStatus({ loading: true, error: "", success: false }); // Limpa status anterior
 
-    if (formData.assunto === "Selecione" || !formData.mensagem || !formData.email || !formData.nome) {
+    if (formData.subject === "Selecione" || !formData.mensagem || !formData.email || !formData.nome) {
       setStatus({
         loading: false,
         error: "Por favor, preencha todos os campos.",
@@ -39,7 +39,7 @@ export default function Ajuda() {
       nome: formData.nome,
       email: formData.email,
       mensagem: formData.mensagem,
-      tipoContato: mapAssuntoToTipo(formData.assunto),
+      tipoContato: handleTipoAssunto(formData.assunto),
       projeto: null
     };
 
@@ -75,7 +75,7 @@ export default function Ajuda() {
       <div className="h-px mx-auto my-10 bg-gray-300 w-lg"></div>
 
       <div className="flex justify-center">
-        <form onSubmit={handleSubmit} className="w-full max-w-xl p-8 space-y-4 bg-white rounded-lg shadow-lg transition-all">
+        <form onSubmit={handleEnviar} className="w-full max-w-xl p-8 space-y-4 transition-all bg-white rounded-lg shadow-lg">
 
           {/* 4. Componentes Alert baseados no objeto 'status' */}
           <Alert type="error">{status.error}</Alert>
@@ -91,9 +91,9 @@ export default function Ajuda() {
               type="text"
               name="nome"
               value={formData.nome}
-              onChange={handleChange}
+              onChange={handleAlteracao}
               placeholder="Seu nome completo"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className="w-full px-4 py-2 transition-all rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
             />
           </div>
 
@@ -104,9 +104,9 @@ export default function Ajuda() {
               type="email"
               name="email"
               value={formData.email}
-              onChange={handleChange}
+              onChange={handleAlteracao}
               placeholder="nome@email.com"
-              className="w-full px-4 py-2 rounded-md outline-none border-slate-300 focus:border-emerald-500 border-3 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className="w-full px-4 py-2 transition-all rounded-md outline-none border-slate-300 focus:border-emerald-500 border-3 focus:ring-4 focus:ring-emerald-100"
             />
           </div>
 
@@ -114,10 +114,10 @@ export default function Ajuda() {
           <div>
             <label className="block mb-1 text-sm font-medium text-slate-700">Assunto</label>
             <select
-              name="assunto"
+              name="Assunto"
               value={formData.assunto}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              onChange={handleAlteracao}
+              className="w-full px-4 py-2 transition-all rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
             >
               <option value="Selecione" disabled>Selecione</option>
               <option>Dúvida</option>
@@ -133,19 +133,19 @@ export default function Ajuda() {
             <textarea
               name="mensagem"
               value={formData.mensagem}
-              onChange={handleChange}
+              onChange={handleAlteracao}
               rows="4"
               placeholder="Descreva sua mensagem"
-              className="w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+              className="w-full px-4 py-2 transition-all rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
             />
           </div>
 
           <button
             type="submit"
             disabled={status.loading}
-            className="w-full py-3 mt-4 font-medium text-white transition-all rounded-md bg-emerald-600 hover:bg-emerald-700 hover:shadow-md disabled:bg-emerald-400 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+            className="flex items-center justify-center w-full gap-2 py-3 mt-4 font-medium text-white transition-all rounded-md bg-emerald-600 hover:bg-emerald-700 hover:shadow-md disabled:bg-emerald-400 disabled:cursor-not-allowed"
           >
-            {status.loading && <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+            {status.loading && <div className="w-5 h-5 border-2 border-white rounded-full border-t-transparent animate-spin"></div>}
             {status.loading ? "Enviando..." : "Enviar mensagem"}
           </button>
         </form>

@@ -1,9 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin} from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 export default function Perfil() {
-  const navigate = useNavigate();
 
   // Estado do usuário e perfil
  
@@ -185,12 +184,12 @@ export default function Perfil() {
             {/* BOTÃO CRIAR PROJETO (somente professor) */}
             {isProfessor && !isEditing && (
               <div className="flex justify-end mt-4">
-                <button
-                  onClick={() => navigate("/projetos/novo")}
+                <Link
+                  to="/criarprojeto"
                   className="px-6 py-2 text-sm font-medium text-white transition rounded-md shadow bg-emerald-600 hover:bg-emerald-700"
                 >
                   + Criar novo projeto
-                </button>
+                </Link>
               </div>
             )}
           </div>

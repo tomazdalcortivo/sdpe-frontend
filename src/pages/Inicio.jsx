@@ -5,8 +5,6 @@ import { Globe } from "lucide-react";
 export default function Home() {
   return (
     <>
-      
-
       {/* Tamnaho mínimo em W e H: min-h-screen min-w-screen */}
       <section className="relative flex items-center min-h-screen pb-8">
         {/* Background - imagem fundo */}

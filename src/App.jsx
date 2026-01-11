@@ -10,6 +10,7 @@ import Entrar from "./pages/Login.jsx";
 import RecuperarSenha from "./pages/RecuperarSenha.jsx";
 import Cadastro from "./pages/Cadastro.jsx";
 import Perfil from "./pages/Perfil.jsx";
+import CriarProjeto from "./pages/CriarProjeto.jsx";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/recuperarsenha" element={<RecuperarSenha />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/perfil" element={<Perfil />} />
+        <Route path="/criarprojeto" element={<CriarProjeto />} />
       </Routes>
 
       <Footer />

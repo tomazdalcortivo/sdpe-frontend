@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import { useState } from "react";
 
 // import api from "../services/api"; //  deixa comentado por enquanto
@@ -11,7 +11,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   // Estados visuais
-  const [showPassword, setShowPassword] = useState(false);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // 2. Novo estado para controlar a mensagem de erro
@@ -125,7 +125,7 @@ export default function Login() {
             <div className="relative">
               <Lock className="absolute w-5 h-5 -translate-y-1/2 text-slate-400 left-3 top-1/2" />
               <input
-                type={showPassword ? "text" : "password"}
+                type={mostrarSenha ? "text" : "password"}
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="••••••••"
@@ -134,10 +134,10 @@ export default function Login() {
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => setMostrarSenha(!mostrarSenha)}
                 className="absolute -translate-y-1/2 right-3 top-1/2 text-slate-400 hover:text-slate-600"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                
               </button>
             </div>
           </div>
