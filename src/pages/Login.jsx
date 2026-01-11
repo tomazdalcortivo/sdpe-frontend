@@ -1,8 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useState } from "react";
-
-// import api from "../services/api"; //  deixa comentado por enquanto
+import api from "../services/api";
 
 import Alert from "../components/Alert";
 
@@ -10,42 +9,25 @@ import Alert from "../components/Alert";
 export default function Login() {
   const navigate = useNavigate();
 
-  // Estados visuais
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 2. Novo estado para controlar a mensagem de erro
   const [erro, setErro] = useState("");
 
-  // Estados do formulário
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
 
-  //Login (mock por enquanto)
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setErro(""); // Limpa qualquer erro anterior ao tentar de novo
+    setErro("");
 
     try {
-
-      // Validação básica
       if (!email || !senha) {
-        alert("Preencha todos os campos.");
+        setErro("Preencha todos os campos.");
+        setIsLoading(false);
         return;
       }
-
-      // =========================
-      // MOCK TEMPORÁRIO
-      // =========================
-      localStorage.setItem("token", "fake-token");
-      navigate("/perfil");
-
-      /*
-      =========================
-      QUANDO O BACKEND ESTIVER PRONTO (Pedro)
-      =========================
-      // Envia os dados para o backend
 
       const response = await api.post("/auth/login", {
         email,
@@ -55,13 +37,13 @@ export default function Login() {
       const token = response.data;
       localStorage.setItem("token", token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+
       navigate("/perfil");
-      */
 
     } catch (error) {
       console.error("Erro no login:", error);
 
-      // Aqui apenas atualizamos o TEXTO do erro. Não colocamos HTML/JSX aqui.
       if (error.response?.status === 403 || error.response?.status === 401) {
         setErro("E-mail ou senha incorretos.");
       } else {
