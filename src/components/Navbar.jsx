@@ -41,7 +41,7 @@ export default function Navbar() {
             <div className="flex flex-col text-[15px]">
               <span className={`font-bold ${logoColor}`}>SDPE</span>
               <span className={`${logoColor} font-semibold uppercase tracking-wider`}>
-                Divulgação de Projetos
+                Divulgação de Projetos de Extensão
               </span>
             </div>
           </div>
