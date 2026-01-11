@@ -1,23 +1,17 @@
-<<<<<<< HEAD
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import {Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin} from "lucide-react";
-=======
 import { useState, useEffect } from "react";
-import { Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin, Phone } from "lucide-react"; 
+import { Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import defaultImage from "../assets/imagem_perfil.png";
 import api from "../services/api";
->>>>>>> 26af47d64883c4453474caa13f9fe4c019c195e2
 
 export default function Perfil() {
+  const navigate = useNavigate();
 
   const [role, setRole] = useState("PARTICIPANTE");
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [projectTab, setProjectTab] = useState("created");
 
-  // Estado alinhado com o UsuarioResponseDTO
   const [userData, setUserData] = useState({
     id: null,
     nome: "",
@@ -25,11 +19,10 @@ export default function Perfil() {
     telefone: "",
     cidade: "",
     resumo: "",
+    fotoPerfil: null,
   });
 
   const isProfessor = role === "COORDENADOR" || role === "ADMIN";
-
-  // <Alert type="error">{erro}</Alert>
 
   useEffect(() => {
     async function fetchUserData() {
@@ -43,7 +36,6 @@ export default function Perfil() {
         const response = await api.get("/auth/perfil");
         const data = response.data;
 
-
         setUserData({
           id: data.id,
           nome: data.nome || "",
@@ -51,7 +43,6 @@ export default function Perfil() {
           telefone: data.telefone || "",
           cidade: data.cidade || "",
           resumo: data.resumo || "",
-
           fotoPerfil: data.fotoPerfil || null,
         });
 
@@ -59,7 +50,10 @@ export default function Perfil() {
 
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
-        // ...
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          localStorage.removeItem("token");
+          navigate("/entrar");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -77,8 +71,10 @@ export default function Perfil() {
         resumo: userData.resumo
       });
       setIsEditing(false);
+      alert("Perfil atualizado com sucesso!"); // Feedback visual
 
     } catch (error) {
+      console.error(error);
       alert("Erro ao salvar dados.");
     }
   };
@@ -95,7 +91,6 @@ export default function Perfil() {
     }
   };
 
-
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -106,7 +101,7 @@ export default function Perfil() {
     }
 
     const formData = new FormData();
-    formData.append("file", file); // "file" deve bater com @RequestParam("file") no Java
+    formData.append("file", file);
 
     try {
       setIsLoading(true);
@@ -122,7 +117,7 @@ export default function Perfil() {
 
     } catch (error) {
       console.error("Erro ao enviar imagem", error);
-      setErro("Erro ao enviar a foto. Tente novamente.");
+      alert("Erro ao enviar a foto. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -183,13 +178,13 @@ export default function Perfil() {
             <div className={`flex flex-col items-end gap-6 mb-6 -mt-20 md:flex-row ${isEditing ? "mt-7" : "-mt-20"}`}>
               <div className="relative group">
                 <img
-                  src={userData.fotoPerfil ? `${userData.fotoPerfil}?t=${Date.now()}` : defaultImage} 
+                  // Garante cache busting com ?t=... e fallback para imagem padrão
+                  src={userData.fotoPerfil ? `${userData.fotoPerfil}?t=${Date.now()}` : defaultImage}
                   alt="Perfil"
                   className="object-cover w-40 h-40 border-4 border-white rounded-lg shadow bg-white"
-
                   onError={(e) => {
                     console.error("Erro ao carregar imagem na tela:", e.target.src);
-                    e.target.src = defaultImage; // Volta para a padrão se falhar
+                    e.target.src = defaultImage;
                   }}
                 />
                 {isEditing && (
@@ -224,13 +219,11 @@ export default function Perfil() {
             {/* INFO: Email, Telefone e Cidade */}
             <div className="grid gap-4 mb-6 md:grid-cols-3 text-slate-600">
 
-              {/* Email */}
               <div className="flex items-center gap-2">
                 <Mail className="text-emerald-600 shrink-0" size={18} />
                 <span className="truncate" title={userData.email}>{userData.email || "-"}</span>
               </div>
 
-              {/* Telefone */}
               <div className="flex items-center gap-2">
                 <Phone className="text-emerald-600 shrink-0" size={18} />
                 {!isEditing ? (
@@ -245,7 +238,6 @@ export default function Perfil() {
                 )}
               </div>
 
-              {/* Cidade */}
               <div className="flex items-center gap-2">
                 <MapPin className="text-emerald-600 shrink-0" size={18} />
                 {!isEditing ? (
@@ -261,7 +253,7 @@ export default function Perfil() {
               </div>
             </div>
 
-            {/* RESUMO (Antiga Bio) */}
+            {/* RESUMO */}
             <div>
               <label className="block mb-1 font-medium text-slate-700">Resumo:</label>
               {!isEditing ? (
@@ -281,19 +273,13 @@ export default function Perfil() {
 
             {/* Botão Criar Projeto */}
             {isProfessor && !isEditing && (
-<<<<<<< HEAD
-              <div className="flex justify-end mt-4">
-                <Link
-                  to="/criarprojeto"
-=======
               <div className="flex justify-end mt-6">
                 <button
-                  onClick={() => navigate("/projetos/novo")}
->>>>>>> 26af47d64883c4453474caa13f9fe4c019c195e2
+                  onClick={() => navigate("/CriarProjeto")}
                   className="px-6 py-2 text-sm font-medium text-white transition rounded-md shadow bg-emerald-600 hover:bg-emerald-700"
                 >
                   + Criar novo projeto
-                </Link>
+                </button>
               </div>
             )}
           </div>

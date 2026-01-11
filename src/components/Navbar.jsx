@@ -1,16 +1,17 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { BookOpenText, LogIn, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { BookOpenText, LogIn, LogOut, User } from "lucide-react";
+import api from "../services/api";
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === "/";
+
   const [isScrolled, setIsScrolled] = useState(false);
+  const [userData, setUserData] = useState(null);
 
-  // Verifica se existe token 
-  const isAuthenticated = !!localStorage.getItem("token");
-
+  // 1. Efeito de Scroll
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 30);
@@ -19,22 +20,47 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // 2. Validação de Login
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      api.get("/auth/perfil")
+        .then((response) => {
+          setUserData({
+            email: response.data.email,
+            perfil: response.data.perfil,
+          });
+        })
+        .catch(() => {
+          localStorage.removeItem("token");
+          setUserData(null);
+        });
+    } else {
+      setUserData(null);
+    }
+  }, [location.pathname]);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
+    setUserData(null);
     navigate("/");
   };
 
-  const navBg = isScrolled ? "bg-white/80 backdrop-blur-md shadow-md" : "bg-transparent";
+  // Cores dinâmicas
+  const navBg = isScrolled ? "bg-white/90 backdrop-blur-md shadow-sm" : "bg-transparent";
   const textColor = isScrolled ? "text-emerald-700" : isHome ? "text-white" : "text-slate-700";
   const logoColor = isScrolled ? "text-emerald-900" : isHome ? "text-white" : "text-emerald-900";
+  // Cor para o texto de boas-vindas
+  const welcomeColor = isScrolled ? "text-emerald-800" : isHome ? "text-emerald-100" : "text-emerald-800";
 
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${navBg} ${isScrolled ? "py-3" : "py-5"}`}>
-      <div className="px-4 mx-auto max-w-8xl sm:px-6 lg:px-8">
+      <div className="px-4 mx-auto max-w-8xl sm:px-6 lg:px-8 relative">
         <div className="flex items-center justify-between">
 
-          {/* Logo */}
-          <div className="flex items-center gap-3">
+          {/* LOGO */}
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
             <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-600">
               <BookOpenText className="w-6 h-6 text-white" />
             </div>
@@ -46,24 +72,50 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Links */}
-          <div className={`hidden md:flex gap-20 font-medium text-[16px] ${textColor}`}>
-            <Link to="/">Início</Link>
-            <Link to="/">Sobre</Link>
-            <Link to="/">Projetos</Link>
-            {isAuthenticated && <Link to="/perfil">Perfil</Link>}
+          {/* === LINKS (Centralizados) === */}
+          <div className={`hidden md:flex absolute left-1/2 transform -translate-x-1/2 gap-10 font-medium text-[16px] ${textColor}`}>
+            <Link to="/" className="hover:opacity-75 transition-opacity">Início</Link>
+            <Link to="/sobre" className="hover:opacity-75 transition-opacity">Sobre</Link>
+            <Link to="/projetos" className="hover:opacity-75 transition-opacity">Projetos</Link>
           </div>
 
-          {/* Botão Entrar / Sair */}
-          <div className="flex justify-end gap-10">
-            {isAuthenticated ? (
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-3 text-[15px] text-white bg-red-600 rounded-lg hover:bg-red-700 transition"
-              >
-                Sair <LogOut size={20} />
-              </button>
+          {/* === ÁREA DA DIREITA (Login / Sair) === */}
+          <div className="flex items-center gap-6">
+
+            {userData ? (
+              // SE ESTIVER LOGADO
+              <div className="flex items-center gap-6">
+
+                {/* Texto "Olá" + Link Perfil */}
+                <div className="flex items-center gap-3">
+                  <div className={`hidden lg:flex flex-col items-end text-sm ${welcomeColor}`}>
+                    <span className="font-semibold">Olá, {userData.email}</span>
+                    <span className="text-[10px] uppercase tracking-wider opacity-80 border border-current px-2 rounded-full">
+                      {userData.perfil}
+                    </span>
+
+                  </div>
+
+                  {/* Ícone de Perfil Clicável */}
+                  <Link
+                    to="/perfil"
+                    className={`p-2 rounded-full transition-colors ${isScrolled ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-white/10 text-white hover:bg-white/20"}`}
+                    title="Meu Perfil"
+                  >
+                    <User size={20} />
+                  </Link>
+                </div>
+
+                {/* Botão Sair */}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-3 text-[15px] text-white bg-red-600 rounded-lg hover:bg-red-700 transition"
+                >
+                  Sair <LogOut size={20} />
+                </button>
+              </div>
             ) : (
+              // SE NÃO ESTIVER LOGADO
               <Link
                 to="/entrar"
                 className="flex items-center gap-2 px-4 py-3 text-[15px] text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition"

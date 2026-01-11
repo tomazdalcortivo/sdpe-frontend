@@ -22,7 +22,7 @@ function App() {
         <Route path="/" element={<Inicio />} />
         <Route path="/ajuda" element={<Ajuda />} />
         <Route path="/entrar" element={<Entrar />} />
-        <Route path="/recuperarsenha" element={<RecuperarSenha />} />
+        <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/criarprojeto" element={<CriarProjeto />} />

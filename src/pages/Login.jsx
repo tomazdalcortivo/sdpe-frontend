@@ -9,12 +9,8 @@ import Alert from "../components/Alert";
 export default function Login() {
   const navigate = useNavigate();
 
-<<<<<<< HEAD
   // Estados visuais
   const [mostrarSenha, setMostrarSenha] = useState(false);
-=======
-  const [showPassword, setShowPassword] = useState(false);
->>>>>>> 26af47d64883c4453474caa13f9fe4c019c195e2
   const [isLoading, setIsLoading] = useState(false);
 
   const [erro, setErro] = useState("");
