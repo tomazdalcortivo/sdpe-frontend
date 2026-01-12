@@ -8,11 +8,14 @@ export default function Cadastro() {
   const [vinculo, setVinculo] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 2. Estados para mensagens
+  const [arquivoPdf, setArquivoPdf] = useState(null);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const inputBase = "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all";
+  
+  const fileInputBase = "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 transition-all";
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -30,10 +33,16 @@ export default function Cadastro() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setArquivoPdf(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");    // Limpa mensagens antigas
+    setError("");    
     setSuccess("");
 
     let perfilBackend = "PARTICIPANTE";
@@ -52,8 +61,15 @@ export default function Cadastro() {
       vinculoInstitucional: true
     };
 
+    const submitData = new FormData();
+    submitData.append("dados", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+
+    if (arquivoPdf) {
+      submitData.append("arquivo", arquivoPdf);
+    }
+
     try {
-      await api.post("/auth/registrar", payload);
+      await api.post("/auth/registrar", submitData);
 
       setSuccess("Cadastro realizado com sucesso! Redirecionando...");
 
@@ -73,6 +89,13 @@ export default function Cadastro() {
     }
   };
 
+  // Lógica para definir o texto do rótulo
+  const getLabelDocumento = () => {
+    if (vinculo === "aluno") return "Declaração de Matrícula (PDF)";
+    if (vinculo === "colaborador") return "Documento de Comprobatório Professor (PDF)";
+    return "Documento Comprobatório (PDF)";
+  };
+
   return (
     <section className="min-h-screen px-8 pt-24 pb-24 bg-linear-to-br from-emerald-100 via-white to-amber-100">
       <div className="mt-16 mb-10 text-center">
@@ -87,7 +110,6 @@ export default function Cadastro() {
       <div className="flex justify-center">
         <form onSubmit={handleSubmit} className="w-full max-w-xl p-8 space-y-4 transition-all bg-white rounded-lg shadow-lg">
 
-          {/* 4. Componentes visuais controlados pelo estado */}
           <Alert type="error">{error}</Alert>
           <Alert type="success">{success}</Alert>
 
@@ -174,18 +196,39 @@ export default function Cadastro() {
             />
           </div>
 
-          {/* Vínculo */}
+          {/* MUDANÇA: Vínculo MOVIDO para cima do upload */}
           <div>
             <label className="block mb-1 text-sm font-medium text-slate-700">Vínculo</label>
             <select
-            className={inputBase}
+              className={inputBase}
               value={vinculo}
               onChange={(e) => setVinculo(e.target.value)}
             >
-              <option value="">Selecione</option>
+              <option value="">Selecione seu vínculo</option>
               <option value="aluno">Aluno (Participante)</option>
               <option value="colaborador">Colaborador (Coordenador)</option>
             </select>
+          </div>
+
+          {/* MUDANÇA: Upload com rótulo dinâmico */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-slate-700">
+              {getLabelDocumento()}
+            </label>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={handleFileChange}
+              className={fileInputBase}
+              // Opcional: Desabilita se não tiver selecionado o vínculo
+              disabled={!vinculo} 
+            />
+            {!vinculo && (
+              <p className="mt-1 text-xs text-amber-600">Selecione o vínculo acima para liberar o envio.</p>
+            )}
+            {vinculo && (
+              <p className="mt-1 text-xs text-slate-500">Opcional. Apenas formato PDF.</p>
+            )}
           </div>
 
           <button
