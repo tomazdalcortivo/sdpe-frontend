@@ -14,7 +14,7 @@ export default function Cadastro() {
   const [success, setSuccess] = useState("");
 
   const inputBase = "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all";
-  
+
   const fileInputBase = "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 transition-all";
 
   const [formData, setFormData] = useState({
@@ -42,7 +42,7 @@ export default function Cadastro() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");    
+    setError("");
     setSuccess("");
 
     let perfilBackend = "PARTICIPANTE";
@@ -79,10 +79,25 @@ export default function Cadastro() {
 
     } catch (error) {
       console.error("Erro no cadastro:", error);
-      if (error.response?.status === 400) {
-        setError("Dados inválidos ou e-mail já cadastrado.");
-      } else {
-        setError("Ocorreu um erro ao criar a conta. Tente novamente.");
+
+
+      if (error.response) {
+
+        const mensagemServidor = error.response.data;
+
+        if (typeof mensagemServidor === "string") {
+          setError(mensagemServidor);
+        }
+
+        else if (mensagemServidor && typeof mensagemServidor === "object") {
+          setError("Verifique os campos preenchidos e tente novamente.");
+        } else {
+          setError("Erro a processar a solicitação.");
+        }
+      } else if (error.request) {
+        setError("Servidor indisponível. Tente novamente mais tarde.");
+      }else {
+        setError("Erro desconhecido. Tente novamente.")
       }
     } finally {
       setLoading(false);
@@ -221,7 +236,7 @@ export default function Cadastro() {
               onChange={handleFileChange}
               className={fileInputBase}
               // Opcional: Desabilita se não tiver selecionado o vínculo
-              disabled={!vinculo} 
+              disabled={!vinculo}
             />
             {!vinculo && (
               <p className="mt-1 text-xs text-amber-600">Selecione o vínculo acima para liberar o envio.</p>
