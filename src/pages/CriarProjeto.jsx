@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api"; 
 import Alert from "../components/Alert";
 
 export default function CriarProjeto() {
-  const navigate = useNavigate(); // navegar entre páginas já programáticas
+  const navigate = useNavigate();
 
-  //Hooks de estado: [loading, setLoading] = useState(false);
-  const [erros, setErros] = useState([]); //mensagem de erro dos itens do formulário
-  const [sucesso, setSucesso] = useState(""); //mensagem sucesso
-  const [arquivo, setArquivo] = useState(null); // guarda o arquivo (.pdf)
-  const [loading, setLoading] = useState(false); // estado de carregamento
+  const [erros, setErros] = useState([]);
+  const [sucesso, setSucesso] = useState("");
+  const [arquivo, setArquivo] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const formFieldBorder = "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all";
   const formFieldName = "block mb-1 text-sm font-medium text-slate-700";
+
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
@@ -25,29 +27,27 @@ export default function CriarProjeto() {
     tipoDocumento: "",
   });
 
-  // atualizar campos do formulário
   const handleAlteracao = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  // validar .pdf
   const handleAlterarArquivo = (e) => {
-    const arquivo = e.target.files[0];
-    if (!arquivo) return;
+    const arquivoSelecionado = e.target.files[0];
+    if (!arquivoSelecionado) return;
 
     const novosErros = [];
 
-    if (arquivo.type !== "application/pdf") {
+    // Validando PDF (O backend espera imagem, mas vamos enviar o PDF mesmo assim por enquanto)
+    if (arquivoSelecionado.type !== "application/pdf") {
       novosErros.push("O documento deve estar no formato PDF.");
     }
 
-    if (arquivo.size > 10 * 1024 * 1024) {
-      novosErros.push("O PDF deve ter no máximo 10MB."); // mudar depois? diminuir?
+    if (arquivoSelecionado.size > 10 * 1024 * 1024) {
+      novosErros.push("O arquivo deve ter no máximo 10MB.");
     }
 
     if (novosErros.length > 0) {
@@ -56,57 +56,32 @@ export default function CriarProjeto() {
     }
 
     setErros([]);
-    setArquivo(arquivo);
+    setArquivo(arquivoSelecionado);
   };
 
-  // verifica
   const handleEnviar = async (e) => {
     e.preventDefault();
     setErros([]);
     setSucesso("");
-
     const novosErros = [];
 
-    // Nome do projeto
+    // --- Validações Locais ---
     if (formData.nome.length < 5 || formData.nome.length > 50) {
       novosErros.push("O nome do projeto deve ter entre 5 e 50 caracteres.");
     }
-
-    // Descrição
     if (formData.descricao.length < 50 || formData.descricao.length > 200) {
       novosErros.push("A descrição deve ter entre 50 e 200 caracteres.");
     }
-
-    // Planejamento
-    if (
-      formData.planejamento.length < 50 ||
-      formData.planejamento.length > 200
-    ) {
-      novosErros.push("O planejamento deve ter entre 50 e 200 caracteres.");
-    }
-
-    // Arquivo
     if (!arquivo) {
-      novosErros.push("É obrigatório enviar o documento de aprovação do projeto.");
+      novosErros.push("É obrigatório enviar o documento.");
     }
-
-    // Datas
-    if (
-      formData.dataInicio &&
-      formData.dataFim &&
-      new Date(formData.dataFim) < new Date(formData.dataInicio)
-    ) {
-      novosErros.push(
-        "A data de término não pode ser anterior à data de início."
-      );
+    if (formData.dataInicio && formData.dataFim && new Date(formData.dataFim) < new Date(formData.dataInicio)) {
+      novosErros.push("A data de término não pode ser anterior à data de início.");
     }
-
-    // Carga horária
     if (Number(formData.cargaHoraria) <= 0) {
       novosErros.push("A carga horária deve ser maior que zero.");
     }
 
-    // Se houver erros, exibe todos eles
     if (novosErros.length > 0) {
       setErros(novosErros);
       return;
@@ -115,10 +90,58 @@ export default function CriarProjeto() {
     setLoading(true);
 
     try {
+      // 1. Preparar o Objeto JSON (Payload)
+      // Ajustamos os nomes para bater com o Projeto.java
+      const payload = {
+        nome: formData.nome,
+        descricao: formData.descricao,
+        area: formData.area,
+        dataInicio: formData.dataInicio, // Formato yyyy-MM-dd vai direto
+        dataFim: formData.dataFim,
+        cargaHoraria: parseFloat(formData.cargaHoraria),
+        // O backend espera o Enum em MAIÚSCULO (ex: PRESENCIAL)
+        formato: formData.formato ? formData.formato.toUpperCase() : null,
+
+        // NOTA: O backend espera um objeto InstituicaoEnsino, não uma string.
+        // Estamos enviando um objeto temporário, mas o backend precisará tratar isso.
+        instituicaoEnsino: {
+          nome: formData.instituicao
+        }
+
+        // OBS: 'planejamento' e 'tipoDocumento' não existem no Projeto.java
+        // Eles não serão salvos a menos que você altere o Backend.
+      };
+
+      // 2. Criar o FormData
+      const submitData = new FormData();
+
+      // Parte 1: O JSON (key: "projeto")
+      submitData.append("projeto", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+
+      // Parte 2: O Arquivo (key: "imagem")
+      // OBS: Seu Controller chama de "imagem", então devemos usar essa chave mesmo sendo PDF
+      if (arquivo) {
+        submitData.append("imagem", arquivo);
+      }
+
+      // 3. Enviar para a API
+      await api.post("/api/projetos", submitData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       setSucesso("Projeto enviado com sucesso! Aguarde a aprovação.");
       setTimeout(() => navigate("/perfil"), 2000);
-    } catch {
-      setErros(["Erro ao enviar o projeto."]);
+
+    } catch (error) {
+      console.error("Erro ao criar projeto:", error);
+      if (error.response && error.response.data) {
+        // Tenta pegar mensagem de erro do backend se houver
+        setErros([typeof error.response.data === 'string' ? error.response.data : "Erro ao processar solicitação."]);
+      } else {
+        setErros(["Erro ao enviar o projeto. Verifique a conexão."]);
+      }
     } finally {
       setLoading(false);
     }
@@ -201,6 +224,7 @@ export default function CriarProjeto() {
             <a
               href="https://lattes.cnpq.br/web/dgp/arvore-do-conhecimento"
               target="_blank"
+              rel="noopener noreferrer"
               className="text-emerald-600 hover:underline"
             >
               Clique aqui
@@ -209,11 +233,9 @@ export default function CriarProjeto() {
 
           {/* Datas */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-            {/* Labels */}
             <label className={formFieldName}>Data de Início</label>
             <label className={formFieldName}>Data de Término</label>
 
-            {/* Inputs */}
             <input
               type="date"
               name="dataInicio"

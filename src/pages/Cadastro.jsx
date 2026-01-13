@@ -6,16 +6,13 @@ import Alert from "../components/Alert";
 export default function Cadastro() {
   const navigate = useNavigate();
 
-  // Estados para feedback visual
   const [erros, setErros] = useState([]);
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Estados do formulário
   const [vinculo, setVinculo] = useState("");
   const [arquivoPdf, setArquivoPdf] = useState(null);
 
-  // Estilização
   const inputBase = "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all";
   const fileInputBase = "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 transition-all";
 
@@ -35,28 +32,24 @@ export default function Cadastro() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // --- NOVA FUNÇÃO: MÁSCARA DE CPF ---
+
   const handleCpfMask = (e) => {
     let value = e.target.value;
 
-    // 1. Remove tudo que não é número
     value = value.replace(/\D/g, "");
 
-    // 2. Limita a 11 dígitos (para não digitar infinitamente)
     if (value.length > 11) {
       value = value.slice(0, 11);
     }
 
-    // 3. Aplica a máscara (000.000.000-00) passo a passo
+    // Aplica a máscara (000.000.000-00) passo a passo
     value = value.replace(/(\d{3})(\d)/, "$1.$2");
     value = value.replace(/(\d{3})(\d)/, "$1.$2");
     value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 
-    // 4. Atualiza o estado
     setFormData((prev) => ({ ...prev, cpf: value }));
   };
 
-  // Validação imediata do arquivo (PDF e Tamanho)
   const handleFileChange = (e) => {
     const arquivo = e.target.files[0];
     if (!arquivo) return;
@@ -73,7 +66,7 @@ export default function Cadastro() {
 
     if (novosErros.length > 0) {
       setErros(novosErros);
-      e.target.value = ""; // Limpa o input visualmente
+      e.target.value = ""; 
       setArquivoPdf(null);
       return;
     }
@@ -89,7 +82,6 @@ export default function Cadastro() {
 
     const novosErros = [];
 
-    // --- Validações ---
 
     // Nome
     const nomeRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ]+( [A-Za-zÀ-ÖØ-öø-ÿ]+)+$/;
