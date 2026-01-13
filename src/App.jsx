@@ -25,6 +25,7 @@ function App() {
         <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/perfil" element={<Perfil />} />
+        {/* <Route path="/projetos" element={<ListaProjetos />} /> */}
         <Route path="/criarprojeto" element={<CriarProjeto />} />
       </Routes>
 
