@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin, Phone } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin, Phone, Calendar, Clock } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom"; 
 import defaultImage from "../assets/imagem_perfil.png";
 import api from "../services/api";
 
@@ -10,7 +10,10 @@ export default function Perfil() {
   const [role, setRole] = useState("PARTICIPANTE");
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [projectTab, setProjectTab] = useState("created");
+  const [projectTab, setProjectTab] = useState("participated");
+
+  const [createdProjects, setCreatedProjects] = useState([]);
+  const [participatedProjects, setParticipatedProjects] = useState([]);
 
   const [userData, setUserData] = useState({
     id: null,
@@ -33,6 +36,7 @@ export default function Perfil() {
           return;
         }
 
+        // 1. Busca dados do usuário
         const response = await api.get("/auth/perfil");
         const data = response.data;
 
@@ -46,7 +50,26 @@ export default function Perfil() {
           fotoPerfil: data.fotoPerfil || null,
         });
 
-        if (data.perfil) setRole(data.perfil);
+        if (data.perfil) {
+          setRole(data.perfil);
+          // Se for coordenador, muda a aba padrão para 'created'
+          if (data.perfil === "COORDENADOR" || data.perfil === "ADMIN") {
+            setProjectTab("created");
+          }
+        }
+
+        // 2. Busca projetos
+        try {
+          if (data.perfil === "COORDENADOR" || data.perfil === "ADMIN") {
+            const resCriados = await api.get("/api/projetos/meus-criados");
+            setCreatedProjects(resCriados.data);
+          }
+          const resParticipados = await api.get("/api/projetos/meus-participados");
+          setParticipatedProjects(resParticipados.data);
+
+        } catch (errorProj) {
+          console.error("Erro ao buscar projetos:", errorProj);
+        }
 
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
@@ -71,8 +94,7 @@ export default function Perfil() {
         resumo: userData.resumo
       });
       setIsEditing(false);
-      alert("Perfil atualizado com sucesso!"); // Feedback visual
-
+      alert("Perfil atualizado com sucesso!");
     } catch (error) {
       console.error(error);
       alert("Erro ao salvar dados.");
@@ -95,7 +117,7 @@ export default function Perfil() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) { // 5MB
+    if (file.size > 5 * 1024 * 1024) {
       alert("A imagem deve ter no máximo 5MB.");
       return;
     }
@@ -105,16 +127,11 @@ export default function Perfil() {
 
     try {
       setIsLoading(true);
-
       const response = await api.patch(`/api/participantes/${userData.id}/foto`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
-
       setUserData({ ...userData, fotoPerfil: response.data.fotoPerfil });
       alert("Foto atualizada com sucesso!");
-
     } catch (error) {
       console.error("Erro ao enviar imagem", error);
       alert("Erro ao enviar a foto. Tente novamente.");
@@ -123,9 +140,48 @@ export default function Perfil() {
     }
   };
 
-  const createdProjects = [];
-  const participatedProjects = [];
+  // Define qual lista exibir
   const currentProjects = projectTab === "created" ? createdProjects : participatedProjects;
+
+  // Componente do Item da Lista
+  const ProjetoItem = ({ projeto }) => (
+    <li className="p-4 mb-3 transition-all border rounded-lg hover:shadow-md border-slate-200 hover:border-emerald-200 bg-slate-50">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div>
+          <h3 className="text-lg font-bold text-slate-800">{projeto.nome}</h3>
+          <p className="mb-2 text-sm text-slate-500 line-clamp-1">{projeto.descricao}</p>
+
+          <div className="flex flex-wrap gap-4 text-xs text-slate-600">
+            {projeto.dataInicio && (
+              <div className="flex items-center gap-1">
+                <Calendar size={14} />
+                {new Date(projeto.dataInicio).toLocaleDateString()}
+              </div>
+            )}
+            {projeto.cargaHoraria && (
+              <div className="flex items-center gap-1">
+                <Clock size={14} />
+                {projeto.cargaHoraria}h
+              </div>
+            )}
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${projeto.status
+                ? "bg-green-100 text-green-700 border-green-200"
+                : "bg-amber-100 text-amber-700 border-amber-200"
+              }`}>
+              {projeto.status ? "ATIVO" : "PENDENTE/INATIVO"}
+            </span>
+          </div>
+        </div>
+
+        <Link
+          to={`/projetos/${projeto.id}`}
+          className="px-4 py-2 text-sm font-medium text-center text-emerald-700 transition-colors border rounded-md border-emerald-200 hover:bg-emerald-50"
+        >
+          Ver Detalhes
+        </Link>
+      </div>
+    </li>
+  );
 
   if (isLoading) {
     return (
@@ -178,14 +234,10 @@ export default function Perfil() {
             <div className={`flex flex-col items-end gap-6 mb-6 -mt-20 md:flex-row ${isEditing ? "mt-7" : "-mt-20"}`}>
               <div className="relative group">
                 <img
-                  // Garante cache busting com ?t=... e fallback para imagem padrão
                   src={userData.fotoPerfil ? `${userData.fotoPerfil}?t=${Date.now()}` : defaultImage}
                   alt="Perfil"
                   className="object-cover w-40 h-40 border-4 border-white rounded-lg shadow bg-white"
-                  onError={(e) => {
-                    console.error("Erro ao carregar imagem na tela:", e.target.src);
-                    e.target.src = defaultImage;
-                  }}
+                  onError={(e) => { e.target.src = defaultImage; }}
                 />
                 {isEditing && (
                   <label className="absolute inset-0 flex items-center justify-center rounded-lg opacity-0 cursor-pointer bg-black/50 group-hover:opacity-100 transition-opacity">
@@ -197,14 +249,12 @@ export default function Perfil() {
 
               <div className="flex-1 space-y-2 w-full">
                 {!isEditing ? (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-2xl font-bold">{userData.nome}</h2>
-                      <span className="px-2 py-0.5 text-xs font-semibold text-emerald-800 bg-emerald-100 rounded-full border border-emerald-200">
-                        {role}
-                      </span>
-                    </div>
-                  </>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold">{userData.nome}</h2>
+                    <span className="px-2 py-0.5 text-xs font-semibold text-emerald-800 bg-emerald-100 rounded-full border border-emerald-200">
+                      {role}
+                    </span>
+                  </div>
                 ) : (
                   <input
                     className="w-full px-4 py-2 border rounded-md outline-none focus:border-emerald-500"
@@ -218,7 +268,6 @@ export default function Perfil() {
 
             {/* INFO: Email, Telefone e Cidade */}
             <div className="grid gap-4 mb-6 md:grid-cols-3 text-slate-600">
-
               <div className="flex items-center gap-2">
                 <Mail className="text-emerald-600 shrink-0" size={18} />
                 <span className="truncate" title={userData.email}>{userData.email || "-"}</span>
@@ -292,29 +341,41 @@ export default function Perfil() {
             Meus Projetos
           </h2>
 
-          <div className="flex gap-3 mb-6">
-            <button
-              onClick={() => setProjectTab("created")}
-              className={`px-5 py-2 rounded-md font-medium transition-colors ${projectTab === "created" ? "bg-emerald-600 text-white" : "bg-gray-100 text-slate-600 hover:bg-gray-200"
-                }`}
-            >
-              Criados
-            </button>
+          <div className="flex gap-3 mb-6 border-b border-gray-100 pb-4">
+            {/* Só mostra aba de criados se for professor */}
+            {isProfessor && (
+              <button
+                onClick={() => setProjectTab("created")}
+                className={`px-5 py-2 rounded-md font-medium transition-colors ${projectTab === "created"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "bg-white text-slate-600 hover:bg-gray-50 border border-gray-200"
+                  }`}
+              >
+                Gerenciados por mim ({createdProjects.length})
+              </button>
+            )}
+
             <button
               onClick={() => setProjectTab("participated")}
-              className={`px-5 py-2 rounded-md font-medium transition-colors ${projectTab === "participated" ? "bg-emerald-600 text-white" : "bg-gray-100 text-slate-600 hover:bg-gray-200"
+              className={`px-5 py-2 rounded-md font-medium transition-colors ${projectTab === "participated"
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "bg-white text-slate-600 hover:bg-gray-50 border border-gray-200"
                 }`}
             >
-              Participados
+              Participações ({participatedProjects.length})
             </button>
           </div>
 
           {currentProjects.length === 0 ? (
-            <div className="py-10 text-center border-2 border-dashed rounded-lg border-slate-200">
-              <p className="text-slate-500">Nenhum projeto encontrado.</p>
+            <div className="py-10 text-center border-2 border-dashed rounded-lg border-slate-200 bg-slate-50/50">
+              <p className="text-slate-500">Nenhum projeto encontrado nesta categoria.</p>
             </div>
           ) : (
-            <ul>{/* Lista de projetos */}</ul>
+            <ul className="space-y-3">
+              {currentProjects.map((projeto) => (
+                <ProjetoItem key={projeto.id} projeto={projeto} />
+              ))}
+            </ul>
           )}
         </div>
 
@@ -322,7 +383,8 @@ export default function Perfil() {
         <div className="flex justify-end mt-4">
           <button
             onClick={handleDeleteAccount}
-            className="flex items-center gap-2 px-6 py-2 text-white bg-red-600 rounded-md shadow hover:bg-red-700 transition-colors">
+            className="flex items-center gap-2 px-6 py-2 text-white bg-red-600 rounded-md shadow hover:bg-red-700 transition-colors"
+          >
             <Trash2 size={16} />
             Excluir conta
           </button>
