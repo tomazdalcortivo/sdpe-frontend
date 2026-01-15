@@ -157,7 +157,7 @@ export default function CriarProjeto() {
 
       const submitData = new FormData();
       submitData.append("projeto", new Blob([JSON.stringify(payload)], { type: "application/json" }));
-      if (arquivo) submitData.append("imagem", arquivo);
+      if (arquivo) submitData.append("arquivo", arquivo);
 
       await api.post("/api/projetos", submitData, {
         headers: { "Content-Type": "multipart/form-data" },
