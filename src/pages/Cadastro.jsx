@@ -5,14 +5,16 @@ import Alert from "../components/Alert";
 
 export default function Cadastro() {
   const navigate = useNavigate();
-  const [vinculo, setVinculo] = useState("");
+
+  const [erros, setErros] = useState([]);
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 2. Estados para mensagens
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [vinculo, setVinculo] = useState("");
+  const [arquivoPdf, setArquivoPdf] = useState(null);
 
   const inputBase = "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all";
+  const fileInputBase = "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 transition-all";
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -30,11 +32,114 @@ export default function Cadastro() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+
+  const handleCpfMask = (e) => {
+    let value = e.target.value;
+
+    value = value.replace(/\D/g, "");
+
+    if (value.length > 11) {
+      value = value.slice(0, 11);
+    }
+
+    // Aplica a máscara (000.000.000-00) passo a passo
+    value = value.replace(/(\d{3})(\d)/, "$1.$2");
+    value = value.replace(/(\d{3})(\d)/, "$1.$2");
+    value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+
+    setFormData((prev) => ({ ...prev, cpf: value }));
+  };
+
+  const handleFileChange = (e) => {
+    const arquivo = e.target.files[0];
+    if (!arquivo) return;
+
+    const novosErros = [];
+
+    if (arquivo.type !== "application/pdf") {
+      novosErros.push("O documento deve estar no formato PDF.");
+    }
+
+    if (arquivo.size > 10 * 1024 * 1024) {
+      novosErros.push("O PDF deve ter no máximo 10MB.");
+    }
+
+    if (novosErros.length > 0) {
+      setErros(novosErros);
+      e.target.value = ""; 
+      setArquivoPdf(null);
+      return;
+    }
+
+    setErros([]);
+    setArquivoPdf(arquivo);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");    // Limpa mensagens antigas
+    setErros([]);
     setSuccess("");
+
+    const novosErros = [];
+
+
+    // Nome
+    const nomeRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ]+( [A-Za-zÀ-ÖØ-öø-ÿ]+)+$/;
+    if (!formData.nome.trim()) {
+      novosErros.push("O nome é obrigatório.");
+    } else if (!nomeRegex.test(formData.nome)) {
+      novosErros.push("Digite o nome completo (nome e sobrenome).");
+    }
+
+    // Email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      novosErros.push("O e-mail é obrigatório.");
+    } else if (!emailRegex.test(formData.email)) {
+      novosErros.push("Digite um endereço de e-mail válido.");
+    }
+
+    // Senha
+    if (formData.senha.length < 6) {
+      novosErros.push("A senha deve ter no mínimo 6 caracteres.");
+    }
+
+    // CPF (Verifica se está completo com a máscara)
+    const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
+    if (!formData.cpf) {
+      novosErros.push("O CPF é obrigatório.");
+    } else if (!cpfRegex.test(formData.cpf)) {
+      novosErros.push("O CPF deve estar completo (000.000.000-00).");
+    }
+
+    // Cidade
+    if (!formData.cidade.trim()) {
+      novosErros.push("A cidade é obrigatória.");
+    }
+
+    // Data de Nascimento
+    if (!formData.dataNascimento) {
+      novosErros.push("A data de nascimento é obrigatória.");
+    } else {
+      const dataNasc = new Date(formData.dataNascimento);
+      const hoje = new Date();
+      if (dataNasc > hoje) {
+        novosErros.push("A data de nascimento não pode ser no futuro.");
+      }
+    }
+
+    // Vínculo
+    if (!vinculo) {
+      novosErros.push("Selecione o seu tipo de vínculo (Aluno ou Colaborador).");
+    }
+
+    if (novosErros.length > 0) {
+      setErros(novosErros);
+      return;
+    }
+
+    // --- Envio ---
+    setLoading(true);
 
     let perfilBackend = "PARTICIPANTE";
     if (vinculo === "colaborador") {
@@ -46,31 +151,49 @@ export default function Cadastro() {
       email: formData.email,
       senha: formData.senha,
       dataNascimento: formData.dataNascimento,
-      cpf: formData.cpf,
+      cpf: formData.cpf, // Envia o CPF formatado
       cidade: formData.cidade,
       perfil: perfilBackend,
       vinculoInstitucional: true
     };
 
+    const submitData = new FormData();
+    submitData.append("dados", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+
+    if (arquivoPdf) {
+      submitData.append("arquivo", arquivoPdf);
+    }
+
     try {
-      await api.post("/auth/registrar", payload);
+      await api.post("/auth/registrar", submitData);
 
       setSuccess("Cadastro realizado com sucesso! Redirecionando...");
-
       setTimeout(() => {
         navigate("/entrar");
       }, 2000);
 
     } catch (error) {
       console.error("Erro no cadastro:", error);
-      if (error.response?.status === 400) {
-        setError("Dados inválidos ou e-mail já cadastrado.");
+
+      if (error.response && error.response.data) {
+        const mensagemServidor = error.response.data;
+        if (typeof mensagemServidor === "string") {
+          setErros([mensagemServidor]);
+        } else if (typeof mensagemServidor === "object") {
+          setErros(["Verifique os campos preenchidos e tente novamente."]);
+        }
       } else {
-        setError("Ocorreu um erro ao criar a conta. Tente novamente.");
+        setErros(["Erro ao processar a solicitação. Tente novamente."]);
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  const getLabelDocumento = () => {
+    if (vinculo === "aluno") return "Declaração de Matrícula (PDF)";
+    if (vinculo === "colaborador") return "Documento Comprobatório Professor (PDF)";
+    return "Documento Comprobatório (PDF)";
   };
 
   return (
@@ -89,8 +212,16 @@ export default function Cadastro() {
       <div className="flex justify-center">
         <form onSubmit={handleSubmit} className="w-full max-w-xl p-8 space-y-4 transition-all bg-white rounded-lg shadow-lg">
 
-          {/* 4. Componentes visuais controlados pelo estado */}
-          <Alert type="error">{error}</Alert>
+          {erros.length > 0 && (
+            <Alert type="error">
+              <ul className="pl-5 space-y-1 list-disc">
+                {erros.map((msg, index) => (
+                  <li key={index}>{msg}</li>
+                ))}
+              </ul>
+            </Alert>
+          )}
+
           <Alert type="success">{success}</Alert>
 
           {/* Nome */}
@@ -135,17 +266,18 @@ export default function Cadastro() {
             />
           </div>
 
-          {/* CPF */}
+          {/* CPF COM MÁSCARA */}
           <div>
             <label className="block mb-1 text-sm font-medium text-slate-700">CPF</label>
             <input
               required
               name="cpf"
               value={formData.cpf}
-              onChange={handleAlteracao}
+              onChange={handleCpfMask} // Usa a nova função aqui
               type="text"
               placeholder="000.000.000-00"
               className={inputBase}
+              maxLength="14"
             />
           </div>
 
@@ -180,14 +312,34 @@ export default function Cadastro() {
           <div>
             <label className="block mb-1 text-sm font-medium text-slate-700">Vínculo</label>
             <select
-            className={inputBase}
+              className={inputBase}
               value={vinculo}
               onChange={(e) => setVinculo(e.target.value)}
             >
-              <option value="">Selecione</option>
+              <option value="">Selecione seu vínculo</option>
               <option value="aluno">Aluno (Participante)</option>
               <option value="colaborador">Colaborador (Coordenador)</option>
             </select>
+          </div>
+
+          {/* Upload de Arquivo */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-slate-700">
+              {getLabelDocumento()}
+            </label>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={handleFileChange}
+              className={fileInputBase}
+              disabled={!vinculo}
+            />
+            {!vinculo && (
+              <p className="mt-1 text-xs text-amber-600">Selecione o vínculo acima para liberar o envio.</p>
+            )}
+            {vinculo && (
+              <p className="mt-1 text-xs text-slate-500">Opcional. Apenas formato PDF (Máx. 10MB).</p>
+            )}
           </div>
 
           <button
