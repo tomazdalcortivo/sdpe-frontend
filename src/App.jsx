@@ -11,6 +11,8 @@ import RecuperarSenha from "./pages/RecuperarSenha.jsx";
 import Cadastro from "./pages/Cadastro.jsx";
 import Perfil from "./pages/Perfil.jsx";
 import CriarProjeto from "./pages/CriarProjeto.jsx";
+import ListaProjetos from "./pages/ListaProjetos.jsx";
+import DetalhesProjetos from "./pages/DetalhesProjetos.jsx";
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/criarprojeto" element={<CriarProjeto />} />
+        <Route path="/listaprojetos" element={<ListaProjetos />} />
+        <Route path="/detalhesprojetos" element={<DetalhesProjetos />} />
       </Routes>
 
       <Footer />

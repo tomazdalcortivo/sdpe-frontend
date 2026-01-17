@@ -80,9 +80,11 @@ export default function Cadastro() {
           Criar Conta
         </h1>
         <p className="max-w-2xl mx-auto text-xl text-slate-600">
-          Cadastre-se para acompanhar e participar dos projetos extensionistas.
+          Cadastre-se para participar dos projetos extensionistas.
         </p>
       </div>
+
+      <div className="h-px mx-auto my-10 bg-gray-300 w-lg"></div>
 
       <div className="flex justify-center">
         <form onSubmit={handleSubmit} className="w-full max-w-xl p-8 space-y-4 transition-all bg-white rounded-lg shadow-lg">

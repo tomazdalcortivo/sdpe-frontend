@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin, Phone } from "lucide-react";
+import { Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin, Phone, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import defaultImage from "../assets/imagem_perfil.png";
 import api from "../services/api";
@@ -130,7 +130,7 @@ export default function Perfil() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-emerald-600 rounded-full border-t-transparent animate-spin"></div>
+        <div className="w-12 h-12 border-4 rounded-full border-emerald-600 border-t-transparent animate-spin"></div>
       </div>
     );
   }
@@ -148,7 +148,7 @@ export default function Perfil() {
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-5 py-2 text-white rounded-md shadow bg-emerald-900 hover:bg-emerald-700 transition-colors"
+                className="flex items-center gap-2 px-5 py-2 text-white transition-colors rounded-md shadow bg-emerald-900 hover:bg-emerald-700"
               >
                 <Edit2 size={16} />
                 Editar perfil
@@ -157,14 +157,14 @@ export default function Perfil() {
               <div className="flex gap-2">
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 px-4 py-2 text-white rounded-md bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-white transition-colors rounded-md bg-emerald-600 hover:bg-emerald-700"
                 >
                   <Save size={16} />
                   Salvar
                 </button>
                 <button
                   onClick={() => setIsEditing(false)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 transition-colors bg-gray-200 rounded-md hover:bg-gray-300"
                 >
                   <X size={16} />
                   Cancelar
@@ -181,21 +181,21 @@ export default function Perfil() {
                   // Garante cache busting com ?t=... e fallback para imagem padrão
                   src={userData.fotoPerfil ? `${userData.fotoPerfil}?t=${Date.now()}` : defaultImage}
                   alt="Perfil"
-                  className="object-cover w-40 h-40 border-4 border-white rounded-lg shadow bg-white"
+                  className="object-cover w-40 h-40 bg-white border-4 border-white rounded-lg shadow"
                   onError={(e) => {
                     console.error("Erro ao carregar imagem na tela:", e.target.src);
                     e.target.src = defaultImage;
                   }}
                 />
                 {isEditing && (
-                  <label className="absolute inset-0 flex items-center justify-center rounded-lg opacity-0 cursor-pointer bg-black/50 group-hover:opacity-100 transition-opacity">
+                  <label className="absolute inset-0 flex items-center justify-center transition-opacity rounded-lg opacity-0 cursor-pointer bg-black/50 group-hover:opacity-100">
                     <Camera className="text-white" />
                     <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
                   </label>
                 )}
               </div>
 
-              <div className="flex-1 space-y-2 w-full">
+              <div className="flex-1 w-full space-y-2">
                 {!isEditing ? (
                   <>
                     <div className="flex items-center gap-3">
@@ -257,7 +257,7 @@ export default function Perfil() {
             <div>
               <label className="block mb-1 font-medium text-slate-700">Resumo:</label>
               {!isEditing ? (
-                <p className="text-slate-600 whitespace-pre-wrap">
+                <p className="whitespace-pre-wrap text-slate-600">
                   {userData.resumo || "Nenhum resumo informado."}
                 </p>
               ) : (
@@ -300,12 +300,21 @@ export default function Perfil() {
             >
               Criados
             </button>
+            
             <button
               onClick={() => setProjectTab("participated")}
               className={`px-5 py-2 rounded-md font-medium transition-colors ${projectTab === "participated" ? "bg-emerald-600 text-white" : "bg-gray-100 text-slate-600 hover:bg-gray-200"
                 }`}
             >
               Participados
+            </button>
+
+            <button
+              onClick={() => setProjectTab("analise")}
+              className={`px-5 py-2 rounded-md font-medium transition-colors ${projectTab === "analise" ? "bg-emerald-600 text-white" : "bg-gray-100 text-slate-600 hover:bg-gray-200"
+                }`}
+            >
+              Em análise
             </button>
           </div>
 
@@ -322,7 +331,7 @@ export default function Perfil() {
         <div className="flex justify-end mt-4">
           <button
             onClick={handleDeleteAccount}
-            className="flex items-center gap-2 px-6 py-2 text-white bg-red-600 rounded-md shadow hover:bg-red-700 transition-colors">
+            className="flex items-center gap-2 px-6 py-2 text-white transition-colors bg-red-600 rounded-md shadow hover:bg-red-700">
             <Trash2 size={16} />
             Excluir conta
           </button>
