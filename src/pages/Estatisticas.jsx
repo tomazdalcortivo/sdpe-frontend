@@ -9,8 +9,10 @@ import {
     Tooltip,
     Legend,
     ArcElement,
+    PointElement,
+    LineElement,
 } from "chart.js";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar, Pie, Line } from "react-chartjs-2";
 
 ChartJS.register(
     CategoryScale,
@@ -19,163 +21,297 @@ ChartJS.register(
     Title,
     Tooltip,
     Legend,
-    ArcElement
+    ArcElement,
+    PointElement,
+    LineElement
 );
 
-export default function Estatisticas() {
-    const [visData, setVisData] = useState(null);
-    const [areaData, setAreaData] = useState(null);
+function useCountUp(endValue, duration = 2000) {
+    const [count, setCount] = useState(0);
 
-    // Novos estados para o filtro
-    const [projetos, setProjetos] = useState([]);
-    const [projetoSelecionado, setProjetoSelecionado] = useState("");
-
-    const [loading, setLoading] = useState(true);
-
-    // 1. Carregar a lista de projetos para o filtro
     useEffect(() => {
-        async function carregarProjetos() {
-            try {
-                // Tenta buscar "Meus Projetos" se for coordenador, ou todos se tiver permissão
-                // Ajuste a rota conforme a sua regra. Pode ser /api/projetos/meus-criados
-                const response = await api.get("/api/projetos/meus-criados");
-                setProjetos(response.data);
-            } catch (error) {
-                console.error("Erro ao carregar lista de projetos", error);
+        let startTime;
+        let animationFrame;
+
+        const animate = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const progress = timestamp - startTime;
+
+            if (progress < duration) {
+                // Calcula o valor proporcional ao tempo decorrido
+                const nextCount = Math.min(endValue, Math.floor((progress / duration) * endValue));
+                setCount(nextCount);
+                animationFrame = requestAnimationFrame(animate);
+            } else {
+                setCount(endValue);
             }
+        };
+
+        if (endValue > 0) {
+            animationFrame = requestAnimationFrame(animate);
+        } else {
+            setCount(0);
         }
-        carregarProjetos();
+
+        return () => cancelAnimationFrame(animationFrame);
+    }, [endValue, duration]);
+
+    return count;
+}
+
+export default function Estatisticas() {
+    const [abaAtiva, setAbaAtiva] = useState("geral");
+    const [loading, setLoading] = useState(false);
+
+    const [totalProjetos, setTotalProjetos] = useState(0);
+    const [cadastrosData, setCadastrosData] = useState(null);
+    const [areasData, setAreasData] = useState(null);
+
+    const [projetosList, setProjetosList] = useState([]);
+    const [projetoSelecionado, setProjetoSelecionado] = useState("");
+    const [visData, setVisData] = useState(null);
+
+    const [isCoordenador, setIsCoordenador] = useState(false);
+
+    const animatedTotal = useCountUp(totalProjetos);
+
+    useEffect(() => {
+
+        const token = localStorage.getItem("token");
+        const userStr = localStorage.getItem("user");
+
+        if (token && userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user.perfil === "COORDENADOR" || user.perfil === "ADMIN") {
+                    setIsCoordenador(true);
+                } else {
+                    setIsCoordenador(false);
+                }
+            } catch (error) {
+                console.error("Erro ao ler dados do usuário:", error);
+            }
+        } else {
+            setIsCoordenador(false);
+        }
     }, []);
 
-    // 2. Carregar gráficos (reage quando muda o projetoSelecionado)
+    // 2. Carregar dados da aba GERAL
     useEffect(() => {
-        async function carregarDados() {
-            setLoading(true);
-            try {
-                const [resVis, resArea] = await Promise.all([
-                    // Passa o ID como parâmetro se estiver selecionado
-                    api.get("/api/estatisticas/visualizacoes", {
-                        params: { projetoId: projetoSelecionado || null }
-                    }),
-                    api.get("/api/estatisticas/areas"),
-                ]);
+        if (abaAtiva === "geral") {
+            async function fetchGeral() {
+                setLoading(true);
+                try {
+                    const [resTotal, resCad, resArea] = await Promise.all([
+                        api.get("/api/estatisticas/geral/total-projetos"),
+                        api.get("/api/estatisticas/geral/cadastros"),
+                        api.get("/api/estatisticas/geral/areas")
+                    ]);
 
-                const labelsVis = resVis.data.map((d) => d.label);
-                const valoresVis = resVis.data.map((d) => d.valor);
+                    setTotalProjetos(resTotal.data);
 
-                setVisData({
-                    labels: labelsVis,
-                    datasets: [
-                        {
+                    setCadastrosData({
+                        labels: resCad.data.map(d => d.label),
+                        datasets: [{
+                            label: "Novos Usuários",
+                            data: resCad.data.map(d => d.valor),
+                            borderColor: "#10b981",
+                            backgroundColor: "rgba(16, 185, 129, 0.2)",
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    });
+
+                    setAreasData({
+                        labels: resArea.data.map(d => d.label),
+                        datasets: [{
+                            data: resArea.data.map(d => d.valor),
+                            backgroundColor: ["#3b82f6", "#ef4444", "#eab308", "#10b981", "#a855f7", "#f97316"],
+                        }]
+                    });
+                } catch (err) {
+                    console.error("Erro ao carregar estatísticas gerais", err);
+                } finally {
+                    setLoading(false);
+                }
+            }
+            fetchGeral();
+        }
+    }, [abaAtiva]);
+
+    // 3. Carregar lista de projetos do COORDENADOR (Apenas se tiver permissão e estiver na aba)
+    useEffect(() => {
+        if (abaAtiva === "coordenador" && isCoordenador) {
+            async function fetchProjetos() {
+                try {
+                    const res = await api.get("/api/projetos/meus-criados");
+                    setProjetosList(res.data);
+
+                    if (res.data.length > 0) {
+                        setProjetoSelecionado(res.data[0].id);
+                    }
+                } catch (err) {
+                    console.error("Erro ao buscar projetos do coordenador", err);
+                }
+            }
+            fetchProjetos();
+        }
+    }, [abaAtiva, isCoordenador]);
+
+    // 4. Carregar visualizações quando muda o projeto selecionado
+    useEffect(() => {
+        if (abaAtiva === "coordenador" && projetoSelecionado) {
+            async function fetchVis() {
+                setLoading(true);
+                try {
+                    const res = await api.get("/api/estatisticas/visualizacoes", {
+                        params: { projetoId: projetoSelecionado }
+                    });
+
+                    setVisData({
+                        labels: res.data.map(d => d.label),
+                        datasets: [{
                             label: "Visualizações",
-                            data: valoresVis,
-                            backgroundColor: "rgba(16, 185, 129, 0.8)",
-                            borderColor: "#047857",
-                            borderWidth: 1,
-                        },
-                    ],
-                });
+                            data: res.data.map(d => d.valor),
+                            backgroundColor: "#3b82f6",
+                            borderRadius: 4
+                        }]
+                    });
+                } catch (err) {
+                    console.error("Erro ao buscar visualizações", err);
+                } finally {
+                    setLoading(false);
+                }
+            }
+            fetchVis();
+        }
+    }, [projetoSelecionado, abaAtiva]);
 
-                const labelsArea = resArea.data.map((d) => d.label);
-                const valoresArea = resArea.data.map((d) => d.valor);
-
-                setAreaData({
-                    labels: labelsArea,
-                    datasets: [
-                        {
-                            label: "Qtd. Projetos",
-                            data: valoresArea,
-                            backgroundColor: [
-                                "#3b82f6", "#ef4444", "#eab308", "#10b981", "#a855f7", "#f97316",
-                            ],
-                            borderColor: "#ffffff",
-                            borderWidth: 2,
-                        },
-                    ],
-                });
-
-            } catch (error) {
-                console.error("Erro ao carregar estatísticas", error);
-            } finally {
-                setLoading(false);
+    // Configuração para forçar números inteiros no gráfico de linha
+    const optionsLine = {
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                ticks: {
+                    stepSize: 1, // Passos de 1 em 1
+                    precision: 0 // Sem casas decimais
+                },
+                beginAtZero: true
+            }
+        },
+        plugins: {
+            tooltip: {
+                mode: 'index',
+                intersect: false,
             }
         }
-        carregarDados();
-    }, [projetoSelecionado]); // <--- Recarrega quando esse estado muda
-
-    const optionsBar = {
-        responsive: true,
-        plugins: {
-            legend: { position: "top" },
-            title: { display: false },
-        },
-        maintainAspectRatio: false,
-    };
-
-    const optionsPie = {
-        responsive: true,
-        plugins: {
-            legend: { position: "bottom" },
-        },
-        maintainAspectRatio: false,
     };
 
     return (
-        <section className="min-h-screen px-8 pt-24 pb-24 bg-linear-to-br from-emerald-100 via-white to-amber-100">
+        <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4">
             <div className="max-w-6xl mx-auto">
-                <h1 className="mb-8 text-4xl font-bold text-center text-emerald-900">
-                    Estatísticas da Plataforma
-                </h1>
+                <h1 className="text-3xl font-bold text-center text-emerald-900 mb-8">Painel de Estatísticas</h1>
 
-                <div className="grid gap-8 md:grid-cols-2">
+                {/* Abas de Navegação */}
+                <div className="flex justify-center gap-4 mb-8">
+                    <button
+                        onClick={() => setAbaAtiva("geral")}
+                        className={`px-6 py-2 rounded-full font-medium transition ${abaAtiva === 'geral' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                    >
+                        Visão Geral
+                    </button>
 
-                    {/* GRÁFICO DE VISUALIZAÇÕES COM FILTRO */}
-                    <div className="p-6 bg-white rounded-lg shadow-lg">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-bold text-slate-700">Visualizações Mensais</h3>
+                    {/* Botão visível APENAS para Coordenadores */}
+                    {isCoordenador && (
+                        <button
+                            onClick={() => setAbaAtiva("coordenador")}
+                            className={`px-6 py-2 rounded-full font-medium transition ${abaAtiva === 'coordenador' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                        >
+                            Área do Coordenador
+                        </button>
+                    )}
+                </div>
 
-                            {/* SELETOR DE PROJETO */}
+                {loading && <p className="text-center text-gray-500 py-8">Carregando dados...</p>}
+
+                {/* --- CONTEÚDO: VISÃO GERAL --- */}
+                {!loading && abaAtiva === "geral" && (
+                    <div className="space-y-6">
+                        {/* Card Total com Animação */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500 transition hover:shadow-md">
+                            <h3 className="text-sm font-bold text-gray-400 uppercase">Total de Projetos</h3>
+                            <p className="text-5xl font-extrabold text-emerald-600 mt-2">
+                                {animatedTotal}
+                            </p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {/* Gráfico de Cadastros (Inteiros) */}
+                            <div className="bg-white p-6 rounded-xl shadow-sm">
+                                <h3 className="font-bold text-gray-700 mb-4">Cadastros Mensais</h3>
+                                <div className="h-64">
+                                    {cadastrosData ? (
+                                        <Line options={optionsLine} data={cadastrosData} />
+                                    ) : (
+                                        <p>Sem dados.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Gráfico de Áreas */}
+                            <div className="bg-white p-6 rounded-xl shadow-sm">
+                                <h3 className="font-bold text-gray-700 mb-4">Projetos por Área</h3>
+                                <div className="h-64">
+                                    {areasData ? (
+                                        <Pie options={{ maintainAspectRatio: false }} data={areasData} />
+                                    ) : (
+                                        <p>Sem dados.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- CONTEÚDO: ÁREA DO COORDENADOR --- */}
+                {!loading && abaAtiva === "coordenador" && isCoordenador && (
+                    <div className="bg-white p-6 rounded-xl shadow-lg animate-fade-in">
+                        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-gray-800">Desempenho do Projeto</h3>
                             <select
-                                className="p-2 text-sm border rounded-md border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                className="mt-2 md:mt-0 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
                                 value={projetoSelecionado}
                                 onChange={(e) => setProjetoSelecionado(e.target.value)}
                             >
-                                <option value="">Geral (Todos)</option>
-                                {projetos.map(proj => (
-                                    <option key={proj.id} value={proj.id}>
-                                        {proj.nome.length > 20 ? proj.nome.substring(0, 20) + "..." : proj.nome}
-                                    </option>
+                                {projetosList.map(p => (
+                                    <option key={p.id} value={p.id}>{p.nome}</option>
                                 ))}
+                                {projetosList.length === 0 && <option>Nenhum projeto encontrado</option>}
                             </select>
                         </div>
 
-                        <div className="h-64">
-                            {loading ? (
-                                <div className="flex items-center justify-center h-full text-slate-400">Carregando...</div>
-                            ) : visData ? (
-                                <Bar options={optionsBar} data={visData} />
+                        <div className="h-80 w-full">
+                            {visData ? (
+                                <Bar
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: { title: { display: true, text: 'Visualizações por Mês' } },
+                                        scales: {
+                                            y: { ticks: { stepSize: 1, precision: 0 }, beginAtZero: true }
+                                        }
+                                    }}
+                                    data={visData}
+                                />
                             ) : (
-                                <p>Sem dados.</p>
+                                <div className="flex h-full items-center justify-center text-gray-400">
+                                    Selecione um projeto para ver as estatísticas.
+                                </div>
                             )}
                         </div>
                     </div>
-
-                    {/* GRÁFICO DE ÁREAS (PIZZA) - Mantido igual */}
-                    <div className="p-6 bg-white rounded-lg shadow-lg">
-                        <h3 className="mb-4 text-xl font-bold text-slate-700">Projetos por Área</h3>
-                        <div className="h-64">
-                            {loading ? (
-                                <div className="flex items-center justify-center h-full text-slate-400">Carregando...</div>
-                            ) : areaData ? (
-                                <Pie options={optionsPie} data={areaData} />
-                            ) : (
-                                <p>Sem dados.</p>
-                            )}
-                        </div>
-                    </div>
-
-                </div>
+                )}
             </div>
-        </section>
+        </div>
     );
 }

@@ -43,7 +43,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    setUserData(null);
+    localStorage.removeItem("user");
     navigate("/");
   };
 
@@ -76,7 +76,8 @@ export default function Navbar() {
           <div className={`hidden md:flex absolute left-1/2 transform -translate-x-1/2 gap-10 font-medium text-[16px] ${textColor}`}>
             <Link to="/" className="transition-opacity hover:opacity-75">Início</Link>
             <Link to="/sobre" className="transition-opacity hover:opacity-75">Sobre</Link>
-            <Link to="/listaprojetos" className="transition-opacity hover:opacity-75">Projetos</Link>
+            <Link to="/lista-projetos" className="transition-opacity hover:opacity-75">Projetos</Link>
+            <Link to="/estatisticas" className="transition-opacity hover:opacity-75">Estatísticas</Link>
           </div>
 
           {/* === ÁREA DA DIREITA (Login / Sair) === */}
