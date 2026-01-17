@@ -56,7 +56,7 @@ export default function Navbar() {
 
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${navBg} ${isScrolled ? "py-3" : "py-5"}`}>
-      <div className="px-4 mx-auto max-w-8xl sm:px-6 lg:px-8 relative">
+      <div className="relative px-4 mx-auto max-w-8xl sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
 
           {/* LOGO */}
@@ -74,9 +74,9 @@ export default function Navbar() {
 
           {/* === LINKS (Centralizados) === */}
           <div className={`hidden md:flex absolute left-1/2 transform -translate-x-1/2 gap-10 font-medium text-[16px] ${textColor}`}>
-            <Link to="/" className="hover:opacity-75 transition-opacity">Início</Link>
-            <Link to="/sobre" className="hover:opacity-75 transition-opacity">Sobre</Link>
-            <Link to="/projetos" className="hover:opacity-75 transition-opacity">Projetos</Link>
+            <Link to="/" className="transition-opacity hover:opacity-75">Início</Link>
+            <Link to="/sobre" className="transition-opacity hover:opacity-75">Sobre</Link>
+            <Link to="/listaprojetos" className="transition-opacity hover:opacity-75">Projetos</Link>
           </div>
 
           {/* === ÁREA DA DIREITA (Login / Sair) === */}

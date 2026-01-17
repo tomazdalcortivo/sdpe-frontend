@@ -12,6 +12,9 @@ import Cadastro from "./pages/Cadastro.jsx";
 import Perfil from "./pages/Perfil.jsx";
 import CriarProjeto from "./pages/CriarProjeto.jsx";
 import Estatisticas from "./pages/Estatisticas.jsx";
+import ListaProjetos from "./pages/ListaProjetos.jsx";
+import DetalhesProjetos from "./pages/DetalhesProjetos.jsx";
+
 
 function App() {
   return (
@@ -26,13 +29,15 @@ function App() {
         <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/perfil" element={<Perfil />} />
-        <Route path="/criar-projeto" element={<CriarProjeto />} />
         <Route path="/estatisticas" element={<Estatisticas />} />
+        <Route path="/criar-projeto" element={<CriarProjeto />} />
+        <Route path="/lista-projetos" element={<ListaProjetos />} />
+        <Route path="/detalhes-projetos" element={<DetalhesProjetos />} />
       </Routes>
 
       <Footer />
       <AjudaButton />
-      
+
     </>
   );
 }

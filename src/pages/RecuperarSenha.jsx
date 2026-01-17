@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, ArrowLeft, Key, Lock } from "lucide-react";
+import { Mail, ArrowLeft, KeyRound, Lock } from "lucide-react";
 import api from "../services/api";
 import Alert from "../components/Alert"; // 1. Importar o componente
 
@@ -79,7 +79,7 @@ export default function RecuperarSenha() {
       <div className="flex justify-center">
         <form
           onSubmit={etapa === 1 ? handleEnviarEmail : handleRedefinirSenha}
-          className="w-full max-w-xl p-8 space-y-4 bg-white rounded-lg shadow-lg transition-all"
+          className="w-full max-w-xl p-8 space-y-4 transition-all bg-white rounded-lg shadow-lg"
         >
           {/* 4. Componentes Alert */}
           <Alert type="error">{erro}</Alert>
@@ -97,7 +97,7 @@ export default function RecuperarSenha() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nome@email.com"
-                  className="w-full px-4 py-2 pl-10 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+                  className="w-full px-4 py-2 pl-10 transition-all rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                   required
                 />
               </div>
@@ -111,13 +111,13 @@ export default function RecuperarSenha() {
                   Código de Verificação
                 </label>
                 <div className="relative">
-                  <Key className="absolute w-5 h-5 -translate-y-1/2 text-slate-400 left-3 top-1/2" />
+                  <KeyRound className="absolute w-5 h-5 -translate-y-1/2 text-slate-400 left-3 top-1/2" />
                   <input
                     type="text"
                     value={codigo}
                     onChange={(e) => setCodigo(e.target.value)}
                     placeholder="Ex: 123456"
-                    className="w-full px-4 py-2 pl-10 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+                    className="w-full px-4 py-2 pl-10 transition-all rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                     required
                   />
                 </div>
@@ -133,7 +133,7 @@ export default function RecuperarSenha() {
                     value={novaSenha}
                     onChange={(e) => setNovaSenha(e.target.value)}
                     placeholder="******"
-                    className="w-full px-4 py-2 pl-10 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all"
+                    className="w-full px-4 py-2 pl-10 transition-all rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                     required
                   />
                 </div>
@@ -144,10 +144,10 @@ export default function RecuperarSenha() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 mt-4 font-medium text-white transition-all rounded-md bg-emerald-600 hover:bg-emerald-700 hover:shadow-md disabled:bg-emerald-400 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+            className="flex items-center justify-center w-full gap-2 py-3 mt-4 font-medium text-white transition-all rounded-md bg-emerald-600 hover:bg-emerald-700 hover:shadow-md disabled:bg-emerald-400 disabled:cursor-not-allowed"
           >
             {loading && (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-5 h-5 border-2 border-white rounded-full border-t-transparent animate-spin"></div>
             )}
             {loading ? "Processando..." : (etapa === 1 ? "Enviar código" : "Redefinir Senha")}
           </button>
@@ -161,9 +161,9 @@ export default function RecuperarSenha() {
           <div className="text-center">
             <Link
               to="/entrar"
-              className="inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors group"
+              className="inline-flex items-center gap-2 text-sm font-medium transition-colors text-emerald-600 hover:text-emerald-700 group"
             >
-              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+              <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
               Voltar para login
             </Link>
           </div>
