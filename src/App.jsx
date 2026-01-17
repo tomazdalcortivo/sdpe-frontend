@@ -11,6 +11,7 @@ import RecuperarSenha from "./pages/RecuperarSenha.jsx";
 import Cadastro from "./pages/Cadastro.jsx";
 import Perfil from "./pages/Perfil.jsx";
 import CriarProjeto from "./pages/CriarProjeto.jsx";
+import Estatisticas from "./pages/Estatisticas.jsx";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/criar-projeto" element={<CriarProjeto />} />
+        <Route path="/estatisticas" element={<Estatisticas />} />
       </Routes>
 
       <Footer />
