@@ -195,7 +195,7 @@ export default function ListaProjetos() {
                     </p>
 
                     <Link
-                      to={`/detalhe-projeto/${projeto.id}`}
+                      to={`/detalhes-projeto/${projeto.id}`}
                       className="block w-full py-2 font-medium text-center text-emerald-700 transition-colors bg-emerald-50 rounded-lg hover:bg-emerald-100 hover:text-emerald-800"
                     >
                       Ver Detalhes

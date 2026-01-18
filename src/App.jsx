@@ -32,7 +32,7 @@ function App() {
         <Route path="/estatisticas" element={<Estatisticas />} />
         <Route path="/criar-projeto" element={<CriarProjeto />} />
         <Route path="/lista-projetos" element={<ListaProjetos />} />
-        <Route path="/detalhes-projeto" element={<DetalhesProjeto />} />
+        <Route path="/detalhes-projeto/:id" element={<DetalhesProjeto />} />
       </Routes>
 
       <Footer />
