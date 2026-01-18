@@ -13,7 +13,7 @@ import Perfil from "./pages/Perfil.jsx";
 import CriarProjeto from "./pages/CriarProjeto.jsx";
 import Estatisticas from "./pages/Estatisticas.jsx";
 import ListaProjetos from "./pages/ListaProjetos.jsx";
-import DetalhesProjetos from "./pages/DetalhesProjetos.jsx";
+import DetalhesProjeto from "./pages/DetalhesProjeto.jsx";
 
 
 function App() {
@@ -32,7 +32,7 @@ function App() {
         <Route path="/estatisticas" element={<Estatisticas />} />
         <Route path="/criar-projeto" element={<CriarProjeto />} />
         <Route path="/lista-projetos" element={<ListaProjetos />} />
-        <Route path="/detalhes-projetos" element={<DetalhesProjetos />} />
+        <Route path="/detalhes-projeto" element={<DetalhesProjeto />} />
       </Routes>
 
       <Footer />
