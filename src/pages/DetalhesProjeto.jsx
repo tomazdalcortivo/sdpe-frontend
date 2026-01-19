@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit2, Calendar, Clock, Users, Target, BookOpen, MapPin, Globe, Facebook, Instagram, Linkedin, Youtube, Upload, X, FileText, Image as ImageIcon, Video, MessageSquare, Mail, Phone } from 'lucide-react';
+import defaultImage from '../assets/capa-padrao-projeto.png';
 import api, { getLoggedUser } from '../services/api';
 
 export default function DetalhesProjeto() {
@@ -91,45 +92,43 @@ export default function DetalhesProjeto() {
 
 
 
+  const handleSave = async () => {
+    try {
+      const formData = new FormData();
 
+      const projetoPayload = {
+        nome: editData.title,
+        descricao: editData.description,
+        area: editData.area,
+        dataInicio: editData.startDate ? new Date(editData.startDate) : null,
+        dataFim: editData.endDate ? new Date(editData.endDate) : null,
+        cargaHoraria: editData.workload ? parseFloat(editData.workload) : null,
+        formato: editData.format?.toUpperCase()
+      };
 
-const handleSave = async () => {
-  try {
-    const formData = new FormData();
+      formData.append("projeto", new Blob([JSON.stringify(projetoPayload)], {
+        type: "application/json"
+      }));
 
-    const projetoPayload = {
-      nome: editData.title, 
-      descricao: editData.description,
-      area: editData.area,
-      dataInicio: editData.startDate ? new Date(editData.startDate) : null,
-      dataFim: editData.endDate ? new Date(editData.endDate) : null,
-      cargaHoraria: editData.workload ? parseFloat(editData.workload) : null,
-      formato: editData.format?.toUpperCase()
-    };
+      if (novaImagem) {
+        formData.append("imagem", novaImagem);
+      }
 
-    formData.append("projeto", new Blob([JSON.stringify(projetoPayload)], {
-      type: "application/json"
-    }));
+      await api.put(`/api/projetos/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-    if (novaImagem) {
-      formData.append("imagem", novaImagem);
+      alert('Projeto atualizado com sucesso!');
+
+      setNovaImagem(null);
+      setIsEditing(false);
+      fetchProject();
+
+    } catch (err) {
+      console.error('Erro ao atualizar projeto:', err);
+      alert('Erro ao atualizar o projeto. Verifique o console.');
     }
-
-    await api.put(`/api/projetos/${id}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-
-    alert('Projeto atualizado com sucesso!');
-    
-    setNovaImagem(null);
-    setIsEditing(false);
-    fetchProject(); 
-
-  } catch (err) {
-    console.error('Erro ao atualizar projeto:', err);
-    alert('Erro ao atualizar o projeto. Verifique o console.');
-  }
-};
+  };
   if (loading) return <p className="p-10">Carregando...</p>;
 
   if (error || !project)
@@ -199,7 +198,7 @@ const handleSave = async () => {
             <img
               src={getImageUrl(project.id)}
               alt={project.nome || project.title}
-              onError={(e) => { e.currentTarget.target.src = 'https://via.placeholder.com/800x400?text=Sem+Imagem'; }}
+              onError={(e) => { e.target.src = defaultImage; }}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
