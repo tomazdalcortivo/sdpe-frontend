@@ -8,6 +8,7 @@ export default function DetalhesProjeto() {
   const navigate = useNavigate();
 
   const [project, setProject] = useState(null);
+  const [novaImagem, setNovaImagem] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -88,29 +89,47 @@ export default function DetalhesProjeto() {
     }
   }
 
-  const handleSave = async () => {
-    try {
-      const projetoUpdate = {
-        nome: editData.title,
-        descricao: editData.description,
-        area: editData.area,
-        dataInicio: editData.startDate ? new Date(editData.startDate) : null,
-        dataFim: editData.endDate ? new Date(editData.endDate) : null,
-        cargaHoraria: editData.workload ? parseFloat(editData.workload) : null,
-        formato: editData.format
-      };
 
-      await api.put(`/api/projetos/${id}`, projetoUpdate);
 
-      setProject(prev => ({ ...prev, ...projetoUpdate }));
-      setIsEditing(false);
-      alert('Projeto atualizado com sucesso!');
-    } catch (err) {
-      console.error('Erro ao atualizar projeto:', err);
-      alert('Erro ao atualizar o projeto. Veja o console.');
+
+
+const handleSave = async () => {
+  try {
+    const formData = new FormData();
+
+    const projetoPayload = {
+      nome: editData.title, 
+      descricao: editData.description,
+      area: editData.area,
+      dataInicio: editData.startDate ? new Date(editData.startDate) : null,
+      dataFim: editData.endDate ? new Date(editData.endDate) : null,
+      cargaHoraria: editData.workload ? parseFloat(editData.workload) : null,
+      formato: editData.format?.toUpperCase()
+    };
+
+    formData.append("projeto", new Blob([JSON.stringify(projetoPayload)], {
+      type: "application/json"
+    }));
+
+    if (novaImagem) {
+      formData.append("imagem", novaImagem);
     }
-  };
 
+    await api.put(`/api/projetos/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    alert('Projeto atualizado com sucesso!');
+    
+    setNovaImagem(null);
+    setIsEditing(false);
+    fetchProject(); 
+
+  } catch (err) {
+    console.error('Erro ao atualizar projeto:', err);
+    alert('Erro ao atualizar o projeto. Verifique o console.');
+  }
+};
   if (loading) return <p className="p-10">Carregando...</p>;
 
   if (error || !project)
@@ -280,7 +299,7 @@ export default function DetalhesProjeto() {
                         {isEditing ? (
                           <select value={editData.format} onChange={(e) => setEditData({ ...editData, format: e.target.value })} className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                             <option>Presencial</option>
-                            <option>Online</option>
+                            <option>Remoto</option>
                             <option>Híbrido</option>
                           </select>
                         ) : (
