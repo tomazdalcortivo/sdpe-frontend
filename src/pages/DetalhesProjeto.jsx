@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit2, Calendar, Clock, Users, Target, BookOpen, MapPin, Globe, Facebook, Instagram, Linkedin, Youtube, Upload, X, FileText, Image as ImageIcon, Video, MessageSquare, Mail, Phone } from 'lucide-react';
-import api from '../services/api';
+import api, { getLoggedUser } from '../services/api';
 
-export default function DetalhesProjeto({ isOwner = true }) {
+export default function DetalhesProjeto() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [project, setProject] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -34,7 +35,7 @@ export default function DetalhesProjeto({ isOwner = true }) {
   const getImageUrl = (id) => `${baseURL}/api/projetos/${id}/imagem`;
 
   const handleBack = () => {
-    navigate(-1); // volta para a página anterior
+    navigate(-1);
   };
 
   useEffect(() => {
@@ -48,6 +49,15 @@ export default function DetalhesProjeto({ isOwner = true }) {
       const data = response.data;
 
       setProject(response.data);
+
+      const user = getLoggedUser();
+      const email = user?.sub;
+
+      const owner = data.coordenadores?.some(
+        (c) => c.conta?.email === email
+      );
+
+      setIsOwner(owner);
 
       setEditData({
         title: response.data.nome || '',
@@ -170,7 +180,7 @@ export default function DetalhesProjeto({ isOwner = true }) {
             <img
               src={getImageUrl(project.id)}
               alt={project.nome || project.title}
-              onError={(e) => {e.currentTarget.target.src = 'https://via.placeholder.com/800x400?text=Sem+Imagem';}}
+              onError={(e) => { e.currentTarget.target.src = 'https://via.placeholder.com/800x400?text=Sem+Imagem'; }}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -289,14 +299,14 @@ export default function DetalhesProjeto({ isOwner = true }) {
                   </div>
                 </div>
 
-                <div>
+                {/* <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Planejamento do Projeto</h2>
                   {isEditing ? (
                     <textarea value={editData.planning} onChange={(e) => setEditData({ ...editData, planning: e.target.value })} rows={4} className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                   ) : (
                     <p className="text-gray-600 leading-relaxed">{editData.planning || 'Nenhuma descrição detalhada disponível.'}</p>
                   )}
-                </div>
+                </div> */}
 
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Equipe do Projeto</h2>

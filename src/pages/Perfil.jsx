@@ -174,7 +174,7 @@ export default function Perfil() {
         </div>
 
         <Link
-          to={`/projetos/${projeto.id}`}
+          to={`/detalhes-projeto/${projeto.id}`}
           className="px-4 py-2 text-sm font-medium text-center text-emerald-700 transition-colors border rounded-md border-emerald-200 hover:bg-emerald-50"
         >
           Ver Detalhes
