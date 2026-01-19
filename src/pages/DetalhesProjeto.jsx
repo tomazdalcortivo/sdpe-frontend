@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit2, Calendar, Clock, Users, Target, BookOpen, MapPin, Globe, Facebook, Instagram, Linkedin, Youtube, Upload, X, FileText, Image as ImageIcon, Video, MessageSquare, Mail, Phone } from 'lucide-react';
+import {
+  ArrowLeft, Edit2, Calendar, Clock, Users, Target, BookOpen, MapPin,
+  Globe, Facebook, Instagram, Linkedin, Youtube, Upload, X, FileText,
+  Image as ImageIcon, Video, MessageSquare, Mail, Phone,
+  Plus, Trash2, Search, UserPlus
+} from 'lucide-react';
 import defaultImage from '../assets/capa-padrao-projeto.png';
 import api, { getLoggedUser } from '../services/api';
 
@@ -16,6 +21,12 @@ export default function DetalhesProjeto() {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Estados para Gestão de Equipe
+  const [showMemberModal, setShowMemberModal] = useState(false);
+  const [memberType, setMemberType] = useState('participante');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const [editData, setEditData] = useState({
     title: '',
@@ -24,7 +35,7 @@ export default function DetalhesProjeto() {
     startDate: '',
     endDate: '',
     workload: '',
-    format: 'Híbrido',
+    format: 'Hibrido',
     planning: '',
     participants: [],
     socialMedia: { website: '', facebook: '', instagram: '', linkedin: '', youtube: '' },
@@ -72,11 +83,11 @@ export default function DetalhesProjeto() {
         planning: '',
         participants: data.participantes || [],
         socialMedia: {
-          website: '',
-          facebook: '',
-          instagram: '',
-          linkedin: '',
-          youtube: ''
+          website: data.redesSociais?.website || '',
+          facebook: data.redesSociais?.facebook || '',
+          instagram: data.redesSociais?.instagram || '',
+          linkedin: data.redesSociais?.linkedin || '',
+          youtube: data.redesSociais?.youtube || ''
         },
         images: [],
         videos: [],
@@ -90,7 +101,64 @@ export default function DetalhesProjeto() {
     }
   }
 
+  // Funções de Busca e Gestão de Membros
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return;
+    setSearchLoading(true);
+    try {
+      let response;
+      if (memberType === 'participante') {
+        response = await api.get(`/api/participantes/buscar?nome=${searchTerm}`);
+        setSearchResults(Array.isArray(response.data) ? response.data : [response.data]);
+      } else {
+        // Adaptar conforme seu backend. Se não houver busca por nome, talvez precise ajustar.
+        // Assumindo que o endpoint /api/coordenadores/nome/{nome} existe e retorna um único objeto:
+        try {
+          response = await api.get(`/api/coordenadores/nome/${searchTerm}`);
+          setSearchResults(response.data ? [response.data] : []);
+        } catch (e) {
+          setSearchResults([]);
+        }
+      }
+    } catch (err) {
+      console.error("Erro na busca:", err);
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
+  const handleAddMember = async (memberId) => {
+    try {
+      const endpoint = memberType === 'participante'
+        ? `/api/projetos/${id}/participantes/${memberId}`
+        : `/api/projetos/${id}/coordenadores/${memberId}`;
+
+      await api.post(endpoint);
+
+      alert(`${memberType === 'participante' ? 'Participante' : 'Coordenador'} adicionado com sucesso!`);
+      setShowMemberModal(false);
+      fetchProject();
+    } catch (err) {
+      console.error("Erro ao adicionar membro:", err);
+      alert("Erro ao adicionar membro. Verifique se ele já não faz parte do projeto.");
+    }
+  };
+
+  const handleRemoveMember = async (memberId, type) => {
+    if (!window.confirm("Tem certeza que deseja remover este membro?")) return;
+    try {
+      const endpoint = type === 'participante'
+        ? `/api/projetos/${id}/participantes/${memberId}`
+        : `/api/projetos/${id}/coordenadores/${memberId}`;
+
+      await api.delete(endpoint);
+      fetchProject();
+    } catch (err) {
+      console.error("Erro ao remover:", err);
+      alert("Erro ao remover membro.");
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -103,7 +171,8 @@ export default function DetalhesProjeto() {
         dataInicio: editData.startDate ? new Date(editData.startDate) : null,
         dataFim: editData.endDate ? new Date(editData.endDate) : null,
         cargaHoraria: editData.workload ? parseFloat(editData.workload) : null,
-        formato: editData.format?.toUpperCase()
+        formato: editData.format?.toUpperCase(),
+        redesSociais: editData.socialMedia
       };
 
       formData.append("projeto", new Blob([JSON.stringify(projetoPayload)], {
@@ -129,20 +198,6 @@ export default function DetalhesProjeto() {
       alert('Erro ao atualizar o projeto. Verifique o console.');
     }
   };
-  if (loading) return <p className="p-10">Carregando...</p>;
-
-  if (error || !project)
-    return (
-      <div className="p-10 text-center">
-        <p>{error || "Projeto não encontrado"}</p>
-        <button
-          onClick={handleBack}
-          className="mt-4 text-emerald-600"
-        >
-          Voltar
-        </button>
-      </div>
-    );
 
   const handleImageUpload = (e) => {
     const files = e.target.files;
@@ -172,18 +227,20 @@ export default function DetalhesProjeto() {
     setEditData({ ...editData, [type]: editData[type].filter((_, i) => i !== index) });
   };
 
-  if (loading) return <div className="p-8 text-center">Carregando detalhes...</div>;
+  if (loading) return <p className="p-10">Carregando...</p>;
 
-  if (error || !project) {
+  if (error || !project)
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-orange-50 pt-24 pb-16">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-gray-600">{error || 'Projeto não encontrado'}</p>
-          <button onClick={handleBack} className="mt-4 text-emerald-600 hover:text-emerald-700">Voltar</button>
-        </div>
+      <div className="p-10 text-center">
+        <p>{error || "Projeto não encontrado"}</p>
+        <button
+          onClick={handleBack}
+          className="mt-4 text-emerald-600"
+        >
+          Voltar
+        </button>
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-orange-50 pt-24 pb-16">
@@ -196,7 +253,7 @@ export default function DetalhesProjeto() {
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
           <div className="relative h-80 overflow-hidden">
             <img
-              src={getImageUrl(project.id)}
+              src={novaImagem ? URL.createObjectURL(novaImagem) : getImageUrl(project.id)}
               alt={project.nome || project.title}
               onError={(e) => { e.target.src = defaultImage; }}
               className="w-full h-full object-cover"
@@ -204,7 +261,24 @@ export default function DetalhesProjeto() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
               {isEditing ? (
-                <input type="text" value={editData.title} onChange={(e) => setEditData({ ...editData, title: e.target.value })} className="text-3xl md:text-4xl font-bold bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg w-full" />
+                <div className="space-y-4">
+                  <label className="flex items-center gap-2 w-fit px-4 py-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm rounded-lg cursor-pointer transition-all border border-white/20">
+                    <Upload className="w-5 h-5 text-white" />
+                    <span className="text-sm font-medium text-white">Alterar Capa</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => e.target.files?.[0] && setNovaImagem(e.target.files[0])}
+                      className="hidden"
+                    />
+                  </label>
+                  <input type="text" value={editData.title} onChange={(e) => setEditData({ ...editData, title: e.target.value })} className="text-3xl md:text-4xl font-bold bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg w-full text-white" />
+                  <div className="flex items-center gap-4">
+                    <span className="px-4 py-1 bg-emerald-600 text-white text-sm font-semibold rounded-full">{project.area || project.category}</span>
+                    <span className="text-sm opacity-90">{project.status === false ? 'Inativo' : 'Em andamento'}</span>
+                    <span className="text-sm opacity-90 border border-white/30 px-2 py-1 rounded">{project.formato || editData.format}</span>
+                  </div>
+                </div>
               ) : (
                 <>
                   <h1 className="text-3xl md:text-4xl font-bold">{project.nome || project.title}</h1>
@@ -317,30 +391,111 @@ export default function DetalhesProjeto() {
                   </div>
                 </div>
 
-                {/* <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Planejamento do Projeto</h2>
-                  {isEditing ? (
-                    <textarea value={editData.planning} onChange={(e) => setEditData({ ...editData, planning: e.target.value })} rows={4} className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-                  ) : (
-                    <p className="text-gray-600 leading-relaxed">{editData.planning || 'Nenhuma descrição detalhada disponível.'}</p>
-                  )}
-                </div> */}
-
+                {/* Seção de Equipe do Projeto */}
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Equipe do Projeto</h2>
-                  <div className="space-y-2">
-                    {(project.equipe || editData.participants || []).slice(0, 10).map((member, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold">{(member.nome || String(member)).slice(0, 2).toUpperCase()}</div>
-                        <div>
-                          <p className="font-semibold text-gray-900">{member.nome || member}</p>
-                          <p className="text-sm text-gray-600">{member.role || 'Membro'}</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold text-gray-900">Equipe do Projeto</h2>
+                    {isOwner && isEditing && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setMemberType('participante'); setShowMemberModal(true); setSearchResults([]); setSearchTerm(''); }}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 text-sm font-medium"
+                        >
+                          <UserPlus className="w-4 h-4" /> Add Participante
+                        </button>
+                        <button
+                          onClick={() => { setMemberType('coordenador'); setShowMemberModal(true); setSearchResults([]); setSearchTerm(''); }}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm font-medium"
+                        >
+                          <UserPlus className="w-4 h-4" /> Add Coordenador
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Lista de Coordenadores */}
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Coordenadores</h3>
+                  <div className="space-y-2 mb-6">
+                    {(project.coordenadores || []).map((coord) => (
+                      <div key={coord.id} className="flex items-center justify-between p-3 bg-blue-50/50 border border-blue-100 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                            {(coord.nome || 'C').slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{coord.nome}</p>
+                            <p className="text-xs text-blue-600">{coord.funcao || 'Coordenador'}</p>
+                          </div>
                         </div>
+                        {isOwner && isEditing && (
+                          <button onClick={() => handleRemoveMember(coord.id, 'coordenador')} className="p-2 text-red-500 hover:bg-red-50 rounded-full">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
+
+                  {/* Lista de Participantes */}
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Participantes</h3>
+                  <div className="space-y-2">
+                    {(project.participantes || []).map((member) => (
+                      <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold">
+                            {(member.nome || 'P').slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{member.nome}</p>
+                            <p className="text-sm text-gray-600">Participante</p>
+                          </div>
+                        </div>
+                        {isOwner && isEditing && (
+                          <button onClick={() => handleRemoveMember(member.id, 'participante')} className="p-2 text-red-500 hover:bg-red-50 rounded-full">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {(!project.participantes || project.participantes.length === 0) && (
+                      <p className="text-gray-500 text-sm italic">Nenhum participante registrado.</p>
+                    )}
+                  </div>
                 </div>
 
+                {/* Seção de Redes Sociais (Apenas Leitura) */}
+                {!isEditing && project.redesSociais && Object.values(project.redesSociais).some(url => url) && (
+                  <div className="mt-8 border-t border-gray-200 pt-6">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Acompanhe nas Redes</h2>
+                    <div className="flex flex-wrap gap-4">
+                      {project.redesSociais.website && (
+                        <a href={project.redesSociais.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full hover:bg-emerald-100 hover:text-emerald-700 transition-colors text-gray-700 font-medium">
+                          <Globe className="w-5 h-5" /> Website
+                        </a>
+                      )}
+                      {project.redesSociais.facebook && (
+                        <a href={project.redesSociais.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full hover:bg-blue-100 hover:text-blue-700 transition-colors text-blue-600 font-medium">
+                          <Facebook className="w-5 h-5" /> Facebook
+                        </a>
+                      )}
+                      {project.redesSociais.instagram && (
+                        <a href={project.redesSociais.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-pink-50 rounded-full hover:bg-pink-100 hover:text-pink-700 transition-colors text-pink-600 font-medium">
+                          <Instagram className="w-5 h-5" /> Instagram
+                        </a>
+                      )}
+                      {project.redesSociais.linkedin && (
+                        <a href={project.redesSociais.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full hover:bg-blue-100 hover:text-blue-800 transition-colors text-blue-700 font-medium">
+                          <Linkedin className="w-5 h-5" /> LinkedIn
+                        </a>
+                      )}
+                      {project.redesSociais.youtube && (
+                        <a href={project.redesSociais.youtube} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-full hover:bg-red-100 hover:text-red-700 transition-colors text-red-600 font-medium">
+                          <Youtube className="w-5 h-5" /> YouTube
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {isEditing && (
                   <div className="border-t border-gray-200 pt-8">
                     <h2 className="text-2xl font-bold text-gray-900 mb-6">Redes Sociais</h2>
@@ -435,6 +590,62 @@ export default function DetalhesProjeto() {
                 {isEditing && (
                   <div className="border-t border-gray-200 pt-8">
                     <button onClick={handleSave} className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-full hover:from-emerald-700 hover:to-emerald-600 transition-all duration-300 shadow-md hover:shadow-lg">Salvar Alterações</button>
+                  </div>
+                )}
+
+                {/* MODAL DE BUSCA DE MEMBROS */}
+                {showMemberModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+                      <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <h3 className="text-xl font-bold text-gray-900">
+                          Adicionar {memberType === 'participante' ? 'Participante' : 'Coordenador'}
+                        </h3>
+                        <button onClick={() => setShowMemberModal(false)} className="text-gray-400 hover:text-gray-600">
+                          <X className="w-6 h-6" />
+                        </button>
+                      </div>
+
+                      <div className="p-6">
+                        <div className="flex gap-2 mb-6">
+                          <input
+                            type="text"
+                            placeholder="Buscar por nome..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                          />
+                          <button
+                            onClick={handleSearch}
+                            disabled={searchLoading}
+                            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            {searchLoading ? '...' : <Search className="w-5 h-5" />}
+                          </button>
+                        </div>
+
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {searchResults.map((user) => (
+                            <div key={user.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                              <div>
+                                <p className="font-semibold text-gray-800">{user.nome}</p>
+                                <p className="text-xs text-gray-500">{user.email || user.cpf || 'Sem contato'}</p>
+                              </div>
+                              <button
+                                onClick={() => handleAddMember(user.id)}
+                                className="p-2 bg-emerald-100 text-emerald-700 rounded-full hover:bg-emerald-200"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                          {searchResults.length === 0 && !searchLoading && searchTerm && (
+                            <p className="text-center text-gray-500">Nenhum usuário encontrado.</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </>
