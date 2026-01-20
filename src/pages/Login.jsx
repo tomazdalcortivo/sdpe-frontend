@@ -45,9 +45,13 @@ export default function Login() {
     } catch (error) {
       console.error("Erro no login:", error);
 
-      if (error.response?.status === 403 || error.response?.status === 401) {
+      if (error.response?.data?.error) {
+        setErro(error.response.data.error);
+      } 
+      else if (error.response?.status === 403 || error.response?.status === 401) {
         setErro("E-mail ou senha incorretos.");
-      } else {
+      } 
+      else {
         setErro("Falha ao entrar. Verifique sua conexão e tente novamente.");
       }
 
