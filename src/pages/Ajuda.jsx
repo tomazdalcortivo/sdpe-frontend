@@ -6,7 +6,7 @@ export default function Ajuda() {
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
-    assunto: "Selecione",
+    assunto: "",
     mensagem: "",
   });
 
@@ -24,9 +24,9 @@ export default function Ajuda() {
 
   const handleEnviar = async (e) => {
     e.preventDefault();
-    setStatus({ loading: true, error: "", success: false }); // Limpa status anterior
+    setStatus({ loading: true, error: "", success: false });
 
-    if (formData.subject === "Selecione" || !formData.mensagem || !formData.email || !formData.nome) {
+    if (formData.assunto === "Selecione" || !formData.mensagem || !formData.email || !formData.nome) {
       setStatus({
         loading: false,
         error: "Por favor, preencha todos os campos.",
@@ -39,8 +39,7 @@ export default function Ajuda() {
       nome: formData.nome,
       email: formData.email,
       mensagem: formData.mensagem,
-      tipoContato: handleTipoAssunto(formData.assunto),
-      projeto: null
+      tipoContato: formData.assunto,
     };
 
     try {
@@ -114,16 +113,16 @@ export default function Ajuda() {
           <div>
             <label className="block mb-1 text-sm font-medium text-slate-700">Assunto</label>
             <select
-              name="Assunto"
+              name="assunto"
               value={formData.assunto}
               onChange={handleAlteracao}
               className="w-full px-4 py-2 transition-all rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
             >
-              <option value="Selecione" disabled>Selecione</option>
-              <option>Dúvida</option>
-              <option>Problema técnico</option>
-              <option>Sugestão</option>
-              <option>Outro</option>
+              <option value="" disabled>Selecione</option>
+              <option value="DUVIDA">Dúvida</option>
+              <option value="CHAMADO">Problema técnico</option>
+              <option value="SUGESTAO">Sugestão</option>
+              <option value="OUTRO">Outro</option>
             </select>
           </div>
 

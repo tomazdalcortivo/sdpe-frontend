@@ -317,8 +317,8 @@ export default function Cadastro() {
               onChange={(e) => setVinculo(e.target.value)}
             >
               <option value="">Selecione seu vínculo</option>
-              <option value="aluno">Aluno (Participante)</option>
-              <option value="colaborador">Colaborador (Coordenador)</option>
+              <option value="aluno">Participante (Aluno)</option>
+              <option value="colaborador">Colaborador (Professor)</option>
             </select>
           </div>
 
