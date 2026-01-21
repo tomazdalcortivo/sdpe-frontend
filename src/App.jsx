@@ -14,6 +14,7 @@ import CriarProjeto from "./pages/CriarProjeto.jsx";
 import Estatisticas from "./pages/Estatisticas.jsx";
 import ListaProjetos from "./pages/ListaProjetos.jsx";
 import DetalhesProjeto from "./pages/DetalhesProjeto.jsx";
+import PainelAdministrativo from "./pages/PainelAdministrativo.jsx";
 
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
         <Route path="/criar-projeto" element={<CriarProjeto />} />
         <Route path="/lista-projetos" element={<ListaProjetos />} />
         <Route path="/detalhes-projeto/:id" element={<DetalhesProjeto />} />
+        <Route path="/painel-administrativo" element={<PainelAdministrativo />} />
       </Routes>
 
       <Footer />
