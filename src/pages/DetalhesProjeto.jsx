@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef} from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Edit2, Calendar, Clock, Users, Target, BookOpen, MapPin,
@@ -27,6 +27,7 @@ export default function DetalhesProjeto() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const viewRecorded = useRef(false);
 
   const [editData, setEditData] = useState({
     title: '',
@@ -52,8 +53,23 @@ export default function DetalhesProjeto() {
   };
 
   useEffect(() => {
-    if (id) fetchProject();
+    if (id) {
+      fetchProject();
+      registerView();
+    }
   }, [id]);
+
+  const registerView = async () => {
+    if (viewRecorded.current) return;
+
+    try {
+      viewRecorded.current = true;
+      await api.post(`/api/projetos/${id}/visualizacao`);
+
+    } catch (error) {
+      console.error("Erro ao registrar visualização", error);
+    }
+  };
 
   async function fetchProject() {
     try {
@@ -101,7 +117,6 @@ export default function DetalhesProjeto() {
     }
   }
 
-  // Funções de Busca e Gestão de Membros
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
     setSearchLoading(true);
@@ -111,8 +126,6 @@ export default function DetalhesProjeto() {
         response = await api.get(`/api/participantes/buscar?nome=${searchTerm}`);
         setSearchResults(Array.isArray(response.data) ? response.data : [response.data]);
       } else {
-        // Adaptar conforme seu backend. Se não houver busca por nome, talvez precise ajustar.
-        // Assumindo que o endpoint /api/coordenadores/nome/{nome} existe e retorna um único objeto:
         try {
           response = await api.get(`/api/coordenadores/nome/${searchTerm}`);
           setSearchResults(response.data ? [response.data] : []);
