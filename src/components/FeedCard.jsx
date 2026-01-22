@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, ExternalLink, Share2, User, Check, ImageOff } from "lucide-react"; // Importei ExternalLink
+import { Users, ExternalLink, Share2, User, Check, ImageOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
 
@@ -10,7 +10,6 @@ export default function FeedCard({ post }) {
     const [linkCopiado, setLinkCopiado] = useState(false);
     const [imgError, setImgError] = useState(false);
 
-    // URL da Imagem (Ajuste a porta/rota se necessário)
     const imageUrl = `http://localhost:8080/api/projetos/${post.id}/imagem`;
 
     async function handleSeguir() {
@@ -45,14 +44,12 @@ export default function FeedCard({ post }) {
     return (
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm mb-6 overflow-hidden hover:shadow-md transition-shadow relative">
 
-            {/* --- CABEÇALHO --- */}
             <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                         <User size={20} />
                     </div>
                     <div className="overflow-hidden">
-                        {/* ALTERAÇÃO 1: Apenas o nome do coordenador, sem o rótulo */}
                         <h3 className="font-bold text-gray-900 text-sm truncate max-w-[200px] sm:max-w-xs"
                             title={post.autorNome}
                         >
@@ -84,7 +81,6 @@ export default function FeedCard({ post }) {
                 </button>
             </div>
 
-            {/* --- ÁREA DA IMAGEM --- */}
             {!imgError ? (
                 <div className="relative w-full bg-gray-100">
                     <div className="aspect-video w-full">
@@ -108,7 +104,6 @@ export default function FeedCard({ post }) {
                 </div>
             )}
 
-            {/* --- CONTEÚDO E AÇÕES --- */}
             <div className="p-4">
                 <div className="mb-4">
                     <h4 className="font-bold text-gray-900 text-lg mb-2 leading-tight">
@@ -128,7 +123,6 @@ export default function FeedCard({ post }) {
 
                     <div className="flex gap-1 items-center">
 
-                        {/* ALTERAÇÃO 2: Ícone ExternalLink para ir ao projeto */}
                         <Link
                             to={`/detalhes-projeto/${post.id}`}
                             className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition"
