@@ -9,7 +9,6 @@ import Alert from "../components/Alert";
 export default function Login() {
   const navigate = useNavigate();
 
-  // Estados visuais
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,18 +38,27 @@ export default function Login() {
       localStorage.setItem("token", token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
+      try {
+        const perfilResponse = await api.get("/auth/perfil");
+        const usuario = perfilResponse.data;
 
-      navigate("/perfil");
-
+        if (usuario.perfil === "ADMIN") {
+          navigate("/painel-administrativo");
+        } else {
+          navigate("/perfil");
+        }
+      } catch (err) {
+        navigate("/perfil");
+      }
     } catch (error) {
       console.error("Erro no login:", error);
 
       if (error.response?.data?.error) {
         setErro(error.response.data.error);
-      } 
+      }
       else if (error.response?.status === 403 || error.response?.status === 401) {
         setErro("E-mail ou senha incorretos.");
-      } 
+      }
       else {
         setErro("Falha ao entrar. Verifique sua conexão e tente novamente.");
       }
@@ -124,7 +132,7 @@ export default function Login() {
                 onClick={() => setMostrarSenha(!mostrarSenha)}
                 className="absolute -translate-y-1/2 right-3 top-1/2 text-slate-400 hover:text-slate-600"
               >
-                
+
               </button>
             </div>
           </div>

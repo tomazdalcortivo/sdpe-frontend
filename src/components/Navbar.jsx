@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { BookOpenText, LogIn, LogOut, User } from "lucide-react";
+import { BookOpenText, LogIn, LogOut, User, LayoutDashboard } from "lucide-react";
 import api from "../services/api";
 
 export default function Navbar() {
@@ -11,7 +11,6 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [userData, setUserData] = useState(null);
 
-  // 1. Efeito de Scroll
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 30);
@@ -20,7 +19,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 2. Validação de Login
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -47,12 +45,14 @@ export default function Navbar() {
     navigate("/");
   };
 
-  // Cores dinâmicas
   const navBg = isScrolled ? "bg-white/90 backdrop-blur-md shadow-sm" : "bg-transparent";
   const textColor = isScrolled ? "text-emerald-700" : isHome ? "text-white" : "text-slate-700";
   const logoColor = isScrolled ? "text-emerald-900" : isHome ? "text-white" : "text-emerald-900";
-  // Cor para o texto de boas-vindas
   const welcomeColor = isScrolled ? "text-emerald-800" : isHome ? "text-emerald-100" : "text-emerald-800";
+
+  const isAdmin = userData?.perfil === "ADMIN";
+  const profileLink = isAdmin ? "/painel-administrativo" : "/perfil";
+  const profileTitle = isAdmin ? "Painel Administrativo" : "Meu Perfil";
 
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${navBg} ${isScrolled ? "py-3" : "py-5"}`}>
@@ -87,23 +87,22 @@ export default function Navbar() {
               // SE ESTIVER LOGADO
               <div className="flex items-center gap-6">
 
-                {/* Texto "Olá" + Link Perfil */}
+                {/* Texto "Olá" + Link Perfil/Admin */}
                 <div className="flex items-center gap-3">
                   <div className={`hidden lg:flex flex-col items-end text-sm ${welcomeColor}`}>
                     <span className="font-semibold">Olá, {userData.email}</span>
                     <span className="text-[10px] uppercase tracking-wider opacity-80 border border-current px-2 rounded-full">
                       {userData.perfil}
                     </span>
-
                   </div>
 
-                  {/* Ícone de Perfil Clicável */}
+                  {/* Ícone de Perfil Clicável (Muda se for Admin) */}
                   <Link
-                    to="/perfil"
+                    to={profileLink}
                     className={`p-2 rounded-full transition-colors ${isScrolled ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-white/10 text-white hover:bg-white/20"}`}
-                    title="Meu Perfil"
+                    title={profileTitle}
                   >
-                    <User size={20} />
+                    {isAdmin ? <LayoutDashboard size={20} /> : <User size={20} />}
                   </Link>
                 </div>
 
