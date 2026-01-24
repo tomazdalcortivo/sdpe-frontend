@@ -3,8 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Edit2, Calendar, Clock, Users, Target, BookOpen, MapPin,
   Globe, Facebook, Instagram, Linkedin, Youtube, Upload, X, FileText,
-  Image as ImageIcon, Video, MessageSquare, Mail, Phone,
-  Plus, Trash2, Search, UserPlus, Heart, Send, MessageCircle
+  Image as ImageIcon, MessageSquare, Mail, Phone,
+  Plus, Trash2, Search, UserPlus, Send,
 } from 'lucide-react';
 import defaultImage from '../assets/capa-padrao-projeto.png';
 import api, { getLoggedUser } from '../services/api';
@@ -24,8 +24,6 @@ export default function DetalhesProjeto() {
   const [posts, setPosts] = useState([]);
   const [newPostContent, setNewPostContent] = useState("");
   const [newPostFile, setNewPostFile] = useState(null);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followersCount, setFollowersCount] = useState(0);
 
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [memberType, setMemberType] = useState('participante');
@@ -90,12 +88,6 @@ export default function DetalhesProjeto() {
       const user = getLoggedUser();
       const email = user?.sub;
 
-      if (data.seguidores) {
-        setFollowersCount(data.seguidores.length);
-        const isFollower = data.seguidores.some(s => s.conta?.email === email || s.email === email);
-        setIsFollowing(isFollower);
-      }
-
       const owner = data.coordenadores?.some(
         (c) => c.conta?.email === email
       );
@@ -152,16 +144,6 @@ export default function DetalhesProjeto() {
       setSearchResults([]);
     } finally {
       setSearchLoading(false);
-    }
-  };
-
-  const handleFollow = async () => {
-    try {
-      await api.post(`/api/projetos/${id}/seguir`);
-      setIsFollowing(!isFollowing);
-      setFollowersCount(prev => isFollowing ? prev - 1 : prev + 1);
-    } catch (err) {
-      console.error("Erro ao seguir", err);
     }
   };
 
@@ -257,22 +239,6 @@ export default function DetalhesProjeto() {
     }
   };
 
-  const handleImageUpload = (e) => {
-    const files = e.target.files;
-    if (files && editData.images.length < 10) {
-      const newImages = Array.from(files).slice(0, 10 - editData.images.length).map(f => URL.createObjectURL(f));
-      setEditData({ ...editData, images: [...editData.images, ...newImages] });
-    }
-  };
-
-  const handleVideoUpload = (e) => {
-    const files = e.target.files;
-    if (files && editData.videos.length < 5) {
-      const newVideos = Array.from(files).slice(0, 5 - editData.videos.length).map(f => f.name);
-      setEditData({ ...editData, videos: [...editData.videos, ...newVideos] });
-    }
-  };
-
   const handleDocumentUpload = (e) => {
     const files = e.target.files;
     if (files && editData.documents.length < 10) {
@@ -341,15 +307,6 @@ export default function DetalhesProjeto() {
                 <>
                   <h1 className="text-3xl md:text-4xl font-bold">{project.nome || project.title}</h1>
                   <div className="flex items-center gap-4 mt-4">
-
-                    <div className="flex items-center gap-2 text-white/90 bg-black/20 px-3 py-1 rounded-full">
-                      <Users className="w-4 h-4" />
-                      <span>{followersCount} Seguidores</span>
-                    </div>
-
-                    {!isOwner && (
-                      <button onClick={handleFollow} className={`flex items-center gap-2 px-4 py-1 rounded-full font-semibold transition-colors ${isFollowing ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-emerald-500 text-white hover:bg-emerald-600'}`}><Heart className={`w-4 h-4 ${isFollowing ? 'fill-current' : ''}`} />{isFollowing ? 'Seguindo' : 'Seguir'}</button>
-                    )}
                     <span className="px-4 py-1 bg-emerald-600 text-white text-sm font-semibold rounded-full">{project.area || project.category}</span>
                     <span className="text-sm opacity-90">{project.status === false ? 'Inativo' : 'Em andamento'}</span>
                     <span className="text-sm opacity-90 border border-white/30 px-2 py-1 rounded">{project.formato || editData.format}</span>
@@ -593,48 +550,6 @@ export default function DetalhesProjeto() {
 
                 {isEditing && (
                   <div className="border-t border-gray-200 pt-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Imagens do Projeto <span className="text-sm text-gray-500">(máx. 10 imagens, 5MB cada)</span></h2>
-                    <div className="space-y-4">
-                      <label className="flex items-center justify-center gap-2 w-full p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-emerald-500 transition-colors">
-                        <ImageIcon className="w-6 h-6 text-gray-400" />
-                        <span className="text-gray-600">Adicionar Imagens</span>
-                        <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={editData.images.length >= 10} />
-                      </label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {editData.images.map((img, idx) => (
-                          <div key={idx} className="relative group">
-                            <img src={img} alt={`Upload ${idx + 1}`} className="w-full h-32 object-cover rounded-lg" />
-                            <button onClick={() => removeItem('images', idx)} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {isEditing && (
-                  <div className="border-t border-gray-200 pt-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Vídeos do Projeto <span className="text-sm text-gray-500">(máx. 5 vídeos, 50MB cada)</span></h2>
-                    <div className="space-y-4">
-                      <label className="flex items-center justify-center gap-2 w-full p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-emerald-500 transition-colors">
-                        <Video className="w-6 h-6 text-gray-400" />
-                        <span className="text-gray-600">Adicionar Vídeos</span>
-                        <input type="file" accept="video/*" multiple onChange={handleVideoUpload} className="hidden" disabled={editData.videos.length >= 5} />
-                      </label>
-                      <div className="space-y-2">
-                        {editData.videos.map((video, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <span className="text-gray-700 text-sm">{video}</span>
-                            <button onClick={() => removeItem('videos', idx)} className="p-1 text-red-500 hover:bg-red-50 rounded"><X className="w-4 h-4" /></button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {isEditing && (
-                  <div className="border-t border-gray-200 pt-8">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Documentos e Editais <span className="text-sm text-gray-500">(máx. 10 arquivos, 10MB cada)</span></h2>
                     <div className="space-y-4">
                       <label className="flex items-center justify-center gap-2 w-full p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-emerald-500 transition-colors">
@@ -755,6 +670,7 @@ export default function DetalhesProjeto() {
                   {posts && posts.length > 0 ? (
                     posts.map((post) => (
                       <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                       
                         {/* Cabeçalho do Post */}
                         <div className="p-4 flex items-center gap-3 border-b border-gray-50">
                           <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold">
@@ -807,7 +723,7 @@ export default function DetalhesProjeto() {
             )}
 
             {activeTab === 'feedback' && (
-              <div className="space-y-8">{/* feedback UI simplified */}
+              <div className="space-y-8">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2"><MessageSquare className="w-6 h-6 text-emerald-600" />Conversas Públicas</h2>
                   <div className="space-y-4">
