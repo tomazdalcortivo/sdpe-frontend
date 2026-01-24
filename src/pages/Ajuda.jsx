@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import "altcha";
+import "altcha/i18n/pt-br";
 import api from "../services/api";
 import Alert from "../components/Alert";
 
@@ -167,6 +168,7 @@ export default function Ajuda() {
               ref={widgetRef}
               challengeurl="http://localhost:8080/api/contatos/challenge"
               hidelogo
+              language="pt-br"
             ></altcha-widget>
           </div>
 
