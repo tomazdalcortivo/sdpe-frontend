@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useRef} from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Edit2, Calendar, Clock, Users, Target, BookOpen, MapPin,
   Globe, Facebook, Instagram, Linkedin, Youtube, Upload, X, FileText,
-  Image as ImageIcon, Video, MessageSquare, Mail, Phone,
-  Plus, Trash2, Search, UserPlus
+  Image as ImageIcon, MessageSquare, Mail, Phone,
+  Plus, Trash2, Search, UserPlus, Send,
 } from 'lucide-react';
 import defaultImage from '../assets/capa-padrao-projeto.png';
 import api, { getLoggedUser } from '../services/api';
@@ -21,7 +21,10 @@ export default function DetalhesProjeto() {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Estados para Gestão de Equipe
+  const [posts, setPosts] = useState([]);
+  const [newPostContent, setNewPostContent] = useState("");
+  const [newPostFile, setNewPostFile] = useState(null);
+
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [memberType, setMemberType] = useState('participante');
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,6 +81,9 @@ export default function DetalhesProjeto() {
       const data = response.data;
 
       setProject(response.data);
+
+      setPosts(data.posts || []);
+
 
       const user = getLoggedUser();
       const email = user?.sub;
@@ -138,6 +144,27 @@ export default function DetalhesProjeto() {
       setSearchResults([]);
     } finally {
       setSearchLoading(false);
+    }
+  };
+
+  const handleCreatePost = async (e) => {
+    e.preventDefault();
+    try {
+      const formData = new FormData();
+      formData.append("conteudo", newPostContent);
+      if (newPostFile) formData.append("arquivo", newPostFile);
+
+      await api.post(`/api/projetos/${id}/posts`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      alert("Post criado!");
+      setNewPostContent("");
+      setNewPostFile(null);
+      fetchProject();
+    } catch (err) {
+      console.error("Erro ao postar", err);
+      alert("Erro ao criar post");
     }
   };
 
@@ -209,22 +236,6 @@ export default function DetalhesProjeto() {
     } catch (err) {
       console.error('Erro ao atualizar projeto:', err);
       alert('Erro ao atualizar o projeto. Verifique o console.');
-    }
-  };
-
-  const handleImageUpload = (e) => {
-    const files = e.target.files;
-    if (files && editData.images.length < 10) {
-      const newImages = Array.from(files).slice(0, 10 - editData.images.length).map(f => URL.createObjectURL(f));
-      setEditData({ ...editData, images: [...editData.images, ...newImages] });
-    }
-  };
-
-  const handleVideoUpload = (e) => {
-    const files = e.target.files;
-    if (files && editData.videos.length < 5) {
-      const newVideos = Array.from(files).slice(0, 5 - editData.videos.length).map(f => f.name);
-      setEditData({ ...editData, videos: [...editData.videos, ...newVideos] });
     }
   };
 
@@ -317,7 +328,7 @@ export default function DetalhesProjeto() {
           <div className="border-b border-gray-200">
             <div className="flex overflow-x-auto">
               <button onClick={() => setActiveTab('overview')} className={`px-6 py-4 font-semibold whitespace-nowrap transition-all duration-300 border-b-2 ${activeTab === 'overview' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 hover:text-emerald-600 hover:border-emerald-300'}`}>Visão Geral</button>
-              <button onClick={() => setActiveTab('multimedia')} className={`px-6 py-4 font-semibold whitespace-nowrap transition-all duration-300 border-b-2 ${activeTab === 'multimedia' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 hover:text-emerald-600 hover:border-emerald-300'}`}>Multimídia</button>
+              <button onClick={() => setActiveTab('feed')} className={`px-6 py-4 font-semibold whitespace-nowrap transition-all duration-300 border-b-2 ${activeTab === 'feed' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 hover:text-emerald-600'}`}>Feed de Notícias</button>
               <button onClick={() => setActiveTab('documents')} className={`px-6 py-4 font-semibold whitespace-nowrap transition-all duration-300 border-b-2 ${activeTab === 'documents' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 hover:text-emerald-600 hover:border-emerald-300'}`}>Editais</button>
               <button onClick={() => setActiveTab('feedback')} className={`px-6 py-4 font-semibold whitespace-nowrap transition-all duration-300 border-b-2 ${activeTab === 'feedback' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 hover:text-emerald-600 hover:border-emerald-300'}`}>Feedback</button>
             </div>
@@ -539,48 +550,6 @@ export default function DetalhesProjeto() {
 
                 {isEditing && (
                   <div className="border-t border-gray-200 pt-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Imagens do Projeto <span className="text-sm text-gray-500">(máx. 10 imagens, 5MB cada)</span></h2>
-                    <div className="space-y-4">
-                      <label className="flex items-center justify-center gap-2 w-full p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-emerald-500 transition-colors">
-                        <ImageIcon className="w-6 h-6 text-gray-400" />
-                        <span className="text-gray-600">Adicionar Imagens</span>
-                        <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={editData.images.length >= 10} />
-                      </label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {editData.images.map((img, idx) => (
-                          <div key={idx} className="relative group">
-                            <img src={img} alt={`Upload ${idx + 1}`} className="w-full h-32 object-cover rounded-lg" />
-                            <button onClick={() => removeItem('images', idx)} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {isEditing && (
-                  <div className="border-t border-gray-200 pt-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Vídeos do Projeto <span className="text-sm text-gray-500">(máx. 5 vídeos, 50MB cada)</span></h2>
-                    <div className="space-y-4">
-                      <label className="flex items-center justify-center gap-2 w-full p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-emerald-500 transition-colors">
-                        <Video className="w-6 h-6 text-gray-400" />
-                        <span className="text-gray-600">Adicionar Vídeos</span>
-                        <input type="file" accept="video/*" multiple onChange={handleVideoUpload} className="hidden" disabled={editData.videos.length >= 5} />
-                      </label>
-                      <div className="space-y-2">
-                        {editData.videos.map((video, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <span className="text-gray-700 text-sm">{video}</span>
-                            <button onClick={() => removeItem('videos', idx)} className="p-1 text-red-500 hover:bg-red-50 rounded"><X className="w-4 h-4" /></button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {isEditing && (
-                  <div className="border-t border-gray-200 pt-8">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Documentos e Editais <span className="text-sm text-gray-500">(máx. 10 arquivos, 10MB cada)</span></h2>
                     <div className="space-y-4">
                       <label className="flex items-center justify-center gap-2 w-full p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-emerald-500 transition-colors">
@@ -664,32 +633,77 @@ export default function DetalhesProjeto() {
               </>
             )}
 
-            {activeTab === 'multimedia' && (
-              <div className="space-y-8">{/* multimídia content (images & videos) - simplified display */}
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2"><ImageIcon className="w-6 h-6 text-emerald-600" />Galeria de Imagens</h2>
-                  {project.imagens && project.imagens.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {project.imagens.map((imgUrl, i) => (
-                        <img key={i} src={imgUrl} alt={`Projeto ${i + 1}`} className="w-full h-48 object-cover rounded-lg shadow-md" />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg">
-                      <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">Nenhuma imagem disponível no momento</p>
-                    </div>
-                  )}
-                </div>
+            {activeTab === 'feed' && (
+              <div className="max-w-3xl mx-auto space-y-8">
 
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2"><Video className="w-6 h-6 text-emerald-600" />Vídeos do Projeto</h2>
-                  {project.videos && project.videos.length > 0 ? (
-                    <div className="space-y-3">{project.videos.map((v, i) => (
-                      <div key={i} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg"><Video className="w-5 h-5 text-emerald-600" /><span className="text-gray-700">{v}</span></div>
-                    ))}</div>
+                {/* Área de Criação de Post (Apenas Coordenadores) */}
+                {isOwner && (
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 className="font-bold text-gray-700 mb-4">Criar nova publicação</h3>
+                    <textarea
+                      value={newPostContent}
+                      onChange={(e) => setNewPostContent(e.target.value)}
+                      placeholder="O que há de novo no projeto?"
+                      className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[100px]"
+                    />
+                    <div className="flex items-center justify-between mt-4">
+                      <label className="cursor-pointer text-gray-500 hover:text-emerald-600 flex items-center gap-2 text-sm">
+                        <ImageIcon className="w-5 h-5" />
+                        <span>Adicionar Mídia</span>
+                        <input type="file" className="hidden" onChange={(e) => setNewPostFile(e.target.files[0])} />
+                      </label>
+                      {newPostFile && <span className="text-xs text-emerald-600 truncate max-w-[150px]">{newPostFile.name}</span>}
+
+                      <button
+                        onClick={handleCreatePost}
+                        disabled={!newPostContent.trim()}
+                        className="bg-emerald-600 text-white px-6 py-2 rounded-full hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
+                      >
+                        <Send className="w-4 h-4" /> Publicar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Lista de Posts */}
+                <div className="space-y-6">
+                  {posts && posts.length > 0 ? (
+                    posts.map((post) => (
+                      <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                       
+                        {/* Cabeçalho do Post */}
+                        <div className="p-4 flex items-center gap-3 border-b border-gray-50">
+                          <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold">
+                            {post.autor?.nome?.slice(0, 2).toUpperCase() || 'AD'}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">{post.autor?.nome || 'Coordenador'}</p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(post.dataPublicacao).toLocaleDateString()} às {new Date(post.dataPublicacao).toLocaleTimeString().slice(0, 5)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Conteúdo Texto */}
+                        <div className="p-4 text-gray-800 whitespace-pre-wrap leading-relaxed">
+                          {post.conteudo}
+                        </div>
+
+                        {/* Conteúdo Mídia (Imagem/Vídeo) */}
+                        {post.mediaUrl && (
+                          <div className="w-full bg-gray-100">
+                            <img
+                              src={post.mediaUrl}
+                              alt="Mídia"
+                              className="w-full max-h-[500px] object-contain" />
+                          </div>
+                        )}
+                      </div>
+                    ))
                   ) : (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg"><Video className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-500">Nenhum vídeo disponível no momento</p></div>
+                    <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                      <p>Ainda não há publicações neste feed.</p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -709,7 +723,7 @@ export default function DetalhesProjeto() {
             )}
 
             {activeTab === 'feedback' && (
-              <div className="space-y-8">{/* feedback UI simplified */}
+              <div className="space-y-8">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2"><MessageSquare className="w-6 h-6 text-emerald-600" />Conversas Públicas</h2>
                   <div className="space-y-4">
