@@ -37,6 +37,7 @@ export default function Navbar() {
           setUserData(null);
         });
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUserData(null);
     }
   }, [location.pathname]);
@@ -100,7 +101,7 @@ export default function Navbar() {
                   {/* Ícone de Perfil Clicável */}
                   <Link
                     to="/perfil"
-                    className={`p-2 rounded-full transition-colors ${isScrolled ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-white/10 text-white hover:bg-white/20"}`}
+                    className={"p-2 rounded-full transition-colors bg-emerald-50 text-emerald-600 hover:bg-emerald-100"}
                     title="Meu Perfil"
                   >
                     <User size={20} />

@@ -199,21 +199,21 @@ export default function CriarProjeto() {
             <label className={formFieldName}>Instituição de Ensino</label>
             <input
               name="instNome" value={buscaInst} onChange={handleBuscaInstituicao}
-              className={formFieldBorder} placeholder="Buscar Instituição..." autoComplete="off" required
+              className={formFieldBorder} placeholder="Digite a sigla (Ex: IFPR)" autoComplete="off" required
             />
             {sugestoesInstituicao.length > 0 && (
-              <ul className="absolute z-10 w-full mt-1 bg-white border rounded shadow max-h-48 overflow-auto">
+              <ul className="absolute z-10 w-full mt-1 overflow-auto bg-white border rounded shadow max-h-48">
                 {sugestoesInstituicao.map(inst => (
-                  <li key={inst.id} onClick={() => selecionarInstituicao(inst)} className="px-4 py-2 hover:bg-emerald-50 cursor-pointer">
+                  <li key={inst.id} onClick={() => selecionarInstituicao(inst)} className="px-4 py-2 cursor-pointer hover:bg-emerald-50">
                     {inst.nome} - {inst.cidade}
                   </li>
                 ))}
               </ul>
             )}
             {mostrarCamposNovaInst && (
-              <div className="mt-2 p-3 bg-emerald-50 rounded border border-emerald-200">
-                <input name="instCidade" placeholder="Cidade *" required value={formData.instCidade} onChange={handleAlteracao} className="w-full mb-2 p-2 rounded border" />
-                <textarea name="instDescricao" placeholder="Descrição" value={formData.instDescricao} onChange={handleAlteracao} className="w-full p-2 rounded border" />
+              <div className="p-3 mt-2 border rounded bg-emerald-50 border-emerald-200">
+                <input name="instCidade" placeholder="Cidade *" required value={formData.instCidade} onChange={handleAlteracao} className="w-full p-2 mb-2 border rounded" />
+                <textarea name="instDescricao" placeholder="Descrição" value={formData.instDescricao} onChange={handleAlteracao} className="w-full p-2 border rounded" />
               </div>
             )}
           </div>
@@ -235,12 +235,12 @@ export default function CriarProjeto() {
 
               {/* Sugestões */}
               {sugestoesPart.length > 0 && (
-                <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                <ul className="absolute z-10 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-md shadow-lg max-h-48">
                   {sugestoesPart.map((part) => (
                     <li
                       key={part.id}
                       onClick={() => adicionarParticipante(part)}
-                      className="px-4 py-2 cursor-pointer hover:bg-emerald-50 text-slate-700 flex justify-between items-center"
+                      className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-emerald-50 text-slate-700"
                     >
                       <span>{part.nome}</span>
                       <span className="text-xs text-gray-400">Adicionar +</span>
@@ -253,23 +253,22 @@ export default function CriarProjeto() {
             {/* Lista de Selecionados (Tags) */}
             <div className="flex flex-wrap gap-2 mt-2">
               {participantesSelecionados.map((part) => (
-                <div key={part.id} className="flex items-center gap-2 px-3 py-1 text-sm bg-emerald-100 text-emerald-800 rounded-full border border-emerald-200">
+                <div key={part.id} className="flex items-center gap-2 px-3 py-1 text-sm border rounded-full bg-emerald-100 text-emerald-800 border-emerald-200">
                   <span>{part.nome}</span>
                   <button
                     type="button"
                     onClick={() => removerParticipante(part.id)}
-                    className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-emerald-200 text-emerald-900 font-bold"
+                    className="flex items-center justify-center w-5 h-5 font-bold rounded-full hover:bg-emerald-200 text-emerald-900"
                   >
                     &times;
                   </button>
                 </div>
               ))}
               {participantesSelecionados.length === 0 && (
-                <p className="text-xs text-slate-400 italic">Nenhum participante adicionado.</p>
+                <p className="text-xs italic text-slate-400">Nenhum participante adicionado.</p>
               )}
             </div>
           </div>
-          {/* --- FIM PARTICIPANTES --- */}
 
           {/* Restante do form (Descricao, Datas, Area, Carga, Formato, Arquivo) */}
           <label className={formFieldName}>Descrição</label>
@@ -304,10 +303,13 @@ export default function CriarProjeto() {
             <option value="Híbrido">Híbrido</option>
           </select>
 
-          <label className={formFieldName}>Arquivo (PDF)</label>
-          <input type="file" accept="application/pdf" required onChange={handleAlterarArquivo} className="block w-full text-sm text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:bg-slate-200" />
+          <label className={formFieldName}>Arquivo comprobatório (PDF)</label>
+          <input type="file" 
+          accept="application/pdf" 
+          required onChange={handleAlterarArquivo} 
+          className={formFieldBorder + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-emerald-50 file:text-emerald-700 file:border-0 hover:file:bg-emerald-100"} />
 
-          <button type="submit" disabled={loading} className="w-full py-3 mt-4 font-medium text-white rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400">
+          <button type="submit" disabled={loading} className="w-full py-3 mt-4 font-medium text-white rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-100">
             {loading ? "Criando..." : "Criar Projeto"}
           </button>
 

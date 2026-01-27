@@ -1,6 +1,6 @@
 import React from "react";
 import testee from "../assets/testee.jpg";
-import { Globe } from "lucide-react";
+import { Users, Lightbulb, ChartColumn } from "lucide-react";
 
 export default function Home() {
   return (
@@ -53,48 +53,46 @@ export default function Home() {
             {/* Coluna 1 */}
             <div className="flex flex-col items-center">
               <div className="flex items-center justify-center w-16 h-16 mb-6 bg-emerald-700 rounded-xl">
-                <Globe className="w-8 h-8 text-white" />
+                <Users className="w-8 h-8 text-white" />
               </div>
 
               <h3 className="mb-3 text-xl font-bold">
-                Conectividade Acadêmica
+                Conectividade 
               </h3>
 
               <p className="max-w-xs text-sm text-gray-600">
-                Universidade e Comunidade em parceria para o desenvolvimento
-                social.
+                Conectar estudantes, professores e comunidade em projetos que transformam realidades.
               </p>
             </div>
 
             {/* Coluna 2 */}
             <div className="flex flex-col items-center">
               <div className="flex items-center justify-center w-16 h-16 mb-6 bg-emerald-700 rounded-xl">
-                <Globe className="w-8 h-8 text-white" />
+                <Lightbulb className="w-8 h-8 text-white" />
               </div>
 
               <h3 className="mb-3 text-xl font-bold">
-                Conectividade Acadêmica
+                Colaboração
               </h3>
 
               <p className="max-w-xs text-sm text-gray-600">
-                Universidade e Comunidade em parceria para o desenvolvimento
-                social.
+                Promover soluções que impactem positivamente a comunidade através da extensão universitária
+
               </p>
             </div>
 
             {/* Coluna 3 */}
             <div className="flex flex-col items-center">
               <div className="flex items-center justify-center w-16 h-16 mb-6 bg-emerald-700 rounded-xl">
-                <Globe className="w-8 h-8 text-white" />
+                <ChartColumn className="w-8 h-8 text-white" />
               </div>
 
               <h3 className="mb-3 text-xl font-bold">
-                Conectividade Acadêmica
+                Impacto
               </h3>
 
               <p className="max-w-xs text-sm text-gray-600">
-                Universidade e Comunidade em parceria para o desenvolvimento
-                social.
+                Gerar resultados concretos e mensuráveis que beneficiem a todos.
               </p>
             </div>
           </div>

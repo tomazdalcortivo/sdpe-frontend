@@ -1,11 +1,55 @@
 import { useState, useEffect } from "react";
-import { Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin, Phone, Calendar, Clock } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom"; 
+import {
+  Camera,
+  Edit2,
+  Trash2,
+  Save,
+  X,
+  Briefcase,
+  Mail,
+  MapPin,
+  Phone,
+  Calendar,
+  Clock,
+} from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import defaultImage from "../assets/imagem_perfil.png";
 import api from "../services/api";
 
+const styles = {
+  page: "min-h-screen px-8 pt-40 pb-40 bg-linear-to-br from-emerald-100 via-white to-amber-100",
+  container: "max-w-6xl mx-auto",
+  card: "relative mb-10 overflow-hidden bg-white rounded-lg shadow",
+  sectionCard: "p-8 mb-10 bg-white rounded-lg shadow",
+  headerBanner: "h-40 bg-linear-to-r from-emerald-700 to-emerald-500",
+  label: "block mb-1 font-medium text-slate-700",
+  input:
+    "w-full px-4 py-2 border rounded-md outline-none focus:border-emerald-500 transition-all",
+  inputSmall:
+    "w-full px-2 py-1 border rounded-md outline-none focus:border-emerald-500",
+  btnPrimary:
+    "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50",
+  btnDark:
+    "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-900 hover:bg-emerald-700",
+  btnDanger:
+    "flex items-center gap-2 px-6 py-2 text-white transition-all bg-red-600 rounded-md shadow hover:bg-red-700",
+  btnGhost:
+    "flex items-center gap-2 px-4 py-2 transition-all bg-gray-200 rounded-md hover:bg-gray-300",
+  btnOutline:
+    "px-4 py-2 text-sm font-medium text-center transition-colors border rounded-md text-emerald-700 border-emerald-200 hover:bg-emerald-50",
+  tabActive:
+    "px-5 py-2 rounded-md font-medium transition-colors bg-emerald-600 text-white shadow-sm",
+  tabInactive:
+    "px-5 py-2 rounded-md font-medium transition-colors bg-white text-slate-600 hover:bg-gray-50 border border-gray-200",
+  badge: "px-2 py-0.5 text-xs font-semibold rounded-full border",
+  badgeSuccess: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  projetoCard:
+    "p-4 mb-3 transition-all border rounded-lg hover:shadow-md border-slate-200 hover:border-emerald-200 bg-slate-50",
+};
+
 export default function Perfil() {
   const navigate = useNavigate();
+  const MESSAGE_MAX = 500;
 
   const [role, setRole] = useState("PARTICIPANTE");
   const [isLoading, setIsLoading] = useState(true);
@@ -14,6 +58,8 @@ export default function Perfil() {
 
   const [createdProjects, setCreatedProjects] = useState([]);
   const [participatedProjects, setParticipatedProjects] = useState([]);
+  const [estados, setEstados] = useState([]);
+  const [cidades, setCidades] = useState([]);
 
   const [userData, setUserData] = useState({
     id: null,
@@ -21,11 +67,20 @@ export default function Perfil() {
     email: "",
     telefone: "",
     cidade: "",
+    estado: "",
     resumo: "",
     fotoPerfil: null,
   });
 
   const isProfessor = role === "COORDENADOR" || role === "ADMIN";
+
+  // Carregar Estados
+  useEffect(() => {
+    api
+      .get("/api/localidades/estados")
+      .then((res) => setEstados(res.data))
+      .catch((err) => console.error("Erro ao carregar estados", err));
+  }, []);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -36,7 +91,6 @@ export default function Perfil() {
           return;
         }
 
-        // 1. Busca dados do usuário
         const response = await api.get("/auth/perfil");
         const data = response.data;
 
@@ -46,184 +100,129 @@ export default function Perfil() {
           email: data.email || "",
           telefone: data.telefone || "",
           cidade: data.cidade || "",
+          estado: data.estado || "",
           resumo: data.resumo || "",
           fotoPerfil: data.fotoPerfil || null,
         });
 
+        if (data.estado) fetchCidades(data.estado);
+
         if (data.perfil) {
           setRole(data.perfil);
-          // Se for coordenador, muda a aba padrão para 'created'
-          if (data.perfil === "COORDENADOR" || data.perfil === "ADMIN") {
+          if (data.perfil === "COORDENADOR" || data.perfil === "ADMIN")
             setProjectTab("created");
-          }
         }
 
-        // 2. Busca projetos
-        try {
-          if (data.perfil === "COORDENADOR" || data.perfil === "ADMIN") {
-            const resCriados = await api.get("/api/projetos/meus-criados");
-            setCreatedProjects(resCriados.data);
-          }
-          const resParticipados = await api.get("/api/projetos/meus-participados");
-          setParticipatedProjects(resParticipados.data);
+        const resCriados =
+          data.perfil === "COORDENADOR" || data.perfil === "ADMIN"
+            ? await api.get("/api/projetos/meus-criados")
+            : { data: [] };
+        const resParticipados = await api.get(
+          "/api/projetos/meus-participados",
+        );
 
-        } catch (errorProj) {
-          console.error("Erro ao buscar projetos:", errorProj);
-        }
-
+        setCreatedProjects(resCriados.data);
+        setParticipatedProjects(resParticipados.data);
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          localStorage.removeItem("token");
-          navigate("/entrar");
-        }
       } finally {
         setIsLoading(false);
       }
     }
-
     fetchUserData();
   }, [navigate]);
 
-  const handleSave = async () => {
+  const fetchCidades = async (uf) => {
     try {
-      await api.put(`/api/participantes/${userData.id}`, {
-        nome: userData.nome,
-        telefone: userData.telefone,
-        cidade: userData.cidade,
-        resumo: userData.resumo
-      });
-      setIsEditing(false);
-      alert("Perfil atualizado com sucesso!");
-    } catch (error) {
-      console.error(error);
-      alert("Erro ao salvar dados.");
+      const res = await api.get(`/api/localidades/estados/${uf}/cidades`);
+      setCidades(res.data);
+    } catch (err) {
+      console.error("Erro ao buscar cidades", err);
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (confirm("Tem certeza que deseja excluir sua conta? Essa ação não pode ser desfeita.")) {
-      try {
-        await api.delete(`/api/participantes/${userData.id}`);
-        localStorage.removeItem("token");
-        navigate("/entrar");
-      } catch (error) {
-        alert("Erro ao excluir conta.");
-      }
+  const handleTelefoneMask = (e) => {
+    let v = e.target.value.replace(/\D/g, "").slice(0, 11);
+
+    v = v.replace(/^(\d{2})(\d)/, "($1) $2");
+    v = v.replace(/^(\(\d{2}\)\s\d)(\d{4})(\d)/, "$1 $2-$3");
+
+    setUserData((prev) => ({ ...prev, telefone: v }));
+  };
+
+  const handleEstadoChange = (e) => {
+    const uf = e.target.value;
+    setUserData({ ...userData, estado: uf, cidade: "" });
+    if (uf) fetchCidades(uf);
+    else setCidades([]);
+  };
+
+  const handleSave = async () => {
+    try {
+      await api.put(`/api/participantes/${userData.id}`, userData);
+      setIsEditing(false);
+      alert("Perfil atualizado!");
+    } catch (error) {
+      alert("Erro ao salvar.");
     }
   };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert("A imagem deve ter no máximo 5MB.");
-      return;
-    }
-
     const formData = new FormData();
     formData.append("file", file);
-
     try {
       setIsLoading(true);
-      const response = await api.patch(`/api/participantes/${userData.id}/foto`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setUserData({ ...userData, fotoPerfil: response.data.fotoPerfil });
-      alert("Foto atualizada com sucesso!");
+      const res = await api.patch(
+        `/api/participantes/${userData.id}/foto`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
+      setUserData({ ...userData, fotoPerfil: res.data.fotoPerfil });
     } catch (error) {
-      console.error("Erro ao enviar imagem", error);
-      alert("Erro ao enviar a foto. Tente novamente.");
+      alert("Erro ao enviar foto.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Define qual lista exibir
-  const currentProjects = projectTab === "created" ? createdProjects : participatedProjects;
+  const currentProjects =
+    projectTab === "created" ? createdProjects : participatedProjects;
 
-  // Componente do Item da Lista
-  const ProjetoItem = ({ projeto }) => (
-    <li className="p-4 mb-3 transition-all border rounded-lg hover:shadow-md border-slate-200 hover:border-emerald-200 bg-slate-50">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h3 className="text-lg font-bold text-slate-800">{projeto.nome}</h3>
-          <p className="mb-2 text-sm text-slate-500 line-clamp-1">{projeto.descricao}</p>
-
-          <div className="flex flex-wrap gap-4 text-xs text-slate-600">
-            {projeto.dataInicio && (
-              <div className="flex items-center gap-1">
-                <Calendar size={14} />
-                {new Date(projeto.dataInicio).toLocaleDateString()}
-              </div>
-            )}
-            {projeto.cargaHoraria && (
-              <div className="flex items-center gap-1">
-                <Clock size={14} />
-                {projeto.cargaHoraria}h
-              </div>
-            )}
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${projeto.status
-                ? "bg-green-100 text-green-700 border-green-200"
-                : "bg-amber-100 text-amber-700 border-amber-200"
-              }`}>
-              {projeto.status ? "ATIVO" : "PENDENTE/INATIVO"}
-            </span>
-          </div>
-        </div>
-
-        <Link
-          to={`/detalhes-projeto/${projeto.id}`}
-          className="px-4 py-2 text-sm font-medium text-center text-emerald-700 transition-colors border rounded-md border-emerald-200 hover:bg-emerald-50"
-        >
-          Ver Detalhes
-        </Link>
-      </div>
-    </li>
-  );
-
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-emerald-600 rounded-full border-t-transparent animate-spin"></div>
+        <div className="w-12 h-12 border-4 rounded-full border-emerald-600 border-t-transparent animate-spin"></div>
       </div>
     );
-  }
 
   return (
-    <section className="min-h-screen px-8 pt-24 pb-24 bg-linear-to-br from-emerald-100 via-white to-amber-100">
-      <div className="max-w-6xl mx-auto">
+    <section className={styles.page}>
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <div className={styles.headerBanner}></div>
 
-        {/* Card do perfil */}
-        <div className="relative mb-10 overflow-hidden bg-white rounded-lg shadow">
-          <div className="h-40 bg-linear-to-r from-emerald-700 to-emerald-500"></div>
-
-          {/* Botão Editar/Salvar */}
           <div className="absolute top-4 right-4">
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-5 py-2 text-white rounded-md shadow bg-emerald-900 hover:bg-emerald-700 transition-colors"
+                className={styles.btnDark}
               >
-                <Edit2 size={16} />
-                Editar perfil
+                <Edit2 size={16} /> Editar perfil
               </button>
             ) : (
               <div className="flex gap-2">
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-2 px-4 py-2 text-white rounded-md bg-emerald-600 hover:bg-emerald-700 transition-colors"
-                >
-                  <Save size={16} />
-                  Salvar
+                <button onClick={handleSave} className={styles.btnPrimary}>
+                  <Save size={16} /> Salvar
                 </button>
                 <button
                   onClick={() => setIsEditing(false)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                  className={styles.btnGhost}
                 >
-                  <X size={16} />
-                  Cancelar
+                  <X size={16} /> Cancelar
                 </button>
               </div>
             )}
@@ -231,46 +230,58 @@ export default function Perfil() {
 
           <div className="px-8 pb-8">
             {/* Foto e Nome */}
-            <div className={`flex flex-col items-end gap-6 mb-6 -mt-20 md:flex-row ${isEditing ? "mt-7" : "-mt-20"}`}>
+            <div
+              className={`flex flex-col items-end gap-6 mb-6 md:flex-row ${isEditing ? "mt-7" : "-mt-20"}`}
+            >
               <div className="relative group">
                 <img
-                  src={userData.fotoPerfil ? `${userData.fotoPerfil}?t=${Date.now()}` : defaultImage}
-                  alt="Perfil"
-                  className="object-cover w-40 h-40 border-4 border-white rounded-lg shadow bg-white"
-                  onError={(e) => { e.target.src = defaultImage; }}
+                  src={
+                    userData.fotoPerfil
+                      ? `${userData.fotoPerfil}?t=${Date.now()}`
+                      : defaultImage
+                  }
+                  className="object-cover w-40 h-40 bg-white border-4 border-white rounded-lg shadow"
                 />
                 {isEditing && (
-                  <label className="absolute inset-0 flex items-center justify-center rounded-lg opacity-0 cursor-pointer bg-black/50 group-hover:opacity-100 transition-opacity">
+                  <label className="absolute inset-0 flex items-center justify-center transition-opacity rounded-lg opacity-0 cursor-pointer bg-black/50 group-hover:opacity-100">
                     <Camera className="text-white" />
-                    <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={handleImageUpload}
+                    />
                   </label>
                 )}
               </div>
-
-              <div className="flex-1 space-y-2 w-full">
+              <div className="flex-1 w-full">
                 {!isEditing ? (
                   <div className="flex items-center gap-3">
                     <h2 className="text-2xl font-bold">{userData.nome}</h2>
-                    <span className="px-2 py-0.5 text-xs font-semibold text-emerald-800 bg-emerald-100 rounded-full border border-emerald-200">
+                    <span className={`${styles.badge} ${styles.badgeSuccess}`}>
                       {role}
                     </span>
                   </div>
                 ) : (
                   <input
-                    className="w-full px-4 py-2 border rounded-md outline-none focus:border-emerald-500"
-                    placeholder="Nome completo"
+                    className={styles.input}
                     value={userData.nome}
-                    onChange={(e) => setUserData({ ...userData, nome: e.target.value })}
+                    onChange={(e) =>
+                      setUserData({ ...userData, nome: e.target.value })
+                    }
+                    placeholder="Nome completo"
                   />
                 )}
               </div>
             </div>
 
-            {/* INFO: Email, Telefone e Cidade */}
+            {/* Informações de Contato e Localização */}
             <div className="grid gap-4 mb-6 md:grid-cols-3 text-slate-600">
               <div className="flex items-center gap-2">
                 <Mail className="text-emerald-600 shrink-0" size={18} />
-                <span className="truncate" title={userData.email}>{userData.email || "-"}</span>
+                <span className="truncate" title={userData.email}>
+                  {userData.email || "-"}
+                </span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -279,115 +290,143 @@ export default function Perfil() {
                   <span>{userData.telefone || "-"}</span>
                 ) : (
                   <input
-                    className="w-full px-2 py-1 border rounded-md outline-none focus:border-emerald-500"
-                    placeholder="Telefone"
+                    className={styles.inputSmall}
                     value={userData.telefone}
-                    onChange={(e) => setUserData({ ...userData, telefone: e.target.value })}
+                    onChange={handleTelefoneMask}
+                    placeholder="(00)0 0000-0000"
                   />
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
-                <MapPin className="text-emerald-600 shrink-0" size={18} />
-                {!isEditing ? (
-                  <span>{userData.cidade || "-"}</span>
-                ) : (
-                  <input
-                    className="w-full px-2 py-1 border rounded-md outline-none focus:border-emerald-500"
-                    placeholder="Cidade"
-                    value={userData.cidade}
-                    onChange={(e) => setUserData({ ...userData, cidade: e.target.value })}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* RESUMO */}
-            <div>
-              <label className="block mb-1 font-medium text-slate-700">Resumo:</label>
+              {/* Localização Dinâmica */}
               {!isEditing ? (
-                <p className="text-slate-600 whitespace-pre-wrap">
-                  {userData.resumo || "Nenhum resumo informado."}
-                </p>
+                <div className="flex items-center gap-2">
+                  <MapPin className="text-emerald-600 shrink-0" size={18} />
+                  <span>
+                    {userData.cidade && userData.estado
+                      ? `${userData.cidade} - ${userData.estado}`
+                      : "Localização não informada"}
+                  </span>
+                </div>
               ) : (
-                <textarea
-                  className="w-full px-4 py-2 border rounded-md outline-none focus:border-emerald-500"
-                  rows="3"
-                  placeholder="Escreva um breve resumo sobre você..."
-                  value={userData.resumo}
-                  onChange={(e) => setUserData({ ...userData, resumo: e.target.value })}
-                />
+                <div className="flex col-span-1 gap-2 md:col-span-1">
+                  <select
+                    className={styles.inputSmall}
+                    value={userData.cidade}
+                    onChange={(e) =>
+                      setUserData({ ...userData, cidade: e.target.value })
+                    }
+                    disabled={!userData.estado}
+                  >
+                    <option value="">Cidade</option>
+                    {cidades.map((cid) => (
+                      <option key={cid.nome} value={cid.nome}>
+                        {cid.nome}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className={`${styles.inputSmall} w-20`}
+                    value={userData.estado}
+                    onChange={handleEstadoChange}
+                  >
+                    <option value="">UF</option>
+                    {estados.map((est) => (
+                      <option key={est.sigla} value={est.sigla}>
+                        {est.sigla}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
             </div>
 
-            {/* Botão Criar Projeto */}
-            {isProfessor && !isEditing && (
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={() => navigate("/criar-projeto")}
-                  className="px-6 py-2 text-sm font-medium text-white transition rounded-md shadow bg-emerald-600 hover:bg-emerald-700"
-                >
-                  + Criar novo projeto
-                </button>
-              </div>
-            )}
+            {/* Resumo */}
+            <div>
+              <label className={styles.label}>Resumo:</label>
+              {!isEditing ? (
+                <p className="max-w-full break-words break-all whitespace-pre-wrap text-slate-600">
+                  {userData.resumo || "Nenhum resumo informado."}
+                </p>
+              ) : (
+                <div className="relative">
+                  <textarea
+                    className={styles.input}
+                    rows="3"
+                    maxLength={MESSAGE_MAX}
+                    placeholder="Conte um pouco sobre você..."
+                    value={userData.resumo}
+                    onChange={(e) =>
+                      setUserData({ ...userData, resumo: e.target.value })
+                    }
+                  />
+                  <span className="absolute text-xs bottom-2 right-3 text-slate-500">
+                    {userData.resumo.length} / {MESSAGE_MAX}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Meus Projetos */}
-        <div className="p-8 mb-10 bg-white rounded-lg shadow">
+        {/* Seção de Projetos */}
+        <div className={styles.sectionCard}>
           <h2 className="flex items-center gap-2 mb-6 text-2xl font-bold text-slate-800">
-            <Briefcase className="text-emerald-600" />
-            Meus Projetos
+            <Briefcase className="text-emerald-600" /> Meus Projetos
           </h2>
-
-          <div className="flex gap-3 mb-6 border-b border-gray-100 pb-4">
-            {/* Só mostra aba de criados se for professor */}
+          <div className="flex gap-3 pb-4 mb-6 border-b border-gray-100">
             {isProfessor && (
               <button
                 onClick={() => setProjectTab("created")}
-                className={`px-5 py-2 rounded-md font-medium transition-colors ${projectTab === "created"
-                    ? "bg-emerald-600 text-white shadow-sm"
-                    : "bg-white text-slate-600 hover:bg-gray-50 border border-gray-200"
-                  }`}
+                className={
+                  projectTab === "created"
+                    ? styles.tabActive
+                    : styles.tabInactive
+                }
               >
-                Gerenciados por mim ({createdProjects.length})
+                Gerenciados ({createdProjects.length})
               </button>
             )}
-
             <button
               onClick={() => setProjectTab("participated")}
-              className={`px-5 py-2 rounded-md font-medium transition-colors ${projectTab === "participated"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "bg-white text-slate-600 hover:bg-gray-50 border border-gray-200"
-                }`}
+              className={
+                projectTab === "participated"
+                  ? styles.tabActive
+                  : styles.tabInactive
+              }
             >
               Participações ({participatedProjects.length})
             </button>
           </div>
 
           {currentProjects.length === 0 ? (
-            <div className="py-10 text-center border-2 border-dashed rounded-lg border-slate-200 bg-slate-50/50">
-              <p className="text-slate-500">Nenhum projeto encontrado nesta categoria.</p>
-            </div>
+            <p className="py-10 text-center text-slate-500">
+              Nenhum projeto encontrado.
+            </p>
           ) : (
             <ul className="space-y-3">
               {currentProjects.map((projeto) => (
-                <ProjetoItem key={projeto.id} projeto={projeto} />
+                <li key={projeto.id} className={styles.projetoCard}>
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-bold text-slate-800">
+                        {projeto.nome}
+                      </h3>
+                      <p className="text-sm text-slate-500 line-clamp-1">
+                        {projeto.descricao}
+                      </p>
+                    </div>
+                    <Link
+                      to={`/detalhes-projeto/${projeto.id}`}
+                      className={styles.btnOutline}
+                    >
+                      Ver Detalhes
+                    </Link>
+                  </div>
+                </li>
               ))}
             </ul>
           )}
-        </div>
-
-        {/* Excluir conta */}
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={handleDeleteAccount}
-            className="flex items-center gap-2 px-6 py-2 text-white bg-red-600 rounded-md shadow hover:bg-red-700 transition-colors"
-          >
-            <Trash2 size={16} />
-            Excluir conta
-          </button>
         </div>
       </div>
     </section>

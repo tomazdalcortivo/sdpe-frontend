@@ -208,9 +208,9 @@ export default function Estatisticas() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4">
+        <div className="min-h-screen px-4 pt-40 pb-12 bg-gray-50">
             <div className="max-w-6xl mx-auto">
-                <h1 className="text-3xl font-bold text-center text-emerald-900 mb-8">Painel de Estatísticas</h1>
+                <h1 className="mb-8 text-3xl font-bold text-center text-emerald-900">Painel de Estatísticas</h1>
 
                 {/* Abas de Navegação */}
                 <div className="flex justify-center gap-4 mb-8">
@@ -223,7 +223,7 @@ export default function Estatisticas() {
 
                     {/* Botão visível APENAS para Coordenadores */}
                     {isCoordenador && (
-                        <button
+                        <button 
                             onClick={() => setAbaAtiva("coordenador")}
                             className={`px-6 py-2 rounded-full font-medium transition ${abaAtiva === 'coordenador' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
                         >
@@ -232,23 +232,23 @@ export default function Estatisticas() {
                     )}
                 </div>
 
-                {loading && <p className="text-center text-gray-500 py-8">Carregando dados...</p>}
+                {loading && <p className="py-8 text-center text-gray-500">Carregando dados...</p>}
 
                 {/* --- CONTEÚDO: VISÃO GERAL --- */}
                 {!loading && abaAtiva === "geral" && (
                     <div className="space-y-6">
                         {/* Card Total com Animação */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500 transition hover:shadow-md">
+                        <div className="p-6 transition bg-white border-l-4 shadow-sm rounded-xl border-emerald-500 hover:shadow-md">
                             <h3 className="text-sm font-bold text-gray-400 uppercase">Total de Projetos</h3>
-                            <p className="text-5xl font-extrabold text-emerald-600 mt-2">
+                            <p className="mt-2 text-5xl font-extrabold text-emerald-600">
                                 {animatedTotal}
                             </p>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-6">
+                        <div className="grid gap-6 md:grid-cols-2">
                             {/* Gráfico de Cadastros (Inteiros) */}
-                            <div className="bg-white p-6 rounded-xl shadow-sm">
-                                <h3 className="font-bold text-gray-700 mb-4">Cadastros Mensais</h3>
+                            <div className="p-6 bg-white shadow-sm rounded-xl">
+                                <h3 className="mb-4 font-bold text-gray-700">Cadastros Mensais</h3>
                                 <div className="h-64">
                                     {cadastrosData ? (
                                         <Line options={optionsLine} data={cadastrosData} />
@@ -259,8 +259,8 @@ export default function Estatisticas() {
                             </div>
 
                             {/* Gráfico de Áreas */}
-                            <div className="bg-white p-6 rounded-xl shadow-sm">
-                                <h3 className="font-bold text-gray-700 mb-4">Projetos por Área</h3>
+                            <div className="p-6 bg-white shadow-sm rounded-xl">
+                                <h3 className="mb-4 font-bold text-gray-700">Projetos por Área</h3>
                                 <div className="h-64">
                                     {areasData ? (
                                         <Pie options={{ maintainAspectRatio: false }} data={areasData} />
@@ -275,11 +275,11 @@ export default function Estatisticas() {
 
                 {/* --- CONTEÚDO: ÁREA DO COORDENADOR --- */}
                 {!loading && abaAtiva === "coordenador" && isCoordenador && (
-                    <div className="bg-white p-6 rounded-xl shadow-lg animate-fade-in">
-                        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+                    <div className="p-6 bg-white shadow-lg rounded-xl animate-fade-in">
+                        <div className="flex flex-col items-center justify-between mb-6 md:flex-row">
                             <h3 className="text-xl font-bold text-gray-800">Desempenho do Projeto</h3>
                             <select
-                                className="mt-2 md:mt-0 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="p-2 mt-2 border rounded-md outline-none md:mt-0 focus:ring-2 focus:ring-blue-500"
                                 value={projetoSelecionado}
                                 onChange={(e) => setProjetoSelecionado(e.target.value)}
                             >
@@ -290,7 +290,7 @@ export default function Estatisticas() {
                             </select>
                         </div>
 
-                        <div className="h-80 w-full">
+                        <div className="w-full h-80">
                             {visData ? (
                                 <Bar
                                     options={{
@@ -304,7 +304,7 @@ export default function Estatisticas() {
                                     data={visData}
                                 />
                             ) : (
-                                <div className="flex h-full items-center justify-center text-gray-400">
+                                <div className="flex items-center justify-center h-full text-gray-400">
                                     Selecione um projeto para ver as estatísticas.
                                 </div>
                             )}

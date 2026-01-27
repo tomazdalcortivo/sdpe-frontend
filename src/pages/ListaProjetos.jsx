@@ -59,9 +59,9 @@ export default function ListaProjetos() {
   });
 
   return (
-    <section className="min-h-screen px-8 pt-24 bg-gradient-to-br from-emerald-50 via-white to-amber-50">
+    <section className="min-h-screen px-8 pt-40 bg-gradient-to-br from-emerald-50 via-white to-amber-50">
       <div className="mx-auto max-w-7xl">
-        <h1 className="mb-4 text-4xl font-bold text-center text-emerald-950">
+        <h1 className="mb-4 text-4xl font-bold text-center text-emerald-700">
           Projetos de Extensão
         </h1>
 
@@ -79,7 +79,7 @@ export default function ListaProjetos() {
               placeholder="Buscar por nome do projeto..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="w-full py-3 pl-12 pr-4 border rounded-full outline-none border-slate-300 focus:ring-2 focus:ring-emerald-500 shadow-sm"
+              className="w-full py-3 pl-12 pr-4 border rounded-full shadow-sm outline-none border-slate-300 focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -105,7 +105,7 @@ export default function ListaProjetos() {
                 <select
                   value={statusFiltro}
                   onChange={(e) => setStatusFiltro(e.target.value)}
-                  className="w-full p-2 text-sm border rounded-md border-slate-200 focus:border-emerald-500 outline-none"
+                  className="w-full p-2 text-sm border rounded-md outline-none border-slate-200 focus:border-emerald-500"
                 >
                   <option value="">Todos os status</option>
                   <option value="EM_ANDAMENTO">Em andamento</option>
@@ -121,7 +121,7 @@ export default function ListaProjetos() {
                 <select
                   value={areaFiltro}
                   onChange={(e) => setAreaFiltro(e.target.value)}
-                  className="w-full p-2 text-sm border rounded-md border-slate-200 focus:border-emerald-500 outline-none"
+                  className="w-full p-2 text-sm border rounded-md outline-none border-slate-200 focus:border-emerald-500"
                 >
                   <option value="">Todas as áreas</option>
                   <option>Ciências Agrárias</option>
@@ -157,7 +157,7 @@ export default function ListaProjetos() {
                   className="flex flex-col overflow-hidden transition-all bg-white border shadow-sm border-slate-100 rounded-xl hover:shadow-lg hover:-translate-y-1 group"
                 >
                   {/* Imagem do Projeto com Fallback */}
-                  <div className="relative h-48 bg-emerald-50 overflow-hidden">
+                  <div className="relative h-48 overflow-hidden bg-emerald-50">
                     <img
                       src={imageUrl}
                       alt={projeto.nome}
@@ -196,7 +196,7 @@ export default function ListaProjetos() {
 
                     <Link
                       to={`/detalhes-projeto/${projeto.id}`}
-                      className="block w-full py-2 font-medium text-center text-emerald-700 transition-colors bg-emerald-50 rounded-lg hover:bg-emerald-100 hover:text-emerald-800"
+                      className="block w-full py-2 font-medium text-center transition-colors rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800"
                     >
                       Ver Detalhes
                     </Link>

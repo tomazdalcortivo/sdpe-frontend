@@ -96,7 +96,7 @@ export default function RecuperarSenha() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nome@email.com"
+                  placeholder="usuario@email.com"
                   className="w-full px-4 py-2 pl-10 transition-all rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                   required
                 />
