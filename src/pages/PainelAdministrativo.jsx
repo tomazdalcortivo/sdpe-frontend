@@ -10,15 +10,17 @@ import api from "../services/api";
 export default function PainelAdministrativo() {
 
     const [activeSection, setActiveSection] = useState("solicitacaoCadastros");
+    const [documentoVisivel, setDocumentoVisivel] = useState(null);
     const [listaDados, setListaDados] = useState([]);
     const [loading, setLoading] = useState(false);
     const [expandedItem, setExpandedItem] = useState(null);
     const [erro, setErro] = useState(null);
 
-    // --- CONFIGURAÇÃO DO MENU ---
     const solicitacoes = [
         { id: "solicitacaoCadastros", label: "Cadastros Pendentes", icon: Users },
+        { id: "solicitacaoProjetos", label: "Projetos Pendentes", icon: FolderKanban },
         { id: "solicitacaoSuporte", label: "Suporte & Contato", icon: MessageSquare },
+
     ];
 
     const gerenciamento = [
@@ -26,11 +28,14 @@ export default function PainelAdministrativo() {
         { id: "gerenciamentoProjetos", label: "Todos os Projetos", icon: FolderKanban },
     ];
 
-    // --- CONFIGURAÇÃO DOS ENDPOINTS ---
     const sectionConfig = {
         solicitacaoCadastros: {
             url: "/api/admin/solicitacoes-pendentes",
             type: "participante"
+        },
+        solicitacaoProjetos: {
+            url: "/api/admin/projetos-pendentes",
+            type: "projeto"
         },
         solicitacaoSuporte: {
             url: "/api/admin/contatos",
@@ -46,8 +51,6 @@ export default function PainelAdministrativo() {
         }
     };
 
-    // --- CARREGAMENTO DE DADOS ---
-
     async function buscarDados() {
         const config = sectionConfig[activeSection];
         if (!config) return;
@@ -58,7 +61,6 @@ export default function PainelAdministrativo() {
 
         try {
             const res = await api.get(config.url);
-            // Garante que é um array, mesmo que venha paginado (Page) ou lista direta (List)
             const data = Array.isArray(res.data) ? res.data : (res.data.content || []);
             setListaDados(data);
         } catch (err) {
@@ -74,9 +76,7 @@ export default function PainelAdministrativo() {
         buscarDados();
     }, [activeSection]);
 
-    // --- FUNÇÕES DE AÇÃO ---
 
-    // 1. Excluir Projeto
     async function handleExcluirProjeto(idProjeto) {
         if (!confirm("ATENÇÃO: Isso excluirá o projeto, arquivos, visualizações e contatos vinculados. Não pode ser desfeito. Continuar?")) return;
 
@@ -90,7 +90,33 @@ export default function PainelAdministrativo() {
         }
     }
 
-    // 2. Aprovar Cadastro ou Reativar Conta
+    async function handleAprovarProjeto(idProjeto) {
+        try {
+            await api.patch(`/api/admin/projetos/${idProjeto}/status`, null, {
+                params: { ativo: true }
+            });
+            alert("Projeto aprovado com sucesso!");
+            buscarDados();
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao aprovar projeto.");
+        }
+    }
+
+    async function handleRejeitarProjeto(idProjeto) {
+        const motivo = window.prompt("Motivo da rejeição (será exibido ao coordenador):");
+        if (motivo === null) return;
+        if (motivo.trim() === "") return alert("Motivo obrigatório.");
+
+        try {
+            await api.patch(`/api/admin/projetos/${idProjeto}/rejeitar`, { motivo });
+            alert("Projeto rejeitado e notificação enviada.");
+            buscarDados();
+        } catch (error) {
+            alert("Erro ao rejeitar.");
+        }
+    }
+
     async function handleAprovar(idConta) {
         try {
             await api.patch(`/api/admin/contas/${idConta}/status`, null, {
@@ -104,7 +130,6 @@ export default function PainelAdministrativo() {
         }
     }
 
-    // 3. Bloquear Conta
     async function handleBloquear(idConta) {
         try {
             await api.patch(`/api/admin/contas/${idConta}/status`, null, {
@@ -118,7 +143,6 @@ export default function PainelAdministrativo() {
         }
     }
 
-    // 4. Excluir Conta (Definitivamente)
     async function handleExcluir(idConta) {
         if (!confirm("Tem a certeza? Isso excluirá a conta, o perfil e TODOS os projetos deste utilizador (se for coordenador).")) return;
 
@@ -132,16 +156,57 @@ export default function PainelAdministrativo() {
         }
     }
 
-    // --- HELPERS DE RENDERIZAÇÃO ---
+    async function handleResponderContato(item) {
+        const { value: textoResposta } = await Swal.fire({
+            title: `Responder a ${item.nome}`,
+            input: 'textarea',
+            inputLabel: `Para: ${item.email}`,
+            inputPlaceholder: 'Escreva a sua resposta aqui...',
+            inputAttributes: {
+                'aria-label': 'Escreva a sua resposta aqui'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Enviar Email <i class="fa fa-paper-plane"></i>',
+            confirmButtonColor: '#059669',
+            cancelButtonText: 'Cancelar',
+            showLoaderOnConfirm: true,
+            preConfirm: async (texto) => {
+                if (!texto) {
+                    Swal.showValidationMessage('A mensagem não pode estar vazia');
+                    return false;
+                }
+                try {
+                    await api.post(`/api/admin/contatos/${item.id}/responder`, {
+                        mensagem: texto
+                    });
+                    return true;
+                } catch (error) {
+                    Swal.showValidationMessage(
+                        `Falha no envio: ${error.response?.data?.message || 'Erro de servidor'}`
+                    );
+                }
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        });
+
+        if (textoResposta) {
+            Swal.fire({
+                title: 'Enviado!',
+                text: 'O email de resposta foi enviado com sucesso.',
+                icon: 'success'
+            });
+        }
+    }
+
 
     const getItemTitle = (item) => {
-        if (activeSection === "gerenciamentoProjetos") return item.nome;
+        if (activeSection === "gerenciamentoProjetos" || activeSection === "solicitacaoProjetos") return item.nome;
         if (activeSection === "solicitacaoSuporte") return item.nome || "Anônimo";
         return item.nome || "Utilizador sem nome";
     };
 
     const getItemSubtitle = (item) => {
-        if (activeSection === "gerenciamentoProjetos") return `Área: ${item.area || "Geral"}`;
+        if (activeSection === "gerenciamentoProjetos" || activeSection === "solicitacaoProjetos") return `Área: ${item.area || "Geral"}`;
 
         if (activeSection === "solicitacaoSuporte") {
             const data = item.dataEnvio ? new Date(item.dataEnvio).toLocaleDateString() : "";
@@ -169,7 +234,7 @@ export default function PainelAdministrativo() {
     };
 
     const renderExtraInfo = (item) => {
-        if (activeSection === "gerenciamentoProjetos") {
+        if (activeSection === "gerenciamentoProjetos" || activeSection === "solicitacaoProjetos") {
             const nomesCoords = item.coordenadores?.map(c => c.nome).join(", ") || "Sem coordenador";
             return (
                 <div className="hidden md:block text-right mr-4">
@@ -295,14 +360,18 @@ export default function PainelAdministrativo() {
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        // AÇÕES GERAIS (Botões Recuperados)
                                                         <div>
-                                                            {/* Documento se existir */}
-                                                            {item.documentoUrl && (
+
+                                                            {/* Visualizar Documento (Modal) */}
+                                                            {(item.documentoUrl || item.documentoPath) && (
                                                                 <div className="mb-4">
-                                                                    <a href={item.documentoUrl} target="_blank" className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded">
-                                                                        <FileText size={14} /> Ver Documento
-                                                                    </a>
+                                                                    <button
+                                                                        onClick={() => setDocumentoVisivel(item.documentoUrl || item.documentoPath)}
+                                                                        className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded cursor-pointer border-0"
+                                                                    >
+                                                                        <FileText size={14} />
+                                                                        {item.documentoPath ? "Visualizar Documento do Projeto" : "Visualizar Comprovante"}
+                                                                    </button>
                                                                 </div>
                                                             )}
 
@@ -327,6 +396,39 @@ export default function PainelAdministrativo() {
                                                                         </button>
                                                                         <button onClick={() => handleExcluir(accountId)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50">
                                                                             <X size={16} /> Rejeitar
+                                                                        </button>
+                                                                    </>
+                                                                )}
+
+                                                                {/* PROJETOS PENDENTES*/}
+                                                                {activeSection === "solicitacaoProjetos" && (
+                                                                    <>
+                                                                        <Link to={`/detalhes-projeto/${item.id}`} target="_blank" className="flex items-center gap-2 px-4 py-2 text-sm text-blue-700 bg-blue-100 rounded hover:bg-blue-200">
+                                                                            <Eye size={16} /> Ver Detalhes
+                                                                        </Link>
+                                                                        <button onClick={() => handleAprovarProjeto(item.id)} className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-emerald-600 rounded hover:bg-emerald-700">
+                                                                            <Check size={16} /> Aprovar
+                                                                        </button>
+                                                                        <button onClick={() => handleRejeitarProjeto(item.id)} className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 border border-red-200 rounded hover:bg-red-50">
+                                                                            <X size={16} /> Rejeitar
+                                                                        </button>
+                                                                    </>
+                                                                )}
+
+                                                                {activeSection === "solicitacaoSuporte" && (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => handleResponderContato(item)}
+                                                                            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-md hover:bg-blue-700 shadow-sm"
+                                                                        >
+                                                                            <Mail size={16} /> Responder por Email
+                                                                        </button>
+
+                                                                        <button
+                                                                            onClick={() => {/* Lógica de excluir */ }}
+                                                                            className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 border border-red-200 rounded-md hover:bg-red-50"
+                                                                        >
+                                                                            <Trash2 size={16} /> Arquivar
                                                                         </button>
                                                                     </>
                                                                 )}
@@ -361,6 +463,49 @@ export default function PainelAdministrativo() {
                     </div>
                 </div>
             </div>
+
+            {/* --- MODAL DE VISUALIZAÇÃO DE DOCUMENTO --- */}
+            {documentoVisivel && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-5xl h-[85vh] rounded-lg shadow-2xl flex flex-col overflow-hidden animate-fade-in">
+
+                        {/* Cabeçalho do Modal */}
+                        <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-gray-50">
+                            <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                                <FileText size={20} /> Visualização do Documento
+                            </h3>
+                            <button
+                                onClick={() => setDocumentoVisivel(null)}
+                                className="p-1 rounded-full hover:bg-gray-200 text-gray-500 transition-colors"
+                                title="Fechar"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Corpo do Modal (Iframe) */}
+                        <div className="flex-1 bg-gray-100 relative">
+                            <iframe
+                                src={documentoVisivel}
+                                className="w-full h-full border-none"
+                                title="Documento"
+                            />
+                        </div>
+
+                        {/* Rodapé Opcional */}
+                        <div className="p-3 border-t border-gray-200 bg-white text-right">
+                            <a
+                                href={documentoVisivel}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:underline"
+                            >
+                                Não carregou? Clique aqui para abrir em nova guia.
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
     );
 }

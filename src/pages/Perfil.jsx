@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
-import { Camera, Edit2, Trash2, Save, X, Briefcase, Mail, MapPin, Phone, Calendar, Clock } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom"; 
+import {
+  Camera, Edit2, Trash2, Save, X, Briefcase,
+  Mail, MapPin, Phone, Calendar, Clock, AlertTriangle
+} from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Alert } from "flowbite-react"; 
+import { HiCheck, HiX } from "react-icons/hi"; 
 import defaultImage from "../assets/imagem_perfil.png";
 import api from "../services/api";
 
@@ -15,6 +20,8 @@ export default function Perfil() {
   const [createdProjects, setCreatedProjects] = useState([]);
   const [participatedProjects, setParticipatedProjects] = useState([]);
 
+  const [feedback, setFeedback] = useState({ type: "", message: "" });
+
   const [userData, setUserData] = useState({
     id: null,
     nome: "",
@@ -27,6 +34,13 @@ export default function Perfil() {
 
   const isProfessor = role === "COORDENADOR" || role === "ADMIN";
 
+  // Função auxiliar para mostrar o feedback
+  const showFeedback = (type, message) => {
+    setFeedback({ type, message });
+    // Opcional: Auto-fechar após 5 segundos
+    setTimeout(() => setFeedback({ type: "", message: "" }), 5000);
+  };
+
   useEffect(() => {
     async function fetchUserData() {
       try {
@@ -36,7 +50,6 @@ export default function Perfil() {
           return;
         }
 
-        // 1. Busca dados do usuário
         const response = await api.get("/auth/perfil");
         const data = response.data;
 
@@ -52,13 +65,11 @@ export default function Perfil() {
 
         if (data.perfil) {
           setRole(data.perfil);
-          // Se for coordenador, muda a aba padrão para 'created'
           if (data.perfil === "COORDENADOR" || data.perfil === "ADMIN") {
             setProjectTab("created");
           }
         }
 
-        // 2. Busca projetos
         try {
           if (data.perfil === "COORDENADOR" || data.perfil === "ADMIN") {
             const resCriados = await api.get("/api/projetos/meus-criados");
@@ -94,10 +105,10 @@ export default function Perfil() {
         resumo: userData.resumo
       });
       setIsEditing(false);
-      alert("Perfil atualizado com sucesso!");
+      showFeedback("success", "Perfil atualizado com sucesso!");
     } catch (error) {
       console.error(error);
-      alert("Erro ao salvar dados.");
+      showFeedback("error", "Erro ao salvar os dados. Tente novamente.");
     }
   };
 
@@ -108,7 +119,7 @@ export default function Perfil() {
         localStorage.removeItem("token");
         navigate("/entrar");
       } catch (error) {
-        alert("Erro ao excluir conta.");
+        showFeedback("error", "Erro ao excluir conta.");
       }
     }
   };
@@ -118,7 +129,7 @@ export default function Perfil() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("A imagem deve ter no máximo 5MB.");
+      showFeedback("error", "A imagem deve ter no máximo 5MB.");
       return;
     }
 
@@ -131,57 +142,94 @@ export default function Perfil() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setUserData({ ...userData, fotoPerfil: response.data.fotoPerfil });
-      alert("Foto atualizada com sucesso!");
+      showFeedback("success", "Foto atualizada com sucesso!");
     } catch (error) {
       console.error("Erro ao enviar imagem", error);
-      alert("Erro ao enviar a foto. Tente novamente.");
+      showFeedback("error", "Erro ao enviar a foto. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Define qual lista exibir
   const currentProjects = projectTab === "created" ? createdProjects : participatedProjects;
 
-  // Componente do Item da Lista
-  const ProjetoItem = ({ projeto }) => (
-    <li className="p-4 mb-3 transition-all border rounded-lg hover:shadow-md border-slate-200 hover:border-emerald-200 bg-slate-50">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h3 className="text-lg font-bold text-slate-800">{projeto.nome}</h3>
-          <p className="mb-2 text-sm text-slate-500 line-clamp-1">{projeto.descricao}</p>
+  const ProjetoItem = ({ projeto }) => {
+    const isRejeitado = !projeto.ativo && projeto.motivoRejeicao;
 
-          <div className="flex flex-wrap gap-4 text-xs text-slate-600">
-            {projeto.dataInicio && (
-              <div className="flex items-center gap-1">
-                <Calendar size={14} />
-                {new Date(projeto.dataInicio).toLocaleDateString()}
+    return (
+      <li className={`mb-4 transition-all border rounded-lg overflow-hidden ${isRejeitado
+        ? "border-red-200 bg-white shadow-sm"
+        : "border-slate-200 hover:border-emerald-200 bg-slate-50"
+        }`}>
+
+        {isRejeitado && (
+          <div className="bg-red-50 border-b border-red-100 p-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-white p-1.5 rounded-full border border-red-100 shadow-sm shrink-0">
+                <AlertTriangle className="text-red-500" size={18} />
               </div>
-            )}
-            {projeto.cargaHoraria && (
-              <div className="flex items-center gap-1">
-                <Clock size={14} />
-                {projeto.cargaHoraria}h
+              <div className="flex-1">
+                <h4 className="font-bold text-red-800 text-sm uppercase tracking-wide mb-1">
+                  Necessária Revisão
+                </h4>
+                <p className="text-sm text-red-700 leading-relaxed whitespace-pre-wrap">
+                  {projeto.motivoRejeicao}
+                </p>
+
+                <div className="mt-3">
+                  <button
+                    onClick={() => navigate(`/detalhes-projeto/${projeto.id}`)}
+                    className="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded shadow-sm transition-colors inline-flex items-center gap-2"
+                  >
+                    <Edit2 size={12} />
+                    Editar e Corrigir
+                  </button>
+                </div>
               </div>
-            )}
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${projeto.status
-                ? "bg-green-100 text-green-700 border-green-200"
-                : "bg-amber-100 text-amber-700 border-amber-200"
-              }`}>
-              {projeto.status ? "ATIVO" : "PENDENTE/INATIVO"}
-            </span>
+            </div>
           </div>
-        </div>
+        )}
 
-        <Link
-          to={`/detalhes-projeto/${projeto.id}`}
-          className="px-4 py-2 text-sm font-medium text-center text-emerald-700 transition-colors border rounded-md border-emerald-200 hover:bg-emerald-50"
-        >
-          Ver Detalhes
-        </Link>
-      </div>
-    </li>
-  );
+        <div className="p-4 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">{projeto.nome}</h3>
+            <p className="mb-2 text-sm text-slate-500 line-clamp-1">{projeto.descricao}</p>
+
+            <div className="flex flex-wrap gap-4 text-xs text-slate-600">
+              {projeto.dataInicio && (
+                <div className="flex items-center gap-1">
+                  <Calendar size={14} />
+                  {new Date(projeto.dataInicio).toLocaleDateString()}
+                </div>
+              )}
+              {projeto.cargaHoraria && (
+                <div className="flex items-center gap-1">
+                  <Clock size={14} />
+                  {projeto.cargaHoraria}h
+                </div>
+              )}
+
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${projeto.ativo
+                ? "bg-green-100 text-green-700 border-green-200"
+                : isRejeitado
+                  ? "bg-red-100 text-red-700 border-red-200"
+                  : "bg-amber-100 text-amber-700 border-amber-200"
+                }`}>
+                {projeto.ativo ? "ATIVO" : isRejeitado ? "COM PENDÊNCIAS" : "EM ANÁLISE"}
+              </span>
+            </div>
+          </div>
+
+          <Link
+            to={`/detalhes-projeto/${projeto.id}`}
+            className="px-4 py-2 text-sm font-medium text-center text-emerald-700 transition-colors border rounded-md border-emerald-200 hover:bg-emerald-50"
+          >
+            Ver Detalhes
+          </Link>
+        </div>
+      </li>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -192,14 +240,30 @@ export default function Perfil() {
   }
 
   return (
-    <section className="min-h-screen px-8 pt-24 pb-24 bg-linear-to-br from-emerald-100 via-white to-amber-100">
+    <section className="min-h-screen px-4 md:px-8 pt-24 pb-24 bg-linear-to-br from-emerald-100 via-white to-amber-100 relative">
+
+      {feedback.message && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-md animate-bounce-in px-4">
+          <Alert
+            color={feedback.type === "success" ? "success" : "failure"}
+            icon={feedback.type === "success" ? HiCheck : HiX}
+            onDismiss={() => setFeedback({ type: "", message: "" })}
+            rounded
+            className="shadow-xl border-t-4" 
+          >
+            <span className="font-medium">
+              {feedback.type === "success" ? "Sucesso! " : "Atenção! "}
+            </span>
+            {feedback.message}
+          </Alert>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto">
 
-        {/* Card do perfil */}
         <div className="relative mb-10 overflow-hidden bg-white rounded-lg shadow">
           <div className="h-40 bg-linear-to-r from-emerald-700 to-emerald-500"></div>
 
-          {/* Botão Editar/Salvar */}
           <div className="absolute top-4 right-4">
             {!isEditing ? (
               <button
@@ -230,7 +294,6 @@ export default function Perfil() {
           </div>
 
           <div className="px-8 pb-8">
-            {/* Foto e Nome */}
             <div className={`flex flex-col items-end gap-6 mb-6 -mt-20 md:flex-row ${isEditing ? "mt-7" : "-mt-20"}`}>
               <div className="relative group">
                 <img
@@ -266,7 +329,6 @@ export default function Perfil() {
               </div>
             </div>
 
-            {/* INFO: Email, Telefone e Cidade */}
             <div className="grid gap-4 mb-6 md:grid-cols-3 text-slate-600">
               <div className="flex items-center gap-2">
                 <Mail className="text-emerald-600 shrink-0" size={18} />
@@ -302,7 +364,6 @@ export default function Perfil() {
               </div>
             </div>
 
-            {/* RESUMO */}
             <div>
               <label className="block mb-1 font-medium text-slate-700">Resumo:</label>
               {!isEditing ? (
@@ -320,7 +381,6 @@ export default function Perfil() {
               )}
             </div>
 
-            {/* Botão Criar Projeto */}
             {isProfessor && !isEditing && (
               <div className="flex justify-end mt-6">
                 <button
@@ -334,7 +394,6 @@ export default function Perfil() {
           </div>
         </div>
 
-        {/* Meus Projetos */}
         <div className="p-8 mb-10 bg-white rounded-lg shadow">
           <h2 className="flex items-center gap-2 mb-6 text-2xl font-bold text-slate-800">
             <Briefcase className="text-emerald-600" />
@@ -342,13 +401,12 @@ export default function Perfil() {
           </h2>
 
           <div className="flex gap-3 mb-6 border-b border-gray-100 pb-4">
-            {/* Só mostra aba de criados se for professor */}
             {isProfessor && (
               <button
                 onClick={() => setProjectTab("created")}
                 className={`px-5 py-2 rounded-md font-medium transition-colors ${projectTab === "created"
-                    ? "bg-emerald-600 text-white shadow-sm"
-                    : "bg-white text-slate-600 hover:bg-gray-50 border border-gray-200"
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "bg-white text-slate-600 hover:bg-gray-50 border border-gray-200"
                   }`}
               >
                 Gerenciados por mim ({createdProjects.length})
@@ -358,8 +416,8 @@ export default function Perfil() {
             <button
               onClick={() => setProjectTab("participated")}
               className={`px-5 py-2 rounded-md font-medium transition-colors ${projectTab === "participated"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "bg-white text-slate-600 hover:bg-gray-50 border border-gray-200"
+                ? "bg-emerald-600 text-white shadow-sm"
+                : "bg-white text-slate-600 hover:bg-gray-50 border border-gray-200"
                 }`}
             >
               Participações ({participatedProjects.length})
@@ -379,7 +437,6 @@ export default function Perfil() {
           )}
         </div>
 
-        {/* Excluir conta */}
         <div className="flex justify-end mt-4">
           <button
             onClick={handleDeleteAccount}
