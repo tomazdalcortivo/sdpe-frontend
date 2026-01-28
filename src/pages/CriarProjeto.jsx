@@ -17,12 +17,15 @@ export default function CriarProjeto() {
   const [buscaInst, setBuscaInst] = useState("");
   const wrapperRefInst = useRef(null);
 
-  const [buscaPart, setBuscaPart] = useState(""); 
-  const [sugestoesPart, setSugestoesPart] = useState([]); 
-  const [participantesSelecionados, setParticipantesSelecionados] = useState([]); 
+  const [buscaPart, setBuscaPart] = useState("");
+  const [sugestoesPart, setSugestoesPart] = useState([]);
+  const [participantesSelecionados, setParticipantesSelecionados] = useState(
+    [],
+  );
   const wrapperRefPart = useRef(null);
 
-  const formFieldBorder = "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all";
+  const formFieldBorder =
+    "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all";
   const formFieldName = "block mb-1 text-sm font-medium text-slate-700";
 
   const [formData, setFormData] = useState({
@@ -46,17 +49,25 @@ export default function CriarProjeto() {
       try {
         const res = await api.get("/api/instituicao-ensino");
         setInstituicoesExistentes(res.data);
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+      }
     }
     carregar();
   }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (wrapperRefInst.current && !wrapperRefInst.current.contains(event.target)) {
+      if (
+        wrapperRefInst.current &&
+        !wrapperRefInst.current.contains(event.target)
+      ) {
         setSugestoesInstituicao([]);
       }
-      if (wrapperRefPart.current && !wrapperRefPart.current.contains(event.target)) {
+      if (
+        wrapperRefPart.current &&
+        !wrapperRefPart.current.contains(event.target)
+      ) {
         setSugestoesPart([]);
       }
     }
@@ -67,11 +78,11 @@ export default function CriarProjeto() {
   const handleBuscaInstituicao = (e) => {
     const valor = e.target.value;
     setBuscaInst(valor);
-    setFormData(prev => ({ ...prev, instNome: valor }));
+    setFormData((prev) => ({ ...prev, instNome: valor }));
 
     if (valor.length > 0) {
-      const filtradas = instituicoesExistentes.filter(inst =>
-        inst.nome.toLowerCase().includes(valor.toLowerCase())
+      const filtradas = instituicoesExistentes.filter((inst) =>
+        inst.nome.toLowerCase().includes(valor.toLowerCase()),
       );
       setSugestoesInstituicao(filtradas);
       setMostrarCamposNovaInst(true);
@@ -83,23 +94,27 @@ export default function CriarProjeto() {
 
   const selecionarInstituicao = (inst) => {
     setBuscaInst(inst.nome);
-    setFormData(prev => ({
-      ...prev, instNome: inst.nome, instCidade: inst.cidade || "", instDescricao: inst.descricao || ""
+    setFormData((prev) => ({
+      ...prev,
+      instNome: inst.nome,
+      instCidade: inst.cidade || "",
+      instDescricao: inst.descricao || "",
     }));
     setSugestoesInstituicao([]);
     setMostrarCamposNovaInst(false);
   };
 
-
   const handleBuscaParticipante = async (e) => {
     const valor = e.target.value;
     setBuscaPart(valor);
 
-    if (valor.length > 2) { 
+    if (valor.length > 2) {
       try {
-        const response = await api.get(`/api/participantes/buscar?nome=${valor}`);
-        const naoSelecionados = response.data.filter(p =>
-          !participantesSelecionados.some(sel => sel.id === p.id)
+        const response = await api.get(
+          `/api/participantes/buscar?nome=${valor}`,
+        );
+        const naoSelecionados = response.data.filter(
+          (p) => !participantesSelecionados.some((sel) => sel.id === p.id),
         );
         setSugestoesPart(naoSelecionados);
       } catch (error) {
@@ -110,17 +125,17 @@ export default function CriarProjeto() {
     }
   };
 
-
   const adicionarParticipante = (participante) => {
     setParticipantesSelecionados([...participantesSelecionados, participante]);
     setBuscaPart("");
-    setSugestoesPart([]); 
+    setSugestoesPart([]);
   };
 
   const removerParticipante = (id) => {
-    setParticipantesSelecionados(participantesSelecionados.filter(p => p.id !== id));
+    setParticipantesSelecionados(
+      participantesSelecionados.filter((p) => p.id !== id),
+    );
   };
-
 
   const handleEnviar = async (e) => {
     e.preventDefault();
@@ -150,13 +165,16 @@ export default function CriarProjeto() {
         instituicaoEnsino: {
           nome: formData.instNome,
           cidade: formData.instCidade,
-          descricao: formData.instDescricao
+          descricao: formData.instDescricao,
         },
-        participantes: participantesSelecionados.map(p => ({ id: p.id }))
+        participantes: participantesSelecionados.map((p) => ({ id: p.id })),
       };
 
       const submitData = new FormData();
-      submitData.append("projeto", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+      submitData.append(
+        "projeto",
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
+      );
       if (arquivo) submitData.append("arquivo", arquivo);
 
       await api.post("/api/projetos", submitData, {
@@ -165,7 +183,6 @@ export default function CriarProjeto() {
 
       setSucesso("Projeto criado com sucesso!");
       setTimeout(() => navigate("/perfil"), 2000);
-
     } catch (error) {
       console.error(error);
       setErros(["Erro ao criar projeto."]);
@@ -174,7 +191,8 @@ export default function CriarProjeto() {
     }
   };
 
-  const handleAlteracao = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleAlteracao = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   const handleAlterarArquivo = (e) => setArquivo(e.target.files[0]);
 
   return (
@@ -186,25 +204,43 @@ export default function CriarProjeto() {
       </div>
 
       <div className="flex justify-center">
-        <form onSubmit={handleEnviar} className="w-full max-w-xl p-8 space-y-4 bg-white rounded-lg shadow-lg">
-
+        <form
+          onSubmit={handleEnviar}
+          className="w-full max-w-xl p-8 space-y-4 bg-white rounded-lg shadow-lg"
+        >
           {erros.length > 0 && <Alert type="error">{erros[0]}</Alert>}
           <Alert type="success">{sucesso}</Alert>
 
           <label className={formFieldName}>Nome do Projeto</label>
-          <input required name="nome" value={formData.nome} onChange={handleAlteracao} className={formFieldBorder} />
+          <input
+            required
+            name="nome"
+            value={formData.nome}
+            onChange={handleAlteracao}
+            className={formFieldBorder}
+            placeholder="Digite o nome do projeto"
+          />
 
           {/* ... Instituição ... */}
           <div className="relative" ref={wrapperRefInst}>
             <label className={formFieldName}>Instituição de Ensino</label>
             <input
-              name="instNome" value={buscaInst} onChange={handleBuscaInstituicao}
-              className={formFieldBorder} placeholder="Digite a sigla (Ex: IFPR)" autoComplete="off" required
+              name="instNome"
+              value={buscaInst}
+              onChange={handleBuscaInstituicao}
+              className={formFieldBorder}
+              placeholder="Digite a sigla (Ex: IFPR)"
+              autoComplete="off"
+              required
             />
             {sugestoesInstituicao.length > 0 && (
               <ul className="absolute z-10 w-full mt-1 overflow-auto bg-white border rounded shadow max-h-48">
-                {sugestoesInstituicao.map(inst => (
-                  <li key={inst.id} onClick={() => selecionarInstituicao(inst)} className="px-4 py-2 cursor-pointer hover:bg-emerald-50">
+                {sugestoesInstituicao.map((inst) => (
+                  <li
+                    key={inst.id}
+                    onClick={() => selecionarInstituicao(inst)}
+                    className="px-4 py-2 cursor-pointer hover:bg-emerald-50"
+                  >
                     {inst.nome} - {inst.cidade}
                   </li>
                 ))}
@@ -212,15 +248,30 @@ export default function CriarProjeto() {
             )}
             {mostrarCamposNovaInst && (
               <div className="p-3 mt-2 border rounded bg-emerald-50 border-emerald-200">
-                <input name="instCidade" placeholder="Cidade *" required value={formData.instCidade} onChange={handleAlteracao} className="w-full p-2 mb-2 border rounded" />
-                <textarea name="instDescricao" placeholder="Descrição" value={formData.instDescricao} onChange={handleAlteracao} className="w-full p-2 border rounded" />
+                <input
+                  name="instCidade"
+                  placeholder="Cidade *"
+                  required
+                  value={formData.instCidade}
+                  onChange={handleAlteracao}
+                  className="w-full p-2 mb-2 border rounded"
+                />
+                <textarea
+                  name="instDescricao"
+                  placeholder="Descrição"
+                  value={formData.instDescricao}
+                  onChange={handleAlteracao}
+                  className="w-full p-2 border rounded"
+                />
               </div>
             )}
           </div>
 
           {/* --- PARTICIPANTES --- */}
           <div className="space-y-2">
-            <label className={formFieldName}>Adicionar Participantes (Alunos)</label>
+            <label className={formFieldName}>
+              Adicionar Participantes (Alunos)
+            </label>
 
             {/* Campo de Busca */}
             <div className="relative" ref={wrapperRefPart}>
@@ -228,7 +279,7 @@ export default function CriarProjeto() {
                 type="text"
                 value={buscaPart}
                 onChange={handleBuscaParticipante}
-                placeholder="Digite o nome do aluno..."
+                placeholder="Digite o nome do aluno"
                 className={formFieldBorder}
                 autoComplete="off"
               />
@@ -253,7 +304,10 @@ export default function CriarProjeto() {
             {/* Lista de Selecionados (Tags) */}
             <div className="flex flex-wrap gap-2 mt-2">
               {participantesSelecionados.map((part) => (
-                <div key={part.id} className="flex items-center gap-2 px-3 py-1 text-sm border rounded-full bg-emerald-100 text-emerald-800 border-emerald-200">
+                <div
+                  key={part.id}
+                  className="flex items-center gap-2 px-3 py-1 text-sm border rounded-full bg-emerald-100 text-emerald-800 border-emerald-200"
+                >
                   <span>{part.nome}</span>
                   <button
                     type="button"
@@ -265,17 +319,31 @@ export default function CriarProjeto() {
                 </div>
               ))}
               {participantesSelecionados.length === 0 && (
-                <p className="text-xs italic text-slate-400">Nenhum participante adicionado.</p>
+                <p className="text-xs italic text-slate-400">
+                  Nenhum participante adicionado.
+                </p>
               )}
             </div>
           </div>
 
           {/* Restante do form (Descricao, Datas, Area, Carga, Formato, Arquivo) */}
           <label className={formFieldName}>Descrição</label>
-          <textarea required name="descricao" value={formData.descricao} onChange={handleAlteracao} className={formFieldBorder} />
+          <textarea
+            required
+            name="descricao"
+            value={formData.descricao}
+            onChange={handleAlteracao}
+            className={formFieldBorder}
+          />
 
           <label className={formFieldName}>Área</label>
-          <select required name="area" value={formData.area} onChange={handleAlteracao} className={formFieldBorder}>
+          <select
+            required
+            name="area"
+            value={formData.area}
+            onChange={handleAlteracao}
+            className={formFieldBorder}
+          >
             <option value="">Selecione</option>
             <option>Ciências Agrárias</option>
             <option>Ciências Biológicas</option>
@@ -288,15 +356,48 @@ export default function CriarProjeto() {
           </select>
 
           <div className="grid grid-cols-2 gap-4">
-            <div><label className={formFieldName}>Início</label><input type="date" required name="dataInicio" value={formData.dataInicio} onChange={handleAlteracao} className={formFieldBorder} /></div>
-            <div><label className={formFieldName}>Fim</label><input type="date" required name="dataFim" value={formData.dataFim} onChange={handleAlteracao} className={formFieldBorder} /></div>
+            <div>
+              <label className={formFieldName}>Início</label>
+              <input
+                type="date"
+                required
+                name="dataInicio"
+                value={formData.dataInicio}
+                onChange={handleAlteracao}
+                className={formFieldBorder}
+              />
+            </div>
+            <div>
+              <label className={formFieldName}>Fim</label>
+              <input
+                type="date"
+                required
+                name="dataFim"
+                value={formData.dataFim}
+                onChange={handleAlteracao}
+                className={formFieldBorder}
+              />
+            </div>
           </div>
 
           <label className={formFieldName}>Carga Horária</label>
-          <input type="number" required name="cargaHoraria" value={formData.cargaHoraria} onChange={handleAlteracao} className={formFieldBorder} />
+          <input
+            type="number"
+            required
+            name="cargaHoraria"
+            value={formData.cargaHoraria}
+            onChange={handleAlteracao}
+            className={formFieldBorder}
+          />
 
           <label className={formFieldName}>Formato</label>
-          <select required name="formato" value={formData.formato} onChange={handleAlteracao} className={formFieldBorder}>
+          <select
+            required
+            name="formato"
+            value={formData.formato}
+            onChange={handleAlteracao}
+            className={formFieldBorder}
+          >
             <option value="">Selecione</option>
             <option value="Presencial">Presencial</option>
             <option value="Remoto">Remoto</option>
@@ -304,15 +405,24 @@ export default function CriarProjeto() {
           </select>
 
           <label className={formFieldName}>Arquivo comprobatório (PDF)</label>
-          <input type="file" 
-          accept="application/pdf" 
-          required onChange={handleAlterarArquivo} 
-          className={formFieldBorder + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-emerald-50 file:text-emerald-700 file:border-0 hover:file:bg-emerald-100"} />
+          <input
+            type="file"
+            accept="application/pdf"
+            required
+            onChange={handleAlterarArquivo}
+            className={
+              formFieldBorder +
+              " file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-emerald-50 file:text-emerald-700 file:border-0 hover:file:bg-emerald-100"
+            }
+          />
 
-          <button type="submit" disabled={loading} className="w-full py-3 mt-4 font-medium text-white rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-100">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 mt-4 font-medium text-white rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-100"
+          >
             {loading ? "Criando..." : "Criar Projeto"}
           </button>
-
         </form>
       </div>
     </section>

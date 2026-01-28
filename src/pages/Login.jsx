@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react"; // Adicionei Eye para o botão de senha
 import { useState } from "react";
 import api from "../services/api";
 import Alert from "../components/Alert";
@@ -28,33 +28,46 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (!email || !senha) {
+      setErro("Preencha todos os campos.");
+      return;
+    }
+
     setIsLoading(true);
     setErro("");
 
     try {
-      if (!email || !senha) {
-        setErro("Preencha todos os campos.");
-        setIsLoading(false);
-        return;
-      }
-
-      const response = await api.post("/auth/login", {
-        email,
-        senha,
-      });
-
+      const response = await api.post("/auth/login", { email, senha });
       const token = response.data;
+
+      // Salva o token e configura o header para chamadas seguintes
       localStorage.setItem("token", token);
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      navigate("/perfil");
+      // Lógica vinda do PULL: Verificar perfil antes de redirecionar
+      try {
+        const perfilResponse = await api.get("/auth/perfil");
+        const usuario = perfilResponse.data;
+
+        if (usuario.perfil === "ADMIN") {
+          navigate("/painel-administrativo");
+        } else {
+          navigate("/perfil");
+        }
+      } catch (err) {
+        // Se falhar ao buscar perfil, envia para a rota padrão
+        navigate("/perfil");
+      }
     } catch (error) {
       console.error("Erro no login:", error);
 
-      if (error.response?.status === 401 || error.response?.status === 403) {
+      // Melhoria no tratamento de erro unificando as duas versões
+      if (error.response?.data?.error) {
+        setErro(error.response.data.error);
+      } else if (error.response?.status === 401 || error.response?.status === 403) {
         setErro("E-mail ou senha incorretos.");
       } else {
-        setErro("Falha ao entrar. Verifique sua conexão e tente novamente.");
+        setErro("Falha ao entrar. Verifique sua conexão.");
       }
     } finally {
       setIsLoading(false);
@@ -63,22 +76,17 @@ export default function Login() {
 
   return (
     <section className={styles.page}>
-      {/* Cabeçalho */}
       <div className="mt-16 mb-10 text-center">
         <h1 className={styles.title}>Bem-vindo!</h1>
-        <p className={styles.subtitle}>
-          Digite suas credenciais para entrar.
-        </p>
+        <p className={styles.subtitle}>Digite suas credenciais para entrar.</p>
       </div>
 
       <div className={styles.divider}></div>
 
-      {/* Formulário */}
       <div className="flex justify-center">
         <form onSubmit={handleLogin} className={styles.card}>
-          <Alert type="error">{erro}</Alert>
+          {erro && <Alert type="error">{erro}</Alert>}
 
-          {/* Email */}
           <div>
             <label className={styles.label}>E-mail</label>
             <div className={styles.inputWrapper}>
@@ -94,7 +102,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Senha */}
           <div>
             <label className={styles.label}>Senha</label>
             <div className={styles.inputWrapper}>
@@ -111,11 +118,12 @@ export default function Login() {
                 type="button"
                 onClick={() => setMostrarSenha(!mostrarSenha)}
                 className="absolute -translate-y-1/2 right-3 top-1/2 text-slate-400 hover:text-slate-600"
-              />
+              >
+                {mostrarSenha ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
           </div>
 
-          {/* Esqueceu senha */}
           <div className="text-right">
             <Link
               to="/recuperar-senha"
@@ -125,26 +133,19 @@ export default function Login() {
             </Link>
           </div>
 
-          {/* Botão */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={styles.button}
-          >
+          <button type="submit" disabled={isLoading} className={styles.button}>
             {isLoading && (
               <div className="w-5 h-5 border-2 border-white rounded-full border-t-transparent animate-spin" />
             )}
             {isLoading ? "Entrando..." : "Entrar"}
           </button>
 
-          {/* Divisor */}
           <div className="flex items-center gap-4 my-6">
             <div className="flex-1 h-px bg-gray-300" />
             <span className="text-sm text-slate-400">ou</span>
             <div className="flex-1 h-px bg-gray-300" />
           </div>
 
-          {/* Criar conta */}
           <p className="text-sm text-center text-slate-600">
             Não tem uma conta?{" "}
             <Link

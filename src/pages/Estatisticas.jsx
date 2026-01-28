@@ -76,24 +76,29 @@ export default function Estatisticas() {
     const animatedTotal = useCountUp(totalProjetos);
 
     useEffect(() => {
+        const verificarPermissoes = async () => {
+            const token = localStorage.getItem("token");
 
-        const token = localStorage.getItem("token");
-        const userStr = localStorage.getItem("user");
+            if (token) {
+                try {
+                    const response = await api.get("/auth/perfil");
+                    const { perfil } = response.data;
 
-        if (token && userStr) {
-            try {
-                const user = JSON.parse(userStr);
-                if (user.perfil === "COORDENADOR" || user.perfil === "ADMIN") {
-                    setIsCoordenador(true);
-                } else {
+                    if (perfil === "COORDENADOR" || perfil === "ADMIN") {
+                        setIsCoordenador(true);
+                    } else {
+                        setIsCoordenador(false);
+                    }
+                } catch (error) {
+                    console.error("Erro ao validar permissões:", error);
                     setIsCoordenador(false);
                 }
-            } catch (error) {
-                console.error("Erro ao ler dados do usuário:", error);
+            } else {
+                setIsCoordenador(false);
             }
-        } else {
-            setIsCoordenador(false);
-        }
+        };
+
+        verificarPermissoes();
     }, []);
 
     // 2. Carregar dados da aba GERAL
