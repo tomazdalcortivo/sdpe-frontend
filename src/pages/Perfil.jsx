@@ -26,22 +26,14 @@ const styles = {
   sectionCard: "p-8 mb-10 bg-white rounded-lg shadow",
   headerBanner: "h-40 bg-linear-to-r from-emerald-700 to-emerald-500",
   label: "block mb-1 font-medium text-slate-700",
-  input:
-    "w-full px-4 py-2 border rounded-md outline-none focus:border-emerald-500 transition-all",
-  inputSmall:
-    "w-full px-2 py-1 border rounded-md outline-none focus:border-emerald-500",
-  btnPrimary:
-    "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50",
-  btnDark:
-    "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-900 hover:bg-emerald-700",
-  btnDanger:
-    "flex items-center gap-2 px-6 py-2 text-white transition-all bg-red-600 rounded-md shadow hover:bg-red-700",
-  btnGhost:
-    "flex items-center gap-2 px-4 py-2 transition-all bg-gray-200 rounded-md hover:bg-gray-300",
-  btnOutline:
-    "px-4 py-2 text-sm font-medium text-center transition-colors border rounded-md text-emerald-700 border-emerald-200 hover:bg-emerald-50",
-  badge:
-    "px-2 py-0.5 text-xs font-semibold rounded-full border bg-emerald-100 text-emerald-800 border-emerald-200",
+  input: "w-full px-4 py-2 border rounded-md outline-none focus:border-emerald-500 transition-all",
+  inputSmall: "w-full px-2 py-1 border rounded-md outline-none focus:border-emerald-500",
+  btnPrimary: "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50",
+  btnDark: "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-900 hover:bg-emerald-700",
+  btnDanger: "flex items-center gap-2 px-6 py-2 text-white transition-all bg-red-600 rounded-md shadow hover:bg-red-700",
+  btnGhost: "flex items-center gap-2 px-4 py-2 transition-all bg-gray-200 rounded-md hover:bg-gray-300",
+  btnOutline: "px-4 py-2 text-sm font-medium text-center transition-colors border rounded-md text-emerald-700 border-emerald-200 hover:bg-emerald-50",
+  badge: "px-2 py-0.5 text-xs font-semibold rounded-full border bg-emerald-100 text-emerald-800 border-emerald-200",
 };
 
 export default function Perfil() {
@@ -77,7 +69,6 @@ export default function Perfil() {
     setTimeout(() => setFeedback({ type: "", message: "" }), 5000);
   };
 
-  // Carregar Estados (Versão HEAD)
   useEffect(() => {
     api
       .get("/api/localidades/estados")
@@ -309,6 +300,7 @@ export default function Perfil() {
                 <Mail className="text-emerald-600 shrink-0" size={18} />
                 <span className="truncate">{userData.email || "-"}</span>
               </div>
+
               <div className="flex items-center gap-2">
                 <Phone className="text-emerald-600 shrink-0" size={18} />
                 {!isEditing ? (
@@ -354,7 +346,7 @@ export default function Perfil() {
                     >
                       <option value="">Cidade</option>
                       {cidades.map((cid) => (
-                        <option key={cid.nome} value={cid.nome}>
+                        <option key={cid.id || cid.nome} value={cid.nome}>
                           {cid.nome}
                         </option>
                       ))}
@@ -434,7 +426,10 @@ export default function Perfil() {
             {currentProjects.map((projeto) => (
               <li
                 key={projeto.id}
-                className={`border rounded-lg overflow-hidden ${!projeto.ativo && projeto.motivoRejeicao ? "border-red-200 bg-red-50" : "border-slate-200 bg-slate-50"}`}
+                className={`border rounded-lg overflow-hidden ${!projeto.ativo && projeto.motivoRejeicao
+                  ? "border-red-200 bg-red-50"
+                  : "border-slate-200 bg-slate-50"
+                  }`}
               >
                 {!projeto.ativo && projeto.motivoRejeicao && (
                   <div className="flex items-start gap-3 p-4 border-b border-red-100">
@@ -452,13 +447,39 @@ export default function Perfil() {
                     </div>
                   </div>
                 )}
+
                 <div className="flex items-center justify-between p-4">
                   <div>
                     <h3 className="font-bold">{projeto.nome}</h3>
-                    <p className="text-sm text-slate-500 line-clamp-1">
+                    <p className="mb-2 text-sm text-slate-500 line-clamp-1">
                       {projeto.descricao}
                     </p>
+
+                    <div className="flex flex-wrap gap-4 text-xs text-slate-600">
+                      {projeto.dataInicio && (
+                        <div className="flex items-center gap-1">
+                          <Calendar size={14} />
+                          {new Date(projeto.dataInicio).toLocaleDateString()}
+                        </div>
+                      )}
+                      {projeto.cargaHoraria && (
+                        <div className="flex items-center gap-1">
+                          <Clock size={14} />
+                          {projeto.cargaHoraria}h
+                        </div>
+                      )}
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${projeto.ativo
+                          ? "bg-green-100 text-green-700 border-green-200"
+                          : "bg-amber-100 text-amber-700 border-amber-200"
+                          }`}
+                      >
+                        {projeto.ativo ? "ATIVO" : "PENDENTE/INATIVO"}
+                      </span>
+                    </div>
+
                   </div>
+
                   <Link
                     to={`/detalhes-projeto/${projeto.id}`}
                     className={styles.btnOutline}
@@ -468,6 +489,11 @@ export default function Perfil() {
                 </div>
               </li>
             ))}
+            {currentProjects.length === 0 && (
+              <li className="py-8 text-center text-slate-500 border-2 border-dashed rounded-lg">
+                Nenhum projeto encontrado.
+              </li>
+            )}
           </ul>
         </div>
 
