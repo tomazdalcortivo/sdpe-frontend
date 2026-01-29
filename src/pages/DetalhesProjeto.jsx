@@ -415,7 +415,6 @@ export default function DetalhesProjeto() {
                   </div>
                 </div>
 
-                {/* Seção de Equipe do Projeto */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-2xl font-bold text-gray-900">Equipe do Projeto</h2>
@@ -437,7 +436,6 @@ export default function DetalhesProjeto() {
                     )}
                   </div>
 
-                  {/* Lista de Coordenadores */}
                   <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Coordenadores</h3>
                   <div className="space-y-2 mb-6">
                     {(project.coordenadores || []).map((coord) => (
@@ -460,7 +458,6 @@ export default function DetalhesProjeto() {
                     ))}
                   </div>
 
-                  {/* Lista de Participantes */}
                   <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Participantes</h3>
                   <div className="space-y-2">
                     {(project.participantes || []).map((member) => (
@@ -487,7 +484,6 @@ export default function DetalhesProjeto() {
                   </div>
                 </div>
 
-                {/* Seção de Redes Sociais (Apenas Leitura) */}
                 {!isEditing && project.redesSociais && Object.values(project.redesSociais).some(url => url) && (
                   <div className="mt-8 border-t border-gray-200 pt-6">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Acompanhe nas Redes</h2>
@@ -575,7 +571,6 @@ export default function DetalhesProjeto() {
                   </div>
                 )}
 
-                {/* MODAL DE BUSCA DE MEMBROS */}
                 {showMemberModal && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
@@ -636,7 +631,6 @@ export default function DetalhesProjeto() {
             {activeTab === 'feed' && (
               <div className="max-w-3xl mx-auto space-y-8">
 
-                {/* Área de Criação de Post (Apenas Coordenadores) */}
                 {isOwner && (
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <h3 className="font-bold text-gray-700 mb-4">Criar nova publicação</h3>
@@ -665,13 +659,11 @@ export default function DetalhesProjeto() {
                   </div>
                 )}
 
-                {/* Lista de Posts */}
                 <div className="space-y-6">
                   {posts && posts.length > 0 ? (
                     posts.map((post) => (
                       <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                        
-                        {/* Cabeçalho do Post */}
                         <div className="p-4 flex items-center gap-3 border-b border-gray-50">
                           <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold">
                             {post.autor?.nome?.slice(0, 2).toUpperCase() || 'AD'}
@@ -684,12 +676,10 @@ export default function DetalhesProjeto() {
                           </div>
                         </div>
 
-                        {/* Conteúdo Texto */}
                         <div className="p-4 text-gray-800 whitespace-pre-wrap leading-relaxed">
                           {post.conteudo}
                         </div>
 
-                        {/* Conteúdo Mídia (Imagem/Vídeo) */}
                         {post.mediaUrl && (
                           <div className="w-full bg-gray-100">
                             <img

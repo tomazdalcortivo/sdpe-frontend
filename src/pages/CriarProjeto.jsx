@@ -43,7 +43,6 @@ export default function CriarProjeto() {
     tipoDocumento: "",
   });
 
-  // Carregar Instituições
   useEffect(() => {
     async function carregar() {
       try {
@@ -221,7 +220,6 @@ export default function CriarProjeto() {
             placeholder="Digite o nome do projeto"
           />
 
-          {/* ... Instituição ... */}
           <div className="relative" ref={wrapperRefInst}>
             <label className={formFieldName}>Instituição de Ensino</label>
             <input
@@ -267,13 +265,11 @@ export default function CriarProjeto() {
             )}
           </div>
 
-          {/* --- PARTICIPANTES --- */}
           <div className="space-y-2">
             <label className={formFieldName}>
               Adicionar Participantes (Alunos)
             </label>
 
-            {/* Campo de Busca */}
             <div className="relative" ref={wrapperRefPart}>
               <input
                 type="text"
@@ -284,7 +280,6 @@ export default function CriarProjeto() {
                 autoComplete="off"
               />
 
-              {/* Sugestões */}
               {sugestoesPart.length > 0 && (
                 <ul className="absolute z-10 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-md shadow-lg max-h-48">
                   {sugestoesPart.map((part) => (
@@ -301,7 +296,6 @@ export default function CriarProjeto() {
               )}
             </div>
 
-            {/* Lista de Selecionados (Tags) */}
             <div className="flex flex-wrap gap-2 mt-2">
               {participantesSelecionados.map((part) => (
                 <div
@@ -326,7 +320,6 @@ export default function CriarProjeto() {
             </div>
           </div>
 
-          {/* Restante do form (Descricao, Datas, Area, Carga, Formato, Arquivo) */}
           <label className={formFieldName}>Descrição</label>
           <textarea
             required

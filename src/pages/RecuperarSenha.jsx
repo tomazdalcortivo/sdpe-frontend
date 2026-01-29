@@ -2,16 +2,15 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, ArrowLeft, KeyRound, Lock } from "lucide-react";
 import api from "../services/api";
-import Alert from "../components/Alert"; // 1. Importar o componente
+import Alert from "../components/Alert";
 
 export default function RecuperarSenha() {
-  const [etapa, setEtapa] = useState(1); // 1: Digitar Email, 2: Digitar Código e Nova Senha
+  const [etapa, setEtapa] = useState(1);
   const [email, setEmail] = useState("");
   const [codigo, setCodigo] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 2. Estados para mensagens
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
 
@@ -26,7 +25,6 @@ export default function RecuperarSenha() {
     try {
       await api.post("/auth/recuperar-senha", { email });
       setEtapa(2);
-      // 3. Feedback positivo
       setMensagem("Código enviado! Verifique seu e-mail (inclusive spam).");
     } catch (error) {
       console.error(error);
@@ -81,7 +79,6 @@ export default function RecuperarSenha() {
           onSubmit={etapa === 1 ? handleEnviarEmail : handleRedefinirSenha}
           className="w-full max-w-xl p-8 space-y-4 transition-all bg-white rounded-lg shadow-lg"
         >
-          {/* 4. Componentes Alert */}
           <Alert type="error">{erro}</Alert>
           <Alert type="success">{mensagem}</Alert>
 

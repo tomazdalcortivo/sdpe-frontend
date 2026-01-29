@@ -164,7 +164,12 @@ export default function Perfil() {
       )
     ) {
       try {
-        await api.delete(`/api/participantes/${userData.id}`);
+        const endpoint =
+          role === "COORDENADOR" || role === "ADMIN"
+            ? `/api/coordenadores/${userData.id}`
+            : `/api/participantes/${userData.id}`;
+
+        await api.delete(endpoint);
         localStorage.removeItem("token");
         navigate("/entrar");
       } catch (error) {

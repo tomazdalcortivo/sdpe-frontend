@@ -14,6 +14,7 @@ import {
   Eye,
   Mail,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import api from "../services/api";
 
 export default function PainelAdministrativo() {
@@ -98,20 +99,26 @@ export default function PainelAdministrativo() {
   }, [activeSection]);
 
   async function handleExcluirProjeto(idProjeto) {
-    if (
-      !confirm(
-        "ATENÇÃO: Isso excluirá o projeto, arquivos, visualizações e contatos vinculados. Não pode ser desfeito. Continuar?",
-      )
-    )
-      return;
+    const result = await Swal.fire({
+      title: "Tem a certeza?",
+      text: "Isso excluirá o projeto, arquivos, visualizações e contatos vinculados. Não pode ser desfeito.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sim, excluir!",
+      cancelButtonText: "Cancelar"
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await api.delete(`/api/admin/projetos/${idProjeto}`);
-      alert("Projeto excluído com sucesso.");
+      Swal.fire("Excluído!", "O projeto foi excluído com sucesso.", "success");
       buscarDados();
     } catch (error) {
       console.error(error);
-      alert("Erro ao excluir projeto.");
+      Swal.fire("Erro", "Erro ao excluir projeto.", "error");
     }
   }
 
@@ -120,27 +127,44 @@ export default function PainelAdministrativo() {
       await api.patch(`/api/admin/projetos/${idProjeto}/status`, null, {
         params: { ativo: true },
       });
-      alert("Projeto aprovado com sucesso!");
+      Swal.fire({
+        title: "Aprovado!",
+        text: "Projeto aprovado com sucesso!",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false
+      });
       buscarDados();
     } catch (error) {
       console.error(error);
-      alert("Erro ao aprovar projeto.");
+      Swal.fire("Erro", "Erro ao aprovar projeto.", "error");
     }
   }
 
   async function handleRejeitarProjeto(idProjeto) {
-    const motivo = window.prompt(
-      "Motivo da rejeição (será exibido ao coordenador):",
-    );
-    if (motivo === null) return;
-    if (motivo.trim() === "") return alert("Motivo obrigatório.");
+    const { value: motivo } = await Swal.fire({
+      title: "Rejeitar Projeto",
+      input: "textarea",
+      inputLabel: "Motivo da rejeição",
+      inputPlaceholder: "Explique o motivo para o coordenador...",
+      showCancelButton: true,
+      confirmButtonText: "Rejeitar",
+      confirmButtonColor: "#d33",
+      inputValidator: (value) => {
+        if (!value) {
+          return "Você precisa escrever um motivo!";
+        }
+      }
+    });
 
-    try {
-      await api.patch(`/api/admin/projetos/${idProjeto}/rejeitar`, { motivo });
-      alert("Projeto rejeitado e notificação enviada.");
-      buscarDados();
-    } catch (error) {
-      alert("Erro ao rejeitar.");
+    if (motivo) {
+      try {
+        await api.patch(`/api/admin/projetos/${idProjeto}/rejeitar`, { motivo });
+        Swal.fire("Rejeitado", "Projeto rejeitado e notificação enviada.", "success");
+        buscarDados();
+      } catch (error) {
+        Swal.fire("Erro", "Erro ao rejeitar projeto.", "error");
+      }
     }
   }
 
@@ -149,54 +173,75 @@ export default function PainelAdministrativo() {
       await api.patch(`/api/admin/contas/${idConta}/status`, null, {
         params: { ativo: true },
       });
-      alert("Conta ativada com sucesso!");
+      const texto = activeSection === "gerenciamentoContas" ? "Conta reativada!" : "Conta aprovada!";
+      Swal.fire({
+        title: "Sucesso!",
+        text: texto,
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false
+      });
       buscarDados();
     } catch (error) {
       console.error(error);
-      alert("Erro ao ativar conta.");
+      Swal.fire("Erro", "Erro ao ativar conta.", "error");
     }
   }
 
   async function handleBloquear(idConta) {
+    const result = await Swal.fire({
+      title: "Bloquear conta?",
+      text: "O usuário perderá acesso ao sistema imediatamente.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#f59e0b",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sim, bloquear"
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       await api.patch(`/api/admin/contas/${idConta}/status`, null, {
         params: { ativo: false },
       });
-      alert("Conta bloqueada.");
+      Swal.fire("Bloqueado!", "A conta foi bloqueada.", "success");
       buscarDados();
     } catch (error) {
       console.error(error);
-      alert("Erro ao bloquear conta.");
+      Swal.fire("Erro", "Erro ao bloquear conta.", "error");
     }
   }
 
   async function handleExcluir(idConta) {
-    if (
-      !confirm(
-        "Tem a certeza? Isso excluirá a conta, o perfil e TODOS os projetos deste utilizador (se for coordenador).",
-      )
-    )
-      return;
+    const result = await Swal.fire({
+      title: "Exclusão Permanente",
+      text: "Isso excluirá a conta, perfil e TODOS os projetos deste utilizador (se for coordenador).",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sim, excluir tudo!"
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await api.delete(`/api/admin/contas/${idConta}`);
-      alert("Conta e dados excluídos.");
+      Swal.fire("Excluído!", "Conta e dados excluídos.", "success");
       buscarDados();
     } catch (error) {
       console.error(error);
-      alert("Erro ao excluir conta.");
+      Swal.fire("Erro", "Erro ao excluir conta.", "error");
     }
   }
 
   async function handleResponderContato(item) {
     const { value: textoResposta } = await Swal.fire({
-      title: `Responder a ${item.nome}`,
+      title: `Responder a ${item.nome || 'Usuário'}`,
       input: "textarea",
       inputLabel: `Para: ${item.email}`,
       inputPlaceholder: "Escreva a sua resposta aqui...",
-      inputAttributes: {
-        "aria-label": "Escreva a sua resposta aqui",
-      },
       showCancelButton: true,
       confirmButtonText: 'Enviar Email <i class="fa fa-paper-plane"></i>',
       confirmButtonColor: "#059669",
@@ -214,7 +259,7 @@ export default function PainelAdministrativo() {
           return true;
         } catch (error) {
           Swal.showValidationMessage(
-            `Falha no envio: ${error.response?.data?.message || "Erro de servidor"}`,
+            `Falha no envio: ${error.response?.data?.message || "Erro de servidor"}`
           );
         }
       },
@@ -222,11 +267,29 @@ export default function PainelAdministrativo() {
     });
 
     if (textoResposta) {
-      Swal.fire({
-        title: "Enviado!",
-        text: "O email de resposta foi enviado com sucesso.",
-        icon: "success",
-      });
+      Swal.fire("Enviado!", "O email de resposta foi enviado com sucesso.", "success");
+    }
+  }
+
+  async function handleArquivarContato(id) {
+    const result = await Swal.fire({
+      title: 'Arquivar mensagem?',
+      text: "Esta mensagem será removida permanentemente da lista.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sim, arquivar'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.delete(`/api/admin/contatos/${id}`);
+        Swal.fire('Arquivado!', 'Mensagem removida.', 'success');
+        buscarDados();
+      } catch (error) {
+        Swal.fire('Erro!', 'Erro ao arquivar mensagem.', 'error');
+      }
     }
   }
 
@@ -319,7 +382,7 @@ export default function PainelAdministrativo() {
         </h1>
 
         <div className="flex flex-col gap-8 md:flex-row">
-          {/* MENU LATERAL */}
+
           <div className="w-full space-y-6 md:w-64 shrink-0">
             <div className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-xl">
               <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
@@ -359,7 +422,6 @@ export default function PainelAdministrativo() {
             </div>
           </div>
 
-          {/* CONTEÚDO */}
           <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 min-h-[500px] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50 rounded-t-xl">
               <h3 className="font-semibold text-gray-800">
@@ -395,7 +457,7 @@ export default function PainelAdministrativo() {
                 {listaDados.map((item, index) => {
                   const itemId = item.id || index;
                   const isExpanded = expandedItem === itemId;
-                  const accountId = item.conta?.id; // ID para deletar/ativar conta
+                  const accountId = item.conta?.id;
 
                   return (
                     <div
@@ -425,8 +487,22 @@ export default function PainelAdministrativo() {
                         {renderExtraInfo(item)}
                         {activeSection === "solicitacaoSuporte" &&
                           renderContatoBadge(item.tipoContato)}
+                        {activeSection === "gerenciamentoProjetos" &&
+                          (item.status ? (
+                            <span className="px-2 py-1 text-xs font-bold text-green-600 bg-green-100 rounded">
+                              ATIVO
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 text-xs font-bold text-red-600 bg-red-100 rounded">
+                              INATIVO
+                            </span>
+                          ))}
+                        {activeSection === "solicitacaoProjetos" && (
+                          <span className="px-2 py-1 text-xs font-bold rounded text-amber-600 bg-amber-100">
+                            PENDENTE
+                          </span>
+                        )}
 
-                        {/* Status Badges para Contas */}
                         {activeSection === "solicitacaoCadastros" && (
                           <span className="px-2 py-1 text-xs font-bold rounded text-amber-600 bg-amber-100">
                             PENDENTE
@@ -448,24 +524,29 @@ export default function PainelAdministrativo() {
 
                       {isExpanded && (
                         <div className="px-4 pt-0 pb-4 pl-12">
-                          {/* SEÇÃO DE SUPORTE */}
+
                           {activeSection === "solicitacaoSuporte" ? (
                             <div className="p-4 mt-2 bg-white border border-gray-200 rounded">
                               <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                "{item.mensagem}"
+                                {item.mensagem}
                               </p>
-                              <div className="flex gap-2 mt-4">
-                                <a
-                                  href={`mailto:${item.email}`}
-                                  className="flex items-center gap-2 text-sm text-emerald-600 hover:underline"
+                              <div className="flex gap-3 mt-4 pt-3 border-t border-gray-100">
+                                <button
+                                  onClick={() => handleResponderContato(item)}
+                                  className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700"
                                 >
                                   <Mail size={16} /> Responder por Email
-                                </a>
+                                </button>
+                                <button
+                                  onClick={() => handleArquivarContato(item.id)}
+                                  className="flex items-center gap-2 px-4 py-2 ml-auto text-sm text-red-600 border border-red-200 rounded-md hover:bg-red-50"
+                                >
+                                  <Trash2 size={16} /> Deletar
+                                </button>
                               </div>
                             </div>
                           ) : (
                             <div>
-                              {/* Visualizar Documento (Modal) */}
                               {(item.documentoUrl || item.documentoPath) && (
                                 <div className="mb-4">
                                   <button
@@ -483,6 +564,80 @@ export default function PainelAdministrativo() {
                                   </button>
                                 </div>
                               )}
+
+                              {(activeSection === "solicitacaoCadastros" || activeSection === "gerenciamentoContas") && (
+                                <div className="mb-5 p-4 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                                  <h4 className="font-bold text-emerald-800 border-b border-slate-200 pb-2 mb-3">
+                                    Dados Completos do Participante
+                                  </h4>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
+                                    <div>
+                                      <span className="block text-xs font-bold text-slate-400 uppercase">CPF</span>
+                                      <span className="text-slate-700 font-mono">{item.cpf || "—"}</span>
+                                    </div>
+
+                                    <div>
+                                      <span className="block text-xs font-bold text-slate-400 uppercase">Data de Nascimento</span>
+                                      <span className="text-slate-700">
+                                        {item.dataNascimento ? new Date(item.dataNascimento).toLocaleDateString('pt-BR') : "—"}
+                                      </span>
+                                    </div>
+
+                                    <div>
+                                      <span className="block text-xs font-bold text-slate-400 uppercase">Telefone</span>
+                                      <span className="text-slate-700">{item.telefone || "—"}</span>
+                                    </div>
+
+                                    <div>
+                                      <span className="block text-xs font-bold text-slate-400 uppercase">Localidade</span>
+                                      <span className="text-slate-700">
+                                        {item.cidade ? `${item.cidade} - ${item.estado}` : "—"}
+                                      </span>
+                                    </div>
+
+                                    <div>
+                                      <span className="block text-xs font-bold text-slate-400 uppercase">Data de Cadastro</span>
+                                      <span className="text-slate-700">
+                                        {item.conta?.dataCriacao ? new Date(item.conta.dataCriacao).toLocaleDateString('pt-BR') : "—"}
+                                      </span>
+                                    </div>
+
+                                    <div>
+                                      <span className="block text-xs font-bold text-slate-400 uppercase">Vínculo Institucional</span>
+                                      <span className={`font-semibold ${item.vinculoInstitucional ? "text-green-600" : "text-gray-500"}`}>
+                                        {item.vinculoInstitucional ? "Sim, possui vínculo" : "Não informado"}
+                                      </span>
+                                    </div>
+
+                                    {(item.cargoInstituicao || item.funcao) && (
+                                      <div className="md:col-span-2 mt-2 pt-2 border-t border-slate-200">
+                                        <p className="text-xs font-bold text-emerald-600 mb-2 uppercase">Dados Institucionais (Coordenador)</p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                          <div>
+                                            <span className="block text-xs font-bold text-slate-400 uppercase">Cargo</span>
+                                            <span className="text-slate-700">{item.cargoInstituicao || "—"}</span>
+                                          </div>
+                                          <div>
+                                            <span className="block text-xs font-bold text-slate-400 uppercase">Função</span>
+                                            <span className="text-slate-700">{item.funcao || "—"}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {item.resumo && (
+                                    <div className="mt-4 pt-3 border-t border-slate-200">
+                                      <span className="block text-xs font-bold text-slate-400 uppercase mb-1">Resumo / Apresentação</span>
+                                      <div className="bg-white p-3 rounded border border-slate-100 text-slate-600 italic">
+                                        "{item.resumo}"
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
 
                               <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-100">
                                 {/* PROJETOS */}
@@ -565,11 +720,10 @@ export default function PainelAdministrativo() {
 
                                     <button
                                       onClick={() => {
-                                        /* Lógica de excluir */
                                       }}
                                       className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 border border-red-200 rounded-md hover:bg-red-50"
                                     >
-                                      <Trash2 size={16} /> Arquivar
+                                      <Trash2 size={16} /> Deletar
                                     </button>
                                   </>
                                 )}

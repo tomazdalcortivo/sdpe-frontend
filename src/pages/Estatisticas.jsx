@@ -38,7 +38,6 @@ function useCountUp(endValue, duration = 2000) {
             const progress = timestamp - startTime;
 
             if (progress < duration) {
-                // Calcula o valor proporcional ao tempo decorrido
                 const nextCount = Math.min(endValue, Math.floor((progress / duration) * endValue));
                 setCount(nextCount);
                 animationFrame = requestAnimationFrame(animate);
@@ -101,7 +100,6 @@ export default function Estatisticas() {
         verificarPermissoes();
     }, []);
 
-    // 2. Carregar dados da aba GERAL
     useEffect(() => {
         if (abaAtiva === "geral") {
             async function fetchGeral() {
@@ -144,7 +142,6 @@ export default function Estatisticas() {
         }
     }, [abaAtiva]);
 
-    // 3. Carregar lista de projetos do COORDENADOR (Apenas se tiver permissão e estiver na aba)
     useEffect(() => {
         if (abaAtiva === "coordenador" && isCoordenador) {
             async function fetchProjetos() {
@@ -163,7 +160,6 @@ export default function Estatisticas() {
         }
     }, [abaAtiva, isCoordenador]);
 
-    // 4. Carregar visualizações quando muda o projeto selecionado
     useEffect(() => {
         if (abaAtiva === "coordenador" && projetoSelecionado) {
             async function fetchVis() {
@@ -192,14 +188,13 @@ export default function Estatisticas() {
         }
     }, [projetoSelecionado, abaAtiva]);
 
-    // Configuração para forçar números inteiros no gráfico de linha
     const optionsLine = {
         maintainAspectRatio: false,
         scales: {
             y: {
                 ticks: {
-                    stepSize: 1, // Passos de 1 em 1
-                    precision: 0 // Sem casas decimais
+                    stepSize: 1, 
+                    precision: 0 
                 },
                 beginAtZero: true
             }
@@ -217,7 +212,6 @@ export default function Estatisticas() {
             <div className="max-w-6xl mx-auto">
                 <h1 className="mb-8 text-3xl font-bold text-center text-emerald-900">Painel de Estatísticas</h1>
 
-                {/* Abas de Navegação */}
                 <div className="flex justify-center gap-4 mb-8">
                     <button
                         onClick={() => setAbaAtiva("geral")}
@@ -226,7 +220,6 @@ export default function Estatisticas() {
                         Visão Geral
                     </button>
 
-                    {/* Botão visível APENAS para Coordenadores */}
                     {isCoordenador && (
                         <button 
                             onClick={() => setAbaAtiva("coordenador")}
@@ -239,10 +232,8 @@ export default function Estatisticas() {
 
                 {loading && <p className="py-8 text-center text-gray-500">Carregando dados...</p>}
 
-                {/* --- CONTEÚDO: VISÃO GERAL --- */}
                 {!loading && abaAtiva === "geral" && (
                     <div className="space-y-6">
-                        {/* Card Total com Animação */}
                         <div className="p-6 transition bg-white border-l-4 shadow-sm rounded-xl border-emerald-500 hover:shadow-md">
                             <h3 className="text-sm font-bold text-gray-400 uppercase">Total de Projetos</h3>
                             <p className="mt-2 text-5xl font-extrabold text-emerald-600">
@@ -251,7 +242,6 @@ export default function Estatisticas() {
                         </div>
 
                         <div className="grid gap-6 md:grid-cols-2">
-                            {/* Gráfico de Cadastros (Inteiros) */}
                             <div className="p-6 bg-white shadow-sm rounded-xl">
                                 <h3 className="mb-4 font-bold text-gray-700">Cadastros Mensais</h3>
                                 <div className="h-64">
@@ -263,7 +253,6 @@ export default function Estatisticas() {
                                 </div>
                             </div>
 
-                            {/* Gráfico de Áreas */}
                             <div className="p-6 bg-white shadow-sm rounded-xl">
                                 <h3 className="mb-4 font-bold text-gray-700">Projetos por Área</h3>
                                 <div className="h-64">
@@ -278,7 +267,6 @@ export default function Estatisticas() {
                     </div>
                 )}
 
-                {/* --- CONTEÚDO: ÁREA DO COORDENADOR --- */}
                 {!loading && abaAtiva === "coordenador" && isCoordenador && (
                     <div className="p-6 bg-white shadow-lg rounded-xl animate-fade-in">
                         <div className="flex flex-col items-center justify-between mb-6 md:flex-row">

@@ -34,7 +34,6 @@ export default function Ajuda() {
   const [altchaPayload, setAltchaPayload] = useState(null);
   const widgetRef = useRef(null);
 
-  // Efeito para capturar a verificação do Captcha (Vindo do Pull)
   useEffect(() => {
     const handleVerified = (ev) => setAltchaPayload(ev.detail.payload);
     const widget = widgetRef.current;
@@ -52,7 +51,6 @@ export default function Ajuda() {
   const handleEnviar = async (e) => {
     e.preventDefault();
     
-    // Validações básicas
     if (!formData.assunto || !formData.mensagem || !formData.email || !formData.nome) {
       setStatus({ loading: false, error: "Por favor, preencha todos os campos.", success: false });
       return;
@@ -70,7 +68,7 @@ export default function Ajuda() {
       email: formData.email,
       mensagem: formData.mensagem,
       tipoContato: formData.assunto,
-      altcha: altchaPayload // Enviando o token do captcha
+      altcha: altchaPayload
     };
 
     try {
