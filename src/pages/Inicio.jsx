@@ -5,9 +5,7 @@ import { Users, Lightbulb, ChartColumn } from "lucide-react";
 export default function Home() {
   return (
     <>
-      {/* Tamnaho mínimo em W e H: min-h-screen min-w-screen */}
       <section className="relative flex items-center min-h-screen pb-8">
-        {/* Background - imagem fundo */}
         <div className="absolute inset-0">
           <img
             src={testee}
@@ -17,11 +15,10 @@ export default function Home() {
           <div className="absolute inset-0 bg-emerald-900/80 mix-blend-multiply" />
         </div>
 
-        {/* Conteúdo da imagem */}
         <div className="relative px-6">
           <h1 className="mb-8 text-6xl font-bold leading-tight text-white">
             Conectando Saberes,
-            <br/>
+            <br />
             <span className="text-emerald-300">
               Formando Protagonistas
             </span>
@@ -36,7 +33,6 @@ export default function Home() {
       </section>
 
       <section className="py-16 bg-white">
-        {/* Linha */}
         <div className="h-px mx-auto my-8 bg-gray-300 w-lg"></div>
 
         <div className="px-6 mx-auto max-w-7xl">
@@ -50,14 +46,13 @@ export default function Home() {
           </p>
 
           <div className="grid grid-cols-3 gap-16 text-center">
-            {/* Coluna 1 */}
             <div className="flex flex-col items-center">
               <div className="flex items-center justify-center w-16 h-16 mb-6 bg-emerald-700 rounded-xl">
                 <Users className="w-8 h-8 text-white" />
               </div>
 
               <h3 className="mb-3 text-xl font-bold">
-                Conectividade 
+                Conectividade
               </h3>
 
               <p className="max-w-xs text-sm text-gray-600">
@@ -65,7 +60,6 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Coluna 2 */}
             <div className="flex flex-col items-center">
               <div className="flex items-center justify-center w-16 h-16 mb-6 bg-emerald-700 rounded-xl">
                 <Lightbulb className="w-8 h-8 text-white" />
@@ -81,7 +75,6 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Coluna 3 */}
             <div className="flex flex-col items-center">
               <div className="flex items-center justify-center w-16 h-16 mb-6 bg-emerald-700 rounded-xl">
                 <ChartColumn className="w-8 h-8 text-white" />

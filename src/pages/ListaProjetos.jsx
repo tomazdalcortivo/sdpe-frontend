@@ -69,9 +69,7 @@ export default function ListaProjetos() {
           Explore os projetos cadastrados na plataforma
         </p>
 
-        {/* --- BARRA DE BUSCA E FILTROS --- */}
         <div className="relative flex flex-col gap-4 mb-12 md:flex-row">
-          {/* Input de Busca */}
           <div className="relative flex-1">
             <Search className="absolute -translate-y-1/2 left-4 top-1/2 text-slate-400" />
             <input
@@ -83,7 +81,6 @@ export default function ListaProjetos() {
             />
           </div>
 
-          {/* Botão Filtro */}
           <button
             onClick={() => setAbrirFiltro(!abrirFiltro)}
             className={`flex items-center justify-center gap-2 px-6 py-3 border rounded-full transition-all shadow-sm ${abrirFiltro
@@ -95,7 +92,6 @@ export default function ListaProjetos() {
             Filtrar
           </button>
 
-          {/* Dropdown de Filtros */}
           {abrirFiltro && (
             <div className="absolute right-0 z-20 p-5 bg-white border shadow-xl w-72 rounded-xl top-16 border-slate-100 animate-in fade-in slide-in-from-top-2">
               <div className="mb-4">
@@ -138,7 +134,6 @@ export default function ListaProjetos() {
           )}
         </div>
 
-        {/* --- LISTAGEM (GRID) --- */}
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="w-10 h-10 border-4 rounded-full border-emerald-200 border-t-emerald-600 animate-spin"></div>
@@ -148,7 +143,6 @@ export default function ListaProjetos() {
             {projetosFiltrados.map((projeto) => {
               const statusLabel = getStatusProjeto(projeto);
 
-              // URL da imagem (apontando para o backend)
               const imageUrl = `http://localhost:8080/api/projetos/${projeto.id}/imagem`;
 
               return (
@@ -156,7 +150,6 @@ export default function ListaProjetos() {
                   key={projeto.id}
                   className="flex flex-col overflow-hidden transition-all bg-white border shadow-sm border-slate-100 rounded-xl hover:shadow-lg hover:-translate-y-1 group"
                 >
-                  {/* Imagem do Projeto com Fallback */}
                   <div className="relative h-48 overflow-hidden bg-emerald-50">
                     <img
                       src={imageUrl}
@@ -164,11 +157,10 @@ export default function ListaProjetos() {
                       className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.style.display = 'none'; // Esconde a img quebrada
-                        e.target.parentNode.classList.add('bg-emerald-600'); // Mostra o fundo colorido
+                        e.target.style.display = 'none';
+                        e.target.parentNode.classList.add('bg-emerald-600');
                       }}
                     />
-                    {/* Badge de Status sobre a imagem */}
                     <div className="absolute top-3 right-3">
                       <span className={`px-2 py-1 text-xs font-bold rounded-md shadow-sm ${statusLabel === "EM_ANDAMENTO" ? "bg-emerald-500 text-white" :
                         statusLabel === "FINALIZADO" ? "bg-blue-500 text-white" :
@@ -207,7 +199,6 @@ export default function ListaProjetos() {
           </div>
         )}
 
-        {/* Estado Vazio */}
         {!loading && projetosFiltrados.length === 0 && (
           <div className="mt-12 text-center">
             <p className="text-lg text-slate-500">

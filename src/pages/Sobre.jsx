@@ -11,13 +11,37 @@ import {
   Users,
   TrendingUp,
 } from "lucide-react";
+import api from "../services/api";
 
 export default function Sobre() {
-  
+
+  const [totalProjetos, setTotalProjetos] = useState(0);
+  const [totalParticipantes, setTotalParticipantes] = useState(0);
+  const [totalVisualizacoes, setTotalVisualizacoes] = useState(0);
+
+  useEffect(() => {
+    async function fetchEstatisticas() {
+      try {
+        const resProjetos = await api.get("/api/estatisticas/geral/total-projetos");
+        setTotalProjetos(resProjetos.data || 0);
+
+        const resParticipantes = await api.get("/api/estatisticas/geral/total-participantes");
+        setTotalParticipantes(resParticipantes.data || 0);
+
+        const resViews = await api.get("/api/estatisticas/geral/total-visualizacoes");
+        setTotalVisualizacoes(resViews.data || 0);
+
+      } catch (error) {
+        console.error("Erro ao carregar estatísticas", error);
+      }
+    }
+    fetchEstatisticas();
+  }, []);
+
   const stats = [
-    { icon: Eye, value: 100, label: "Visualizações Totais", suffix: "+" },
-    { icon: FolderOpen, value: 50, label: "Projetos Cadastrados", suffix: "" },
-    { icon: UserCheck, value: 320, label: "Participantes Ativos", suffix: "+" },
+    { icon: Eye, value: totalVisualizacoes, label: "Visualizações Totais", suffix: "+" },
+    { icon: FolderOpen, value: totalProjetos, label: "Projetos Cadastrados", suffix: "" },
+    { icon: UserCheck, value: totalParticipantes, label: "Participantes Ativos", suffix: "+" },
   ];
 
   const aboutItems = [
@@ -95,6 +119,8 @@ export default function Sobre() {
 
     useEffect(() => {
       let start = 0;
+      if (end === 0) return;
+
       const increment = end / (duration / 50);
       const counter = setInterval(() => {
         start += increment;
@@ -113,12 +139,11 @@ export default function Sobre() {
 
   return (
     <>
-      {/* HERO */}
       <section className="px-8 pt-40 pb-20 bg-gradient-to-br from-emerald-600/10 to-emerald-400/5">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="mb-6 text-5xl font-bold md:text-6xl">
             Plataforma de Divulgação de <br />
-            <span className="text-transparent bg-linear-to-r from-emerald-700 via-emerald-500 to-emerald-700 bg-clip-text">
+            <span className="text-transparent bg-gradient-to-r from-emerald-700 via-emerald-500 to-emerald-700 bg-clip-text">
               Projetos de Extensão
             </span>
           </h1>
@@ -132,15 +157,14 @@ export default function Sobre() {
             </p>
           </div>
 
-          {/* STATS */}
           <div className="grid grid-cols-1 gap-6 mt-16 md:grid-cols-3">
             {stats.map((stat, index) => (
               <div
                 key={index}
-                className="p-8 bg-white border shadow-lg rounded-2xl border-emerald-100"
+                className="p-8 bg-white border shadow-lg rounded-2xl border-emerald-100 transition-transform hover:-translate-y-1"
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="flex items-center justify-center mb-4 w-14 h-14 bg-emerald-700 rounded-xl">
+                  <div className="flex items-center justify-center mb-4 w-14 h-14 bg-emerald-700 rounded-xl shadow-md">
                     <stat.icon className="text-white w-7 h-7" />
                   </div>
                   <div className="text-4xl font-bold text-gray-900">
@@ -155,7 +179,6 @@ export default function Sobre() {
         </div>
       </section>
 
-      {/* O QUE É O SDPE */}
       <section className="px-4 py-20 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="mb-16 text-center">
@@ -185,7 +208,6 @@ export default function Sobre() {
             ))}
           </div>
 
-          {/* PARA QUEM É */}
           <div className="mt-20">
             <div className="mb-16 text-center">
               <div className="h-px mx-auto my-8 bg-gray-300 w-lg"></div>
@@ -217,7 +239,6 @@ export default function Sobre() {
         </div>
       </section>
 
-      {/* COMEÇAR AGORA */}
       <section className="px-8 pt-20 pb-20 bg-gradient-to-br from-emerald-600/10 to-emerald-400/5">
         <div className="max-w-6xl mx-auto">
           <div className="mb-12 text-center">

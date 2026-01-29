@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react"; // Adicionei Eye para o botão de senha
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import api from "../services/api";
 import Alert from "../components/Alert";
@@ -40,11 +40,9 @@ export default function Login() {
       const response = await api.post("/auth/login", { email, senha });
       const token = response.data;
 
-      // Salva o token e configura o header para chamadas seguintes
       localStorage.setItem("token", token);
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      // Lógica vinda do PULL: Verificar perfil antes de redirecionar
       try {
         const perfilResponse = await api.get("/auth/perfil");
         const usuario = perfilResponse.data;
@@ -55,13 +53,11 @@ export default function Login() {
           navigate("/perfil");
         }
       } catch (err) {
-        // Se falhar ao buscar perfil, envia para a rota padrão
         navigate("/perfil");
       }
     } catch (error) {
       console.error("Erro no login:", error);
 
-      // Melhoria no tratamento de erro unificando as duas versões
       if (error.response?.data?.error) {
         setErro(error.response.data.error);
       } else if (error.response?.status === 401 || error.response?.status === 403) {
