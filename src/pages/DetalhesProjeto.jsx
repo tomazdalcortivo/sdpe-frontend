@@ -3,19 +3,24 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Edit2, Calendar, Clock, Users, Target, BookOpen, MapPin,
   Globe, Facebook, Instagram, Linkedin, Youtube, Upload, X, FileText,
-  Image as ImageIcon, MessageSquare, Mail, Phone,
-  Plus, Trash2, Search, UserPlus, Send,
+  Image as ImageIcon, MessageSquare, Mail,
+  Plus, Trash2, Search, UserPlus, Send, Check, User
 } from 'lucide-react';
+import Swal from "sweetalert2";
 import defaultImage from '../assets/capa-padrao-projeto.png';
 import api, { getLoggedUser } from '../services/api';
 
 export default function DetalhesProjeto() {
+
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [project, setProject] = useState(null);
   const [novaImagem, setNovaImagem] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
+
+  const [isParticipant, setIsParticipant] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -25,11 +30,16 @@ export default function DetalhesProjeto() {
   const [newPostContent, setNewPostContent] = useState("");
   const [newPostFile, setNewPostFile] = useState(null);
 
+  const [comentarios, setFeedbacks] = useState([]);
+  const [novoComentario, setNewComment] = useState({ nome: "", email: "", mensagem: "" });
+  const [loadingComentarios, setLoadingComentarios] = useState(false);
+
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [memberType, setMemberType] = useState('participante');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+
   const viewRecorded = useRef(false);
   const coordenadorPrincipal = project?.coordenadores?.[0];
 
@@ -44,8 +54,6 @@ export default function DetalhesProjeto() {
     planning: '',
     participants: [],
     socialMedia: { website: '', facebook: '', instagram: '', linkedin: '', youtube: '' },
-    images: [],
-    videos: [],
     documents: []
   });
 
@@ -59,9 +67,10 @@ export default function DetalhesProjeto() {
   useEffect(() => {
     if (id) {
       fetchProject();
+      fetchFeedbacks();
       registerView();
     }
-  }, [id]);
+  }, [activeTab, id]);
 
   const registerView = async () => {
     if (viewRecorded.current) return;
@@ -82,18 +91,30 @@ export default function DetalhesProjeto() {
       const data = response.data;
 
       setProject(response.data);
-
       setPosts(data.posts || []);
 
 
       const user = getLoggedUser();
-      const email = user?.sub;
+      const currentUserEmail = user?.sub;
 
-      const owner = data.coordenadores?.some(
-        (c) => c.conta?.email === email
+      const owner = data.coordenadores?.some((c) => c.conta?.email === currentUserEmail);
+      setIsOwner(owner);
+
+      const foundParticipant = data.participantes?.find(
+        (p) => p.conta?.email === currentUserEmail
       );
 
-      setIsOwner(owner);
+      if (foundParticipant) {
+        setIsParticipant(true);
+        setNewComment(prev => ({
+          ...prev,
+          nome: foundParticipant.nome,
+          email: currentUserEmail,
+          mensagem: ""
+        }));
+      } else {
+        setIsParticipant(false);
+      }
 
       setEditData({
         title: response.data.nome || '',
@@ -112,8 +133,6 @@ export default function DetalhesProjeto() {
           linkedin: data.redesSociais?.linkedin || '',
           youtube: data.redesSociais?.youtube || ''
         },
-        images: [],
-        videos: [],
         documents: []
       });
     } catch (err) {
@@ -121,6 +140,63 @@ export default function DetalhesProjeto() {
       setError('Não foi possível carregar o projeto.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchFeedbacks() {
+    try {
+      setLoadingComentarios(true);
+      
+      const res = await api.get(`/api/projetos/${id}/feedbacks`);
+
+      if (Array.isArray(res.data)) {
+        setFeedbacks(res.data);
+      } else {
+        console.warn("Formato de resposta inesperado:", res.data);
+        setFeedbacks([]);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar feedbacks:", error);
+    } finally {
+      setLoadingComentarios(false);
+    }
+  }
+
+  async function HandlerSendFeedback(e) {
+    e.preventDefault();
+    if (!novoComentario.mensagem.trim()) return;
+
+    try {
+      const response = await api.post(`/api/projetos/${id}/feedbacks`, {
+        nome: novoComentario.nome,
+        email: novoComentario.email,
+        mensagem: novoComentario.mensagem,
+        tipoContato: "FEEDBACK",
+      });
+
+      console.log("Feedback enviado:", response.data);
+
+      setNewComment(prev => ({ ...prev, mensagem: "" }));
+
+      Swal.fire({
+        title: "Sucesso!",
+        text: "Feedback enviado com sucesso.",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false
+      });
+
+      fetchFeedbacks();
+
+    } catch (error) {
+      console.error("Erro detalhado no envio:", error);
+      if (error.response && error.response.status === 201) {
+        fetchFeedbacks();
+        setNewComment(prev => ({ ...prev, mensagem: "" }));
+        Swal.fire("Sucesso!", "Feedback enviado.", "success");
+      } else {
+        Swal.fire("Erro", "Não foi possível enviar o feedback.", "error");
+      }
     }
   }
 
@@ -731,70 +807,147 @@ export default function DetalhesProjeto() {
             )}
 
             {activeTab === 'feedback' && (
-              <div className="space-y-8">
+              <div className="space-y-8 animate-in fade-in duration-500">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2 space-y-8">
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <MessageSquare className="w-5 h-5 text-emerald-600" />
+                        Enviar Feedback do Projeto
+                      </h3>
 
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <MessageSquare className="w-6 h-6 text-emerald-600" />
-                    Dúvidas e Sugestões
-                  </h2>
+                      {isParticipant ? (
+                        <form onSubmit={HandlerSendFeedback} className="space-y-4">
 
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                    <p className="text-gray-600 mb-4">
-                      Tem alguma dúvida sobre o projeto ou deseja enviar uma sugestão?
-                      Entre em contacto diretamente com a coordenação abaixo.
-                    </p>
-                  </div>
-                </div>
+                          <div className="bg-emerald-50/50 p-4 rounded-lg border border-emerald-100 flex flex-col md:flex-row gap-4 md:items-center text-sm">
+                            <div className="flex items-center gap-2 text-emerald-800">
+                              <User className="w-4 h-4" />
+                              <span className="font-semibold">De:</span>
+                              <span>{novoComentario.nome}</span>
+                            </div>
+                            <div className="hidden md:block w-px h-4 bg-emerald-200"></div>
+                            <div className="flex items-center gap-2 text-emerald-800">
+                              <Mail className="w-4 h-4" />
+                              <span>{novoComentario.email}</span>
+                            </div>
+                            <div className="hidden md:block w-px h-4 bg-emerald-200"></div>
+                            <div className="flex items-center gap-2 text-emerald-600 italic ml-auto">
+                              <Check className="w-3 h-3" />
+                              <span>Participante Verificado</span>
+                            </div>
+                          </div>
 
-                <div className="border-t border-gray-200 pt-8">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Como Ingressar no Projeto</h2>
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Sua Mensagem</label>
+                            <textarea
+                              required
+                              rows={4}
+                              value={novoComentario.mensagem}
+                              onChange={e => setNewComment({ ...novoComentario, mensagem: e.target.value })}
+                              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none shadow-sm placeholder-gray-400"
+                              placeholder="Escreva aqui seu feedback, sugestão ou dúvida para a coordenação..."
+                            />
+                          </div>
 
-                  <div className="bg-gradient-to-br from-emerald-50 to-orange-50 rounded-xl p-6 md:p-8">
-                    <p className="text-gray-700 mb-6 leading-relaxed">
-                      Interessado em participar deste projeto? Entre em contacto para mais informações sobre vagas disponíveis, requisitos e processo seletivo.
-                    </p>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm">
-                        <Mail className="w-6 h-6 text-emerald-600 flex-shrink-0" />
-                        <div className="overflow-hidden">
-                          <p className="font-semibold text-gray-900">E-mail</p>
-                          {coordenadorPrincipal?.conta?.email ? (
-                            <span className="text-gray-700 block truncate select-all">
-                              {coordenadorPrincipal.conta.email}
-                            </span>
-                          ) : (
-                            <span className="text-gray-500 italic">E-mail não informado</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm">
-                        <Phone className="w-6 h-6 text-emerald-600 flex-shrink-0" />
-                        <div>
-                          <p className="font-semibold text-gray-900">Telefone / Contacto</p>
-                          {coordenadorPrincipal?.telefone ? (
-                            <span className="text-gray-700 select-all">
-                              {coordenadorPrincipal.telefone}
-                            </span>
-                          ) : (
-                            <span className="text-gray-500 italic">Telefone não disponível</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm">
-                        <Users className="w-6 h-6 text-emerald-600 flex-shrink-0" />
-                        <div>
-                          <p className="font-semibold text-gray-900">Coordenador Responsável</p>
-                          <p className="text-gray-700 font-medium">
-                            {coordenadorPrincipal?.nome || "Nome não informado"}
+                          <div className="flex justify-end">
+                            <button
+                              type="submit"
+                              className="px-6 py-2.5 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 shadow-md hover:shadow-lg transform active:scale-95"
+                            >
+                              <Send size={16} /> Enviar Feedback
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-300 text-center">
+                          <div className="bg-gray-100 p-3 rounded-full mb-3">
+                            <Users className="w-8 h-8 text-gray-400" />
+                          </div>
+                          <h4 className="text-gray-700 font-bold mb-1">Acesso Restrito a Participantes</h4>
+                          <p className="text-sm text-gray-500 max-w-md px-4">
+                            Apenas participantes ativos vinculados a este projeto podem enviar feedbacks.
+                            Entre em contato com a coordenação se acredita que isso é um erro.
                           </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 px-1">
+                        Feedbacks Anteriores ({comentarios.length})
+                      </h3>
+
+                      {loadingComentarios ? (
+                        <div className="flex justify-center py-8">
+                          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      ) : comentarios.length > 0 ? (
+                        <div className="space-y-4">
+                          {comentarios.map((comentario, index) => (
+                            <div key={comentario.id || index} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm uppercase">
+                                    {comentario.nome ? comentario.nome.substring(0, 2) : "AN"}
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-gray-900 text-sm">{comentario.nome}</p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full font-medium border border-gray-200">
+                                        {comentario.tipoContato || "FEEDBACK"}
+                                      </span>
+                                      <span className="text-xs text-gray-400 flex items-center gap-1">
+                                        <Clock size={10} />
+                                        {comentario.dataEnvio ? new Date(comentario.dataEnvio).toLocaleDateString() : "Recentemente"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <p className="text-gray-600 text-sm pl-[52px] leading-relaxed whitespace-pre-wrap">
+                                {comentario.mensagem}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-200">
+                          <p className="text-gray-500 font-medium text-sm">Nenhum feedback registrado ainda.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 rounded-xl p-6 shadow-sm sticky top-24">
+                      <h3 className="font-bold text-emerald-900 mb-4 border-b border-emerald-100 pb-2 text-sm uppercase tracking-wide">
+                        Coordenação
+                      </h3>
+                      <div className="space-y-5">
+                        <div className="flex items-start gap-3">
+                          <User className="w-5 h-5 text-emerald-600 mt-0.5" />
+                          <div>
+                            <span className="block text-[10px] font-bold text-gray-400 uppercase">Responsável</span>
+                            <span className="text-gray-800 font-medium text-sm block">
+                              {coordenadorPrincipal?.nome || "Não informado"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <Mail className="w-5 h-5 text-emerald-600 mt-0.5" />
+                          <div className="overflow-hidden w-full">
+                            <span className="block text-[10px] font-bold text-gray-400 uppercase">Contato</span>
+                            {coordenadorPrincipal?.conta?.email ? (
+                              <span className="text-gray-700 text-sm block break-all select-all font-medium">
+                                {coordenadorPrincipal.conta.email}
+                              </span>
+                            ) : <span className="text-gray-400 italic text-sm">E-mail indisponível</span>}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
+
                 </div>
               </div>
             )}

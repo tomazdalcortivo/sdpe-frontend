@@ -14,7 +14,6 @@ import {
   Eye,
   Mail,
 } from "lucide-react";
-import Swal from "sweetalert2";
 import api from "../services/api";
 
 export default function PainelAdministrativo() {
