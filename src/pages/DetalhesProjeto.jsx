@@ -31,6 +31,7 @@ export default function DetalhesProjeto() {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const viewRecorded = useRef(false);
+  const coordenadorPrincipal = project?.coordenadores?.[0];
 
   const [editData, setEditData] = useState({
     title: '',
@@ -731,27 +732,68 @@ export default function DetalhesProjeto() {
 
             {activeTab === 'feedback' && (
               <div className="space-y-8">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2"><MessageSquare className="w-6 h-6 text-emerald-600" />Conversas Públicas</h2>
-                  <div className="space-y-4">
-                    {(project.comentarios || []).map((c, i) => (
-                      <div key={i} className="bg-gray-50 rounded-lg p-4"><div className="flex items-start gap-3"><div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">{(c.autor || 'U').slice(0, 2).toUpperCase()}</div><div className="flex-1"><div className="flex items-center gap-2 mb-1"><span className="font-semibold text-gray-900">{c.autor || 'Usuário'}</span><span className="text-sm text-gray-500">{c.tempo || ''}</span></div><p className="text-gray-700">{c.texto || c}</p></div></div></div>
-                    ))}
 
-                    <div className="border-2 border-gray-200 rounded-lg p-4"><textarea placeholder="Deixe seu comentário ou pergunta..." rows={4} className="w-full border-0 focus:outline-none resize-none text-gray-700" /><div className="flex justify-end mt-3"><button className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-full">Enviar Comentário</button></div></div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <MessageSquare className="w-6 h-6 text-emerald-600" />
+                    Dúvidas e Sugestões
+                  </h2>
+
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                    <p className="text-gray-600 mb-4">
+                      Tem alguma dúvida sobre o projeto ou deseja enviar uma sugestão?
+                      Entre em contacto diretamente com a coordenação abaixo.
+                    </p>
                   </div>
                 </div>
 
                 <div className="border-t border-gray-200 pt-8">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Como Ingressar no Projeto</h2>
+
                   <div className="bg-gradient-to-br from-emerald-50 to-orange-50 rounded-xl p-6 md:p-8">
-                    <p className="text-gray-700 mb-6 leading-relaxed">Interessado em participar deste projeto? Entre em contato com nossa equipe para mais informações sobre vagas disponíveis, requisitos e processo seletivo.</p>
+                    <p className="text-gray-700 mb-6 leading-relaxed">
+                      Interessado em participar deste projeto? Entre em contacto para mais informações sobre vagas disponíveis, requisitos e processo seletivo.
+                    </p>
+
                     <div className="space-y-4">
-                      <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm"><Mail className="w-6 h-6 text-emerald-600 flex-shrink-0" /><div><p className="font-semibold text-gray-900">E-mail</p><a href="mailto:contato@projeto.edu.br" className="text-emerald-600 hover:text-emerald-700">contato@projeto.edu.br</a></div></div>
-                      <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm"><Phone className="w-6 h-6 text-emerald-600 flex-shrink-0" /><div><p className="font-semibold text-gray-900">Telefone</p><a href="tel:+5511999999999" className="text-emerald-600 hover:text-emerald-700">(11) 99999-9999</a></div></div>
-                      <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm"><Users className="w-6 h-6 text-emerald-600 flex-shrink-0" /><div><p className="font-semibold text-gray-900">Coordenador</p><p className="text-gray-700">Dr. João Silva</p></div></div>
+                      <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm">
+                        <Mail className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+                        <div className="overflow-hidden">
+                          <p className="font-semibold text-gray-900">E-mail</p>
+                          {coordenadorPrincipal?.conta?.email ? (
+                            <span className="text-gray-700 block truncate select-all">
+                              {coordenadorPrincipal.conta.email}
+                            </span>
+                          ) : (
+                            <span className="text-gray-500 italic">E-mail não informado</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm">
+                        <Phone className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+                        <div>
+                          <p className="font-semibold text-gray-900">Telefone / Contacto</p>
+                          {coordenadorPrincipal?.telefone ? (
+                            <span className="text-gray-700 select-all">
+                              {coordenadorPrincipal.telefone}
+                            </span>
+                          ) : (
+                            <span className="text-gray-500 italic">Telefone não disponível</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm">
+                        <Users className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+                        <div>
+                          <p className="font-semibold text-gray-900">Coordenador Responsável</p>
+                          <p className="text-gray-700 font-medium">
+                            {coordenadorPrincipal?.nome || "Nome não informado"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="mt-6"><button className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-full">Enviar Mensagem</button></div>
                   </div>
                 </div>
               </div>
