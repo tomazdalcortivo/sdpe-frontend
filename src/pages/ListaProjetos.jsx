@@ -1,6 +1,6 @@
-import { Search, SlidersHorizontal, MapPin, Monitor, Building2 } from "lucide-react";
+import { Search, SlidersHorizontal, Building2, User, ChevronDown, Check } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import api from "../services/api";
 
 export default function ListaProjetos() {
@@ -10,10 +10,11 @@ export default function ListaProjetos() {
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState("");
   const [areaFiltro, setAreaFiltro] = useState("");
-  const [modalidadeFiltro, setModalidadeFiltro] = useState(""); 
-  const [instituicaoFiltro, setInstituicaoFiltro] = useState(""); 
-
+  const [modalidadeFiltro, setModalidadeFiltro] = useState("");
+  const [instituicaoFiltro, setInstituicaoFiltro] = useState("");
   const [abrirFiltro, setAbrirFiltro] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const filtroContainerRef = useRef(null);
 
   useEffect(() => {
     async function carregarProjetos() {
@@ -30,11 +31,21 @@ export default function ListaProjetos() {
     carregarProjetos();
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (filtroContainerRef.current && !filtroContainerRef.current.contains(event.target)) {
+        setActiveDropdown(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const listaInstituicoes = useMemo(() => {
     const instituicoes = projetos
       .map(p => p.instituicaoEnsino?.nome)
-      .filter(nome => nome); 
-    return [...new Set(instituicoes)].sort(); 
+      .filter(nome => nome && nome.trim().length > 0);
+    return [...new Set(instituicoes)].sort();
   }, [projetos]);
 
   const getStatusProjeto = (projeto) => {
@@ -46,270 +57,274 @@ export default function ListaProjetos() {
 
   const projetosFiltrados = projetos.filter((p) => {
     const statusCalculado = getStatusProjeto(p);
-
     if (busca) {
       const termo = busca.toLowerCase();
       const matchNome = p.nome?.toLowerCase().includes(termo);
-      const matchCoordenador = p.coordenadores?.some(c =>
-        c.nome?.toLowerCase().includes(termo)
-      );
-
-      if (!matchNome && !matchCoordenador) {
-        return false;
-      }
+      const matchCoordenador = p.coordenadores?.some(c => c.nome?.toLowerCase().includes(termo));
+      if (!matchNome && !matchCoordenador) return false;
     }
-
     if (statusFiltro && statusCalculado !== statusFiltro) return false;
     if (areaFiltro && p.area !== areaFiltro) return false;
-
     if (modalidadeFiltro && p.formato !== modalidadeFiltro) return false;
     if (instituicaoFiltro && p.instituicaoEnsino?.nome !== instituicaoFiltro) return false;
-
     return true;
   });
 
+  const filterFields = [
+    {
+      label: "Status",
+      value: statusFiltro,
+      onChange: setStatusFiltro,
+      options: [
+        { val: "", text: "Todos" },
+        { val: "EM_ANDAMENTO", text: "Em andamento" },
+        { val: "FINALIZADO", text: "Finalizados" },
+        { val: "INATIVO", text: "Inativos" }
+      ]
+    },
+    {
+      label: "Área",
+      value: areaFiltro,
+      onChange: setAreaFiltro,
+      options: [
+        { val: "", text: "Todas" },
+        { val: "Ciências Agrárias", text: "Ciências Agrárias" },
+        { val: "Ciências Biológicas", text: "Ciências Biológicas" },
+        { val: "Ciências Exatas e da Terra", text: "Ciências Exatas e da Terra" },
+        { val: "Ciências Humanas", text: "Ciências Humanas" },
+        { val: "Ciências da Saúde", text: "Ciências da Saúde" },
+        { val: "Ciências Sociais Aplicadas", text: "Ciências Sociais Aplicadas" },
+        { val: "Engenharias", text: "Engenharias" },
+        { val: "Linguística, Letras e Artes", text: "Linguística, Letras e Artes" }
+      ]
+    },
+    {
+      label: "Modalidade",
+      value: modalidadeFiltro,
+      onChange: setModalidadeFiltro,
+      options: [
+        { val: "", text: "Todas" },
+        { val: "PRESENCIAL", text: "Presencial" },
+        { val: "REMOTO", text: "Remoto" },
+        { val: "HIBRIDO", text: "Híbrido" }
+      ]
+    },
+    {
+      label: "Instituição",
+      value: instituicaoFiltro,
+      onChange: setInstituicaoFiltro,
+      options: [
+        { val: "", text: "Todas" },
+        ...listaInstituicoes.map(inst => ({ val: inst, text: inst }))
+      ]
+    }
+  ];
+
   return (
-    <section className="min-h-screen px-8 pt-40 bg-gradient-to-br from-emerald-50 via-white to-amber-50">
+    <section className="min-h-screen px-4 md:px-8 pt-32 pb-20 bg-gray-50/50">
       <div className="mx-auto max-w-7xl">
-        <h1 className="mb-4 text-4xl font-bold text-center text-emerald-700">
-          Projetos de Extensão
-        </h1>
 
-        <p className="mb-10 text-center text-slate-600">
-          Explore os projetos cadastrados, filtre por área, professor ou modalidade.
-        </p>
-
-        <div className="relative flex flex-col gap-4 mb-12 md:flex-row z-10">
-          <div className="relative flex-1">
-            <Search className="absolute -translate-y-1/2 left-4 top-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar por projeto ou nome do professor..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="w-full py-3 pl-12 pr-4 border rounded-full shadow-sm outline-none border-slate-300 focus:ring-2 focus:ring-emerald-500"
-            />
+        <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+              Projetos de Extensão
+            </h1>
+            <p className="mt-2 text-sm text-gray-500">
+              Explore {projetosFiltrados.length} projetos disponíveis na rede.
+            </p>
           </div>
 
-          <button
-            onClick={() => setAbrirFiltro(!abrirFiltro)}
-            className={`flex items-center justify-center gap-2 px-6 py-3 border rounded-full transition-all shadow-sm ${abrirFiltro
-              ? "bg-emerald-100 border-emerald-500 text-emerald-800"
-              : "bg-white border-slate-300 hover:bg-slate-50"
-              }`}
-          >
-            <SlidersHorizontal size={18} />
-            Filtros
-            {(statusFiltro || areaFiltro || modalidadeFiltro || instituicaoFiltro) && (
-              <span className="flex items-center justify-center w-5 h-5 text-xs text-white rounded-full bg-emerald-600">
-                {[statusFiltro, areaFiltro, modalidadeFiltro, instituicaoFiltro].filter(Boolean).length}
-              </span>
-            )}
-          </button>
-
-          {abrirFiltro && (
-            <div className="absolute right-0 p-5 bg-white border shadow-xl w-full md:w-[600px] rounded-xl top-16 border-slate-100 animate-in fade-in slide-in-from-top-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block mb-1.5 text-sm font-semibold text-slate-700">
-                    Status
-                  </label>
-                  <select
-                    value={statusFiltro}
-                    onChange={(e) => setStatusFiltro(e.target.value)}
-                    className="w-full p-2.5 text-sm border rounded-lg outline-none border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-slate-50"
-                  >
-                    <option value="">Todos os status</option>
-                    <option value="EM_ANDAMENTO">Em andamento</option>
-                    <option value="FINALIZADO">Finalizados</option>
-                    <option value="INATIVO">Inativos</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block mb-1.5 text-sm font-semibold text-slate-700">
-                    Modalidade
-                  </label>
-                  <div className="relative">
-                    <Monitor size={16} className="absolute text-slate-400 left-3 top-3" />
-                    <select
-                      value={modalidadeFiltro}
-                      onChange={(e) => setModalidadeFiltro(e.target.value)}
-                      className="w-full p-2.5 pl-9 text-sm border rounded-lg outline-none border-slate-200 focus:border-emerald-500 bg-slate-50"
-                    >
-                      <option value="">Todas</option>
-                      <option value="PRESENCIAL">Presencial</option>
-                      <option value="ONLINE">Remoto</option>
-                      <option value="HIBRIDO">Híbrido</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block mb-1.5 text-sm font-semibold text-slate-700">
-                    Área de Conhecimento
-                  </label>
-                  <select
-                    value={areaFiltro}
-                    onChange={(e) => setAreaFiltro(e.target.value)}
-                    className="w-full p-2.5 text-sm border rounded-lg outline-none border-slate-200 focus:border-emerald-500 bg-slate-50"
-                  >
-                    <option value="">Todas as áreas</option>
-                    <option>Ciências Agrárias</option>
-                    <option>Ciências Biológicas</option>
-                    <option>Ciências Exatas e da Terra</option>
-                    <option>Ciências Humanas</option>
-                    <option>Ciências da Saúde</option>
-                    <option>Ciências Sociais Aplicadas</option>
-                    <option>Engenharias</option>
-                    <option>Linguística, Letras e Artes</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block mb-1.5 text-sm font-semibold text-slate-700">
-                    Instituição
-                  </label>
-                  <div className="relative">
-                    <Building2 size={16} className="absolute text-slate-400 left-3 top-3" />
-                    <select
-                      value={instituicaoFiltro}
-                      onChange={(e) => setInstituicaoFiltro(e.target.value)}
-                      className="w-full p-2.5 pl-9 text-sm border rounded-lg outline-none border-slate-200 focus:border-emerald-500 bg-slate-50"
-                    >
-                      <option value="">Todas as instituições</option>
-                      {listaInstituicoes.map((inst, index) => (
-                        <option key={index} value={inst}>{inst}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="md:col-span-2 pt-2 flex justify-end border-t border-slate-100 mt-2">
-                <button
-                  onClick={() => {
-                    setStatusFiltro("");
-                    setAreaFiltro("");
-                    setModalidadeFiltro("");
-                    setInstituicaoFiltro("");
-                  }}
-                  className="text-sm text-emerald-600 hover:text-emerald-800 hover:underline px-2"
-                >
-                  Limpar Filtros
-                </button>
-              </div>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:w-80 group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-600 w-4 h-4 transition-colors" />
+              <input
+                type="text"
+                placeholder="Buscar projeto ou professor"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="w-full h-10 pl-9 pr-4 text-sm bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+              />
             </div>
-          )}
+
+            <button
+              onClick={() => setAbrirFiltro(!abrirFiltro)}
+              className={`h-10 px-4 flex items-center gap-2 text-sm font-medium border rounded-lg transition-all shadow-sm ${abrirFiltro
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                }`}
+            >
+              <SlidersHorizontal size={16} />
+              <span className="hidden sm:inline">Filtros</span>
+            </button>
+          </div>
         </div>
+
+        {abrirFiltro && (
+          <div
+            ref={filtroContainerRef}
+            className="mb-8 p-6 bg-white border border-gray-100 rounded-xl shadow-lg grid grid-cols-1 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2 relative z-20"
+          >
+            {filterFields.map((field, idx) => {
+              const isOpen = activeDropdown === idx;
+              const selectedOption = field.options.find(opt => opt.val === field.value);
+
+              return (
+                <div key={idx} className="relative">
+                  <label className="text-xs font-semibold text-gray-500 uppercase ml-1 mb-1 block">
+                    {field.label}
+                  </label>
+
+                  <button
+                    onClick={() => setActiveDropdown(isOpen ? null : idx)}
+                    className={`w-full h-10 pl-3 pr-8 text-sm text-left bg-white border rounded-lg shadow-sm flex items-center justify-between transition-all outline-none
+                      ${isOpen ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-gray-200 hover:border-emerald-300'}
+                    `}
+                  >
+                    <span className={`truncate ${!field.value ? 'text-gray-600' : 'text-gray-900 font-medium'}`}>
+                      {selectedOption ? selectedOption.text : "Selecione"}
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className={`absolute right-3 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-emerald-500' : ''}`}
+                    />
+                  </button>
+
+                  {isOpen && (
+                    <div className="absolute z-50 mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                      <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                        {field.options.map((opt, i) => (
+                          <div
+                            key={i}
+                            onClick={() => {
+                              field.onChange(opt.val);
+                              setActiveDropdown(null);
+                            }}
+                            className={`px-4 py-2.5 text-sm cursor-pointer flex items-center justify-between group transition-colors
+                              ${field.value === opt.val ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}
+                            `}
+                          >
+                            <span className="truncate">{opt.text}</span>
+                            {field.value === opt.val && <Check size={14} className="text-emerald-600" />}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            <div className="md:col-span-4 flex justify-end mt-2 border-t border-gray-50 pt-4">
+              <button
+                onClick={() => {
+                  setStatusFiltro("");
+                  setAreaFiltro("");
+                  setModalidadeFiltro("");
+                  setInstituicaoFiltro("");
+                  setActiveDropdown(null);
+                }}
+                className="text-xs font-medium text-red-600 hover:text-red-800 transition-colors hover:underline"
+              >
+                Limpar Filtros
+              </button>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="w-10 h-10 border-4 rounded-full border-emerald-200 border-t-emerald-600 animate-spin"></div>
+            <div className="w-8 h-8 border-2 rounded-full border-gray-200 border-t-emerald-600 animate-spin"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 relative z-0">
             {projetosFiltrados.map((projeto) => {
               const statusLabel = getStatusProjeto(projeto);
               const imageUrl = `http://localhost:8080/api/projetos/${projeto.id}/imagem`;
-
-              const nomeCoordenador = projeto.coordenadores?.[0]?.nome || "Coordenação não informada";
+              const nomeCompleto = projeto.coordenadores?.[0]?.nome || "Coordenação";
 
               return (
-                <div
+                <Link
+                  to={`/detalhes-projeto/${projeto.id}`}
                   key={projeto.id}
-                  className="flex flex-col overflow-hidden transition-all bg-white border shadow-sm border-slate-100 rounded-xl hover:shadow-lg hover:-translate-y-1 group"
+                  className="group relative flex flex-col bg-white rounded-xl border border-gray-200/60 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300 overflow-hidden"
                 >
-                  <div className="relative h-48 overflow-hidden bg-emerald-50">
+                  <div className="relative h-36 overflow-hidden bg-gray-50">
                     <img
                       src={imageUrl}
                       alt={projeto.nome}
-                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.style.display = 'none';
-                        e.target.parentNode.classList.add('bg-emerald-600');
+                        const parent = e.target.parentNode;
+                        parent.classList.remove('bg-gray-50');
+                        parent.classList.add('bg-emerald-50', 'flex', 'items-center', 'justify-center');
+                        parent.innerHTML += `
+                          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
+                            <line x1="2" x2="22" y1="2" y2="22"/>
+                            <path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"/>
+                            <path d="M21 15V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/>
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                          </svg>
+                        `;
                       }}
                     />
-                    <div className="absolute top-3 right-3">
-                      <span className={`px-2 py-1 text-xs font-bold rounded-md shadow-sm ${statusLabel === "EM_ANDAMENTO" ? "bg-emerald-500 text-white" :
-                          statusLabel === "FINALIZADO" ? "bg-blue-500 text-white" :
-                            "bg-gray-500 text-white"
+
+                    <div className="absolute top-2 right-2">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase shadow-sm backdrop-blur-md ${statusLabel === "EM_ANDAMENTO" ? "bg-emerald-500/90 text-white" :
+                        statusLabel === "FINALIZADO" ? "bg-blue-500/90 text-white" :
+                          "bg-gray-500/90 text-white"
                         }`}>
-                        {statusLabel.replace("_", " ")}
+                        {statusLabel === "EM_ANDAMENTO" ? "Ativo" : statusLabel === "FINALIZADO" ? "Fim" : "Inativo"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex flex-col flex-1 p-6">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <span className="inline-block px-2 py-1 text-[10px] font-semibold tracking-wide uppercase rounded bg-slate-100 text-slate-600">
+                  <div className="flex flex-col flex-1 p-3.5">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 whitespace-normal leading-tight">
                         {projeto.area}
                       </span>
                       {projeto.formato && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold tracking-wide uppercase rounded bg-blue-50 text-blue-600">
-                          <Monitor size={10} /> {projeto.formato}
+                        <span className="text-[10px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 whitespace-nowrap">
+                          {projeto.formato.toLowerCase()}
                         </span>
                       )}
                     </div>
 
-                    <h3 className="mb-2 text-xl font-bold text-slate-800 line-clamp-2" title={projeto.nome}>
+                    <h3 className="text-sm font-bold text-gray-800 leading-snug line-clamp-2 mb-1 group-hover:text-emerald-700 transition-colors">
                       {projeto.nome}
                     </h3>
 
-                    <p className="flex-1 mb-4 text-sm text-slate-500 line-clamp-3">
+                    <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">
                       {projeto.descricao}
                     </p>
 
-                    <div className="pt-4 mt-auto border-t border-slate-50">
-                      <div className="flex items-center gap-2 mb-3 text-xs text-slate-500">
-                        <span className="font-semibold text-emerald-700">Prof. Responsável:</span>
-                        <span className="truncate">{nomeCoordenador}</span>
+                    <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
+                      <div className="flex items-center gap-1.5 w-full" title={`Professor(a): ${nomeCompleto}`}>
+                        <User size={12} className="text-gray-300 shrink-0" />
+                        <span className="font-medium text-gray-600 truncate flex-1">{nomeCompleto}</span>
                       </div>
-
-                      {projeto.instituicaoEnsino?.nome && (
-                        <div className="flex items-center gap-2 mb-4 text-xs text-slate-400">
-                          <MapPin size={12} />
-                          <span className="truncate">{projeto.instituicaoEnsino.nome}</span>
-                        </div>
-                      )}
-
-                      <Link
-                        to={`/detalhes-projeto/${projeto.id}`}
-                        className="block w-full py-2.5 text-sm font-semibold text-center transition-colors rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800"
-                      >
-                        Ver Detalhes
-                      </Link>
                     </div>
+                    {projeto.instituicaoEnsino?.nome && (
+                      <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400" title={projeto.instituicaoEnsino.nome}>
+                        <Building2 size={12} className="text-gray-300 shrink-0" />
+                        <span className="truncate flex-1">{projeto.instituicaoEnsino.nome}</span>
+                      </div>
+                    )}
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
         )}
 
         {!loading && projetosFiltrados.length === 0 && (
-          <div className="mt-12 text-center">
-            <p className="text-lg text-slate-500">
-              Nenhum projeto encontrado com os filtros selecionados.
-            </p>
-            {(busca || statusFiltro || areaFiltro || modalidadeFiltro) && (
-              <button
-                onClick={() => {
-                  setBusca("");
-                  setStatusFiltro("");
-                  setAreaFiltro("");
-                  setModalidadeFiltro("");
-                  setInstituicaoFiltro("");
-                }}
-                className="mt-4 text-emerald-600 hover:underline"
-              >
-                Limpar filtros
-              </button>
-            )}
+          <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200 mt-8">
+            <p className="text-gray-500 text-sm">Nenhum projeto encontrado.</p>
+            <button onClick={() => { setBusca(""); setStatusFiltro(""); setAreaFiltro(""); }} className="mt-2 text-sm text-emerald-600 font-medium hover:underline">
+              Limpar filtros
+            </button>
           </div>
         )}
       </div>
