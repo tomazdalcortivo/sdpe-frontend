@@ -366,11 +366,28 @@ export default function DetalhesProjeto() {
                         <h3 className="font-semibold text-gray-900">Período</h3>
                         {isEditing ? (
                           <div className="space-y-2 mt-1">
-                            <input type="date" value={editData.startDate} onChange={(e) => setEditData({ ...editData, startDate: e.target.value })} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-                            <input type="date" value={editData.endDate} onChange={(e) => setEditData({ ...editData, endDate: e.target.value })} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                            <label className="block text-xs text-gray-500">Início</label>
+                            <input
+                              type="date"
+                              value={editData.startDate}
+                              onChange={(e) => setEditData({ ...editData, startDate: e.target.value })}
+                              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
+
+                            <label className="block text-xs text-gray-500">Fim</label>
+                            <input
+                              type="date"
+                              value={editData.endDate}
+                              onChange={(e) => setEditData({ ...editData, endDate: e.target.value })}
+                              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
                           </div>
                         ) : (
-                          <p className="text-gray-600">{(project.dataInicio || 'Jan 2024').split('T')[0]} - {(project.dataFim || 'Dec 2024').split('T')[0]}</p>
+                          <p className="text-gray-600 capitalize">
+                            {project.dataInicio ? new Date(project.dataInicio).toLocaleDateString('pt-BR') : 'Data indef.'}
+                            {' - '}
+                            {project.dataFim ? new Date(project.dataFim).toLocaleDateString('pt-BR') : 'Data indef.'}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -663,7 +680,7 @@ export default function DetalhesProjeto() {
                   {posts && posts.length > 0 ? (
                     posts.map((post) => (
                       <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                       
+
                         <div className="p-4 flex items-center gap-3 border-b border-gray-50">
                           <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold">
                             {post.autor?.nome?.slice(0, 2).toUpperCase() || 'AD'}
