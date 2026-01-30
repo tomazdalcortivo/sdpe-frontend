@@ -35,7 +35,7 @@ function App() {
 
         <Route path="/estatisticas" element={<Estatisticas />} />
         <Route path="/criar-projeto" element={<CriarProjeto />} />
-        <Route path="/lista-projetos" element={<ListaProjetos />} />
+        <Route path="/projetos" element={<ListaProjetos />} />
         <Route path="/detalhes-projeto/:id" element={<DetalhesProjeto />} />
         <Route path="/sobre" element={<Sobre />} />
         <Route element={<RotaAdmin />}>

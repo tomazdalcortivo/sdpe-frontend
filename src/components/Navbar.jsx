@@ -42,7 +42,7 @@ export default function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setUserData(null); // Limpa o estado local imediatamente
+    setUserData(null);
     navigate("/");
   };
 
@@ -51,7 +51,6 @@ export default function Navbar() {
   const logoColor = isScrolled ? "text-emerald-900" : isHome ? "text-white" : "text-emerald-900";
   const welcomeColor = isScrolled ? "text-emerald-800" : isHome ? "text-emerald-100" : "text-emerald-800";
 
-  // Lógica vinda do PULL: Diferencia Admin de Usuário comum
   const isAdmin = userData?.perfil === "ADMIN";
   const profileLink = isAdmin ? "/painel-administrativo" : "/perfil";
   const profileTitle = isAdmin ? "Painel Administrativo" : "Meu Perfil";
@@ -78,7 +77,7 @@ export default function Navbar() {
           <div className={`hidden md:flex absolute left-1/2 transform -translate-x-1/2 gap-10 font-medium text-[16px] ${textColor}`}>
             <Link to="/" className="transition-opacity hover:opacity-75">Início</Link>
             <Link to="/sobre" className="transition-opacity hover:opacity-75">Sobre</Link>
-            <Link to="/lista-projetos" className="transition-opacity hover:opacity-75">Projetos</Link>
+            <Link to="/projetos" className="transition-opacity hover:opacity-75">Projetos</Link>
             <Link to="/estatisticas" className="transition-opacity hover:opacity-75">Estatísticas</Link>
           </div>
 
@@ -94,7 +93,6 @@ export default function Navbar() {
                     </span>
                   </div>
 
-                  {/* Redirecionamento dinâmico conforme o perfil */}
                   <Link
                     to={profileLink}
                     className={"p-2 rounded-full transition-colors bg-emerald-100 text-emerald-600 hover:bg-emerald-200" 
