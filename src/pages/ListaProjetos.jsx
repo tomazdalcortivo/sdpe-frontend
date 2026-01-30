@@ -1,20 +1,20 @@
-import { Search, SlidersHorizontal, MapPin, Monitor, Building2, User } from "lucide-react";
+import { Search, SlidersHorizontal, Building2, User, ChevronDown, Check } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import api from "../services/api";
 
 export default function ListaProjetos() {
   const [projetos, setProjetos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados dos Filtros
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState("");
   const [areaFiltro, setAreaFiltro] = useState("");
   const [modalidadeFiltro, setModalidadeFiltro] = useState("");
   const [instituicaoFiltro, setInstituicaoFiltro] = useState("");
-
   const [abrirFiltro, setAbrirFiltro] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const filtroContainerRef = useRef(null);
 
   useEffect(() => {
     async function carregarProjetos() {
@@ -31,10 +31,20 @@ export default function ListaProjetos() {
     carregarProjetos();
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (filtroContainerRef.current && !filtroContainerRef.current.contains(event.target)) {
+        setActiveDropdown(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const listaInstituicoes = useMemo(() => {
     const instituicoes = projetos
       .map(p => p.instituicaoEnsino?.nome)
-      .filter(nome => nome);
+      .filter(nome => nome && nome.trim().length > 0);
     return [...new Set(instituicoes)].sort();
   }, [projetos]);
 
@@ -60,11 +70,60 @@ export default function ListaProjetos() {
     return true;
   });
 
+  const filterFields = [
+    {
+      label: "Status",
+      value: statusFiltro,
+      onChange: setStatusFiltro,
+      options: [
+        { val: "", text: "Todos" },
+        { val: "EM_ANDAMENTO", text: "Em andamento" },
+        { val: "FINALIZADO", text: "Finalizados" },
+        { val: "INATIVO", text: "Inativos" }
+      ]
+    },
+    {
+      label: "Área",
+      value: areaFiltro,
+      onChange: setAreaFiltro,
+      options: [
+        { val: "", text: "Todas" },
+        { val: "Ciências Agrárias", text: "Ciências Agrárias" },
+        { val: "Ciências Biológicas", text: "Ciências Biológicas" },
+        { val: "Ciências Exatas e da Terra", text: "Ciências Exatas e da Terra" },
+        { val: "Ciências Humanas", text: "Ciências Humanas" },
+        { val: "Ciências da Saúde", text: "Ciências da Saúde" },
+        { val: "Ciências Sociais Aplicadas", text: "Ciências Sociais Aplicadas" },
+        { val: "Engenharias", text: "Engenharias" },
+        { val: "Linguística, Letras e Artes", text: "Linguística, Letras e Artes" }
+      ]
+    },
+    {
+      label: "Modalidade",
+      value: modalidadeFiltro,
+      onChange: setModalidadeFiltro,
+      options: [
+        { val: "", text: "Todas" },
+        { val: "PRESENCIAL", text: "Presencial" },
+        { val: "REMOTO", text: "Remoto" },
+        { val: "HIBRIDO", text: "Híbrido" }
+      ]
+    },
+    {
+      label: "Instituição",
+      value: instituicaoFiltro,
+      onChange: setInstituicaoFiltro,
+      options: [
+        { val: "", text: "Todas" },
+        ...listaInstituicoes.map(inst => ({ val: inst, text: inst }))
+      ]
+    }
+  ];
+
   return (
     <section className="min-h-screen px-4 md:px-8 pt-32 pb-20 bg-gray-50/50">
       <div className="mx-auto max-w-7xl">
 
-        {/* CABEÇALHO */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">
@@ -75,22 +134,21 @@ export default function ListaProjetos() {
             </p>
           </div>
 
-          {/* BARRA DE FERRAMENTAS */}
           <div className="flex items-center gap-2 w-full md:w-auto">
             <div className="relative flex-1 md:w-80 group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-600 w-4 h-4 transition-colors" />
               <input
                 type="text"
-                placeholder="Buscar projeto ou professor..."
+                placeholder="Buscar projeto ou professor"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                className="w-full h-10 pl-9 pr-4 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-sm"
+                className="w-full h-10 pl-9 pr-4 text-sm bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
               />
             </div>
 
             <button
               onClick={() => setAbrirFiltro(!abrirFiltro)}
-              className={`h-10 px-4 flex items-center gap-2 text-sm font-medium border rounded-lg transition-all ${abrirFiltro
+              className={`h-10 px-4 flex items-center gap-2 text-sm font-medium border rounded-lg transition-all shadow-sm ${abrirFiltro
                 ? "bg-emerald-50 border-emerald-200 text-emerald-700"
                 : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
                 }`}
@@ -101,71 +159,88 @@ export default function ListaProjetos() {
           </div>
         </div>
 
-        {/* PAINEL DE FILTROS */}
         {abrirFiltro && (
-          <div className="mb-8 p-6 bg-white border border-gray-100 rounded-xl shadow-lg grid grid-cols-1 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2">
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase">Status</label>
-              <select value={statusFiltro} onChange={(e) => setStatusFiltro(e.target.value)} className="mt-1 w-full text-sm border-gray-200 rounded-md focus:ring-emerald-500 focus:border-emerald-500">
-                <option value="">Todos</option>
-                <option value="EM_ANDAMENTO">Em andamento</option>
-                <option value="FINALIZADO">Finalizados</option>
-                <option value="INATIVO">Inativos</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase">Área</label>
-              <select value={areaFiltro} onChange={(e) => setAreaFiltro(e.target.value)} className="mt-1 w-full text-sm border-gray-200 rounded-md focus:ring-emerald-500 focus:border-emerald-500">
-                <option value="">Todas</option>
-                <option>Ciências Agrárias</option>
-                <option>Ciências Biológicas</option>
-                <option>Ciências Exatas e da Terra</option>
-                <option>Ciências Humanas</option>
-                <option>Ciências da Saúde</option>
-                <option>Ciências Sociais Aplicadas</option>
-                <option>Engenharias</option>
-                <option>Linguística, Letras e Artes</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase">Modalidade</label>
-              <select value={modalidadeFiltro} onChange={(e) => setModalidadeFiltro(e.target.value)} className="mt-1 w-full text-sm border-gray-200 rounded-md focus:ring-emerald-500 focus:border-emerald-500">
-                <option value="">Todas</option>
-                <option value="PRESENCIAL">Presencial</option>
-                <option value="ONLINE">Online</option>
-                <option value="HIBRIDO">Híbrido</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase">Instituição</label>
-              <select value={instituicaoFiltro} onChange={(e) => setInstituicaoFiltro(e.target.value)} className="mt-1 w-full text-sm border-gray-200 rounded-md focus:ring-emerald-500 focus:border-emerald-500">
-                <option value="">Todas</option>
-                {listaInstituicoes.map((inst, i) => <option key={i} value={inst}>{inst}</option>)}
-              </select>
-            </div>
-            <div className="md:col-span-4 flex justify-end">
-              <button onClick={() => { setStatusFiltro(""); setAreaFiltro(""); setModalidadeFiltro(""); setInstituicaoFiltro(""); }} className="text-xs font-medium text-red-600 hover:text-red-800">
+          <div
+            ref={filtroContainerRef}
+            className="mb-8 p-6 bg-white border border-gray-100 rounded-xl shadow-lg grid grid-cols-1 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2 relative z-20"
+          >
+            {filterFields.map((field, idx) => {
+              const isOpen = activeDropdown === idx;
+              const selectedOption = field.options.find(opt => opt.val === field.value);
+
+              return (
+                <div key={idx} className="relative">
+                  <label className="text-xs font-semibold text-gray-500 uppercase ml-1 mb-1 block">
+                    {field.label}
+                  </label>
+
+                  <button
+                    onClick={() => setActiveDropdown(isOpen ? null : idx)}
+                    className={`w-full h-10 pl-3 pr-8 text-sm text-left bg-white border rounded-lg shadow-sm flex items-center justify-between transition-all outline-none
+                      ${isOpen ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-gray-200 hover:border-emerald-300'}
+                    `}
+                  >
+                    <span className={`truncate ${!field.value ? 'text-gray-600' : 'text-gray-900 font-medium'}`}>
+                      {selectedOption ? selectedOption.text : "Selecione"}
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className={`absolute right-3 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-emerald-500' : ''}`}
+                    />
+                  </button>
+
+                  {isOpen && (
+                    <div className="absolute z-50 mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                      <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                        {field.options.map((opt, i) => (
+                          <div
+                            key={i}
+                            onClick={() => {
+                              field.onChange(opt.val);
+                              setActiveDropdown(null);
+                            }}
+                            className={`px-4 py-2.5 text-sm cursor-pointer flex items-center justify-between group transition-colors
+                              ${field.value === opt.val ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}
+                            `}
+                          >
+                            <span className="truncate">{opt.text}</span>
+                            {field.value === opt.val && <Check size={14} className="text-emerald-600" />}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            <div className="md:col-span-4 flex justify-end mt-2 border-t border-gray-50 pt-4">
+              <button
+                onClick={() => {
+                  setStatusFiltro("");
+                  setAreaFiltro("");
+                  setModalidadeFiltro("");
+                  setInstituicaoFiltro("");
+                  setActiveDropdown(null);
+                }}
+                className="text-xs font-medium text-red-600 hover:text-red-800 transition-colors hover:underline"
+              >
                 Limpar Filtros
               </button>
             </div>
           </div>
         )}
 
-        {/* --- GRID DE CARDS --- */}
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 rounded-full border-gray-200 border-t-emerald-600 animate-spin"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 relative z-0">
             {projetosFiltrados.map((projeto) => {
               const statusLabel = getStatusProjeto(projeto);
               const imageUrl = `http://localhost:8080/api/projetos/${projeto.id}/imagem`;
-              const nomeOriginal = projeto.coordenadores?.[0]?.nome || "";
-              const partesNome = nomeOriginal.trim().split(" ");
-              const nomeFormatado = partesNome.length > 1
-                ? `${partesNome[0]} ${partesNome[partesNome.length - 1]}`
-                : (partesNome[0] || "Coordenação");
+              const nomeCompleto = projeto.coordenadores?.[0]?.nome || "Coordenação";
 
               return (
                 <Link
@@ -173,25 +248,19 @@ export default function ListaProjetos() {
                   key={projeto.id}
                   className="group relative flex flex-col bg-white rounded-xl border border-gray-200/60 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300 overflow-hidden"
                 >
-                  {/* IMAGEM SLIM (h-36) */}
                   <div className="relative h-36 overflow-hidden bg-gray-50">
                     <img
                       src={imageUrl}
                       alt={projeto.nome}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      // --- MUDANÇA AQUI: Fundo Neutro + Ícone Riscado ---
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.style.display = 'none'; // 1. Esconde a tag img quebrada
-
+                        e.target.style.display = 'none';
                         const parent = e.target.parentNode;
-                        // 2. Adiciona fundo cinza claro neutro e centraliza
-                        parent.classList.remove('bg-gray-50'); // Remove o padrão se necessário
-                        parent.classList.add('bg-gray-100', 'flex', 'items-center', 'justify-center');
-
-                        // 3. Injeta o ícone de 'Imagem Riscada' (SVG) em cinza neutro
+                        parent.classList.remove('bg-gray-50');
+                        parent.classList.add('bg-emerald-50', 'flex', 'items-center', 'justify-center');
                         parent.innerHTML += `
-                          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
                             <line x1="2" x2="22" y1="2" y2="22"/>
                             <path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"/>
                             <path d="M21 15V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/>
@@ -199,58 +268,50 @@ export default function ListaProjetos() {
                           </svg>
                         `;
                       }}
-                    // ---------------------------------------------
                     />
 
-                    {/* Badge de Status */}
                     <div className="absolute top-2 right-2">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase shadow-sm backdrop-blur-md ${statusLabel === "EM_ANDAMENTO" ? "bg-emerald-500/90 text-white" :
-                          statusLabel === "FINALIZADO" ? "bg-blue-500/90 text-white" :
-                            "bg-gray-500/90 text-white"
+                        statusLabel === "FINALIZADO" ? "bg-blue-500/90 text-white" :
+                          "bg-gray-500/90 text-white"
                         }`}>
                         {statusLabel === "EM_ANDAMENTO" ? "Ativo" : statusLabel === "FINALIZADO" ? "Fim" : "Inativo"}
                       </span>
                     </div>
                   </div>
 
-                  {/* CONTEÚDO COMPACTO */}
                   <div className="flex flex-col flex-1 p-3.5">
-                    {/* Tags */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 truncate max-w-[120px]">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 whitespace-normal leading-tight">
                         {projeto.area}
                       </span>
                       {projeto.formato && (
-                        <span className="text-[10px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                        <span className="text-[10px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 whitespace-nowrap">
                           {projeto.formato.toLowerCase()}
                         </span>
                       )}
                     </div>
 
-                    {/* Título */}
                     <h3 className="text-sm font-bold text-gray-800 leading-snug line-clamp-2 mb-1 group-hover:text-emerald-700 transition-colors">
                       {projeto.nome}
                     </h3>
 
-                    {/* Descrição */}
                     <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">
                       {projeto.descricao}
                     </p>
 
-                    {/* Rodapé */}
                     <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
-                      <div className="flex items-center gap-1.5" title={`Professor(a): ${nomeOriginal}`}>
-                        <User size={12} className="text-gray-300" />
-                        <span className="font-medium text-gray-600 truncate max-w-[110px]">{nomeFormatado}</span>
+                      <div className="flex items-center gap-1.5 w-full" title={`Professor(a): ${nomeCompleto}`}>
+                        <User size={12} className="text-gray-300 shrink-0" />
+                        <span className="font-medium text-gray-600 truncate flex-1">{nomeCompleto}</span>
                       </div>
-
-                      {projeto.instituicaoEnsino?.nome && (
-                        <div className="flex items-center gap-1.5" title={projeto.instituicaoEnsino.nome}>
-                          <Building2 size={12} className="text-gray-300" />
-                          <span className="truncate max-w-[90px]">{projeto.instituicaoEnsino.nome}</span>
-                        </div>
-                      )}
                     </div>
+                    {projeto.instituicaoEnsino?.nome && (
+                      <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400" title={projeto.instituicaoEnsino.nome}>
+                        <Building2 size={12} className="text-gray-300 shrink-0" />
+                        <span className="truncate flex-1">{projeto.instituicaoEnsino.nome}</span>
+                      </div>
+                    )}
                   </div>
                 </Link>
               );
@@ -258,7 +319,6 @@ export default function ListaProjetos() {
           </div>
         )}
 
-        {/* Empty State */}
         {!loading && projetosFiltrados.length === 0 && (
           <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200 mt-8">
             <p className="text-gray-500 text-sm">Nenhum projeto encontrado.</p>
