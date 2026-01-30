@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 export default function Footer() {
   return (
     <footer className="text-gray-300 bg-gradient-to-b from-slate-900 to-slate-950">
-      {/* Conteúdo principal */}
       <div className="grid grid-cols-1 gap-10 py-12 md:grid-cols-3">
 
         {/* Coluna 1 - Logo */}
@@ -16,7 +15,7 @@ export default function Footer() {
             <div className="flex flex-col text-sm font-medium">
               <span className="font-bold leading-none">SDPE</span>
               <span className="text-sm font-semibold uppercase">
-                Divulgação de Projetos
+                Divulgação de Projetos de Extensão
               </span>
             </div>
           </div>
@@ -37,7 +36,7 @@ export default function Footer() {
               </Link>
             </li>
             <li>
-              <Link to="/lista-projetos" className="hover:text-emerald-400">
+              <Link to="/projetos" className="hover:text-emerald-400">
                 Nossos Projetos
               </Link>
             </li>
@@ -84,7 +83,7 @@ export default function Footer() {
       <div className="border-t border-slate-800">
         <div className="px-6 py-6 mx-auto text-sm text-center text-gray-500 max-w-7xl">
           <span>
-            © 2026 SDPE - Divulgação de Projetos. Todos os direitos reservados.
+            © 2026 SDPE - Divulgação de Projetos de Extensão. Todos os direitos reservados.
           </span>
         </div>
       </div>
