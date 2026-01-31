@@ -9,9 +9,9 @@ import {
   Mail,
   MapPin,
   Phone,
-  Calendar,
-  Clock,
   AlertTriangle,
+  Clock,
+  CheckCircle, 
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -25,14 +25,22 @@ const styles = {
   sectionCard: "p-8 mb-10 bg-white rounded-lg shadow",
   headerBanner: "h-40 bg-linear-to-r from-emerald-700 to-emerald-500",
   label: "block mb-1 font-medium text-slate-700",
-  input: "w-full px-4 py-2 border rounded-md outline-none focus:border-emerald-500 transition-all",
-  inputSmall: "w-full px-2 py-1 border rounded-md outline-none focus:border-emerald-500",
-  btnPrimary: "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50",
-  btnDark: "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-900 hover:bg-emerald-700",
-  btnDanger: "flex items-center gap-2 px-6 py-2 text-white transition-all bg-red-600 rounded-md shadow hover:bg-red-700",
-  btnGhost: "flex items-center gap-2 px-4 py-2 transition-all bg-gray-200 rounded-md hover:bg-gray-300",
-  btnOutline: "px-4 py-2 text-sm font-medium text-center transition-colors border rounded-md text-emerald-700 border-emerald-200 hover:bg-emerald-50",
-  badge: "px-2 py-0.5 text-xs font-semibold rounded-full border bg-emerald-100 text-emerald-800 border-emerald-200",
+  input:
+    "w-full px-4 py-2 border rounded-md outline-none focus:border-emerald-500 transition-all",
+  inputSmall:
+    "w-full px-2 py-1 border rounded-md outline-none focus:border-emerald-500",
+  btnPrimary:
+    "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50",
+  btnDark:
+    "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-900 hover:bg-emerald-700",
+  btnDanger:
+    "flex items-center gap-2 px-6 py-2 text-white transition-all bg-red-600 rounded-md shadow hover:bg-red-700",
+  btnGhost:
+    "flex items-center gap-2 px-4 py-2 transition-all bg-gray-200 rounded-md hover:bg-gray-300",
+  btnOutline:
+    "px-4 py-2 text-sm font-medium text-center transition-colors border rounded-md text-emerald-700 border-emerald-200 hover:bg-emerald-50",
+  badge:
+    "px-2 py-0.5 text-xs font-semibold rounded-full border bg-emerald-100 text-emerald-800 border-emerald-200",
 };
 
 export default function Perfil() {
@@ -48,7 +56,6 @@ export default function Perfil() {
   const [participatedProjects, setParticipatedProjects] = useState([]);
   const [estados, setEstados] = useState([]);
   const [cidades, setCidades] = useState([]);
-  const [feedback, setFeedback] = useState({ type: "", message: "" });
 
   const [userData, setUserData] = useState({
     id: null,
@@ -63,17 +70,17 @@ export default function Perfil() {
 
   const isProfessor = role === "COORDENADOR" || role === "ADMIN";
 
-  const showFeedback = (type, message) => {
+  const showToast = (icon, title) => {
     Swal.fire({
-      icon: type,
-      title: type === "error" ? "Ops!" : "Sucesso!",
-      text: message,
-      confirmButtonColor: type === "success" ? "#059669" : "#dc2626",
+      icon: icon,
+      title: title,
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
       timer: 3000,
       timerProgressBar: true,
     });
-  }
-
+  };
 
   useEffect(() => {
     api
@@ -155,18 +162,23 @@ export default function Perfil() {
 
   const handleSave = async () => {
     try {
-      await api.put(`/api/participantes/${userData.id}`, userData);
+      const endpoint =
+        role === "COORDENADOR" || role === "ADMIN"
+          ? `/api/coordenadores/${userData.id}`
+          : `/api/participantes/${userData.id}`;
+
+      await api.put(endpoint, userData);
       setIsEditing(false);
-      showFeedback("success", "Perfil atualizado com sucesso!");
+      showToast("success", "Perfil atualizado com sucesso!");
     } catch (error) {
-      showFeedback("error", "Erro ao salvar os dados.");
+      showToast("error", "Erro ao salvar os dados.");
     }
   };
 
   const handleDeleteAccount = () => {
     Swal.fire({
       title: "Tem certeza?",
-      text: "Você deseja excluir sua conta? Essa ação não pode ser desfeita.",
+      text: "Deseja excluir sua conta? Essa ação não pode ser desfeita.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -182,18 +194,34 @@ export default function Perfil() {
               : `/api/participantes/${userData.id}`;
 
           await api.delete(endpoint);
-
           localStorage.removeItem("token");
-
-          await Swal.fire(
-            "Excluído!",
-            "Sua conta foi excluída com sucesso.",
-            "success"
-          );
-
+          await Swal.fire("Excluído!", "Sua conta foi excluída.", "success");
           navigate("/entrar");
         } catch (error) {
-          showFeedback("error", "Erro ao excluir conta.");
+          showToast("error", "Erro ao excluir conta.");
+        }
+      }
+    });
+  };
+
+  const handleDeleteProject = (idProjeto) => {
+    Swal.fire({
+      title: "Excluir projeto?",
+      text: "Isso apagará o projeto e seus dados permanentemente.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sim, excluir",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.delete(`/api/projetos/${idProjeto}`);
+          setCreatedProjects((prev) => prev.filter((p) => p.id !== idProjeto));
+          Swal.fire("Excluído!", "Projeto removido.", "success");
+        } catch (error) {
+          showToast("error", "Erro ao excluir projeto.");
         }
       }
     });
@@ -203,7 +231,7 @@ export default function Perfil() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024)
-      return showFeedback("error", "A imagem deve ter no máximo 5MB.");
+      return showToast("error", "A imagem deve ter no máximo 5MB.");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -212,17 +240,50 @@ export default function Perfil() {
       const res = await api.patch(
         `/api/participantes/${userData.id}/foto`,
         formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       setUserData({ ...userData, fotoPerfil: res.data.fotoPerfil });
-      showFeedback("success", "Foto atualizada!");
+      showToast("success", "Foto atualizada!");
     } catch (error) {
-      showFeedback("error", "Erro ao enviar foto.");
+      showToast("error", "Erro ao enviar foto.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getStatusInfo = (projeto) => {
+    const isAtivo =
+      projeto.status !== undefined ? projeto.status : projeto.ativo;
+
+    if (!isAtivo) {
+      if (projeto.motivoRejeicao) {
+        return {
+          label: "Revisão Necessária",
+          className: "bg-red-100 text-red-700 border-red-200",
+          icon: <AlertTriangle size={12} />,
+        };
+      }
+      return {
+        label: "Em Análise", // Admin está olhando
+        className: "bg-amber-100 text-amber-700 border-amber-200",
+        icon: <Clock size={12} />,
+      };
+    }
+
+
+    if (projeto.dataFim && new Date(projeto.dataFim) < new Date()) {
+      return {
+        label: "Concluído",
+        className: "bg-gray-100 text-gray-600 border-gray-200",
+        icon: <CheckCircle size={12} />,
+      };
+    }
+
+    return {
+      label: "Ativo",
+      className: "bg-emerald-100 text-emerald-700 border-emerald-200",
+      icon: <CheckCircle size={12} />,
+    };
   };
 
   const currentProjects =
@@ -237,20 +298,6 @@ export default function Perfil() {
 
   return (
     <section className={styles.page}>
-      {feedback.message && (
-        <div className="fixed z-50 w-full max-w-md px-4 -translate-x-1/2 top-24 left-1/2">
-          <Alert
-            color={feedback.type === "success" ? "success" : "failure"}
-            icon={feedback.type === "success" ? HiCheck : HiX}
-            onDismiss={() => setFeedback({ type: "", message: "" })}
-            rounded
-            className="shadow-xl"
-          >
-            {feedback.message}
-          </Alert>
-        </div>
-      )}
-
       <div className={styles.container}>
         <div className={styles.card}>
           <div className={styles.headerBanner}></div>
@@ -326,7 +373,6 @@ export default function Perfil() {
                 <Mail className="text-emerald-600 shrink-0" size={18} />
                 <span className="truncate">{userData.email || "-"}</span>
               </div>
-
               <div className="flex items-center gap-2">
                 <Phone className="text-emerald-600 shrink-0" size={18} />
                 {!isEditing ? (
@@ -372,7 +418,7 @@ export default function Perfil() {
                     >
                       <option value="">Cidade</option>
                       {cidades.map((cid) => (
-                        <option key={cid.id || cid.nome} value={cid.nome}>
+                        <option key={cid.nome} value={cid.nome}>
                           {cid.nome}
                         </option>
                       ))}
@@ -449,77 +495,68 @@ export default function Perfil() {
           </div>
 
           <ul className="space-y-4">
-            {currentProjects.map((projeto) => (
-              <li
-                key={projeto.id}
-                className={`border rounded-lg overflow-hidden ${!projeto.ativo && projeto.motivoRejeicao
-                  ? "border-red-200 bg-red-50"
-                  : "border-slate-200 bg-slate-50"
-                  }`}
-              >
-                {!projeto.ativo && projeto.motivoRejeicao && (
-                  <div className="flex items-start gap-3 p-4 border-b border-red-100">
-                    <AlertTriangle
-                      className="text-red-500 shrink-0"
-                      size={18}
-                    />
+            {currentProjects.map((projeto) => {
+              const status = getStatusInfo(projeto);
+
+              return (
+                <li
+                  key={projeto.id}
+                  className={`border rounded-lg overflow-hidden ${!projeto.status && projeto.motivoRejeicao ? "border-red-200 bg-red-50" : "border-slate-200 bg-slate-50"}`}
+                >
+                  {!projeto.status && projeto.motivoRejeicao && (
+                    <div className="flex items-start gap-3 p-4 border-b border-red-100">
+                      <AlertTriangle
+                        className="text-red-500 shrink-0"
+                        size={18}
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-red-800 uppercase">
+                          Necessária Revisão
+                        </p>
+                        <p className="text-sm text-red-700">
+                          {projeto.motivoRejeicao}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between p-4">
                     <div>
-                      <p className="text-xs font-bold text-red-800 uppercase">
-                        Necessária Revisão
-                      </p>
-                      <p className="text-sm text-red-700">
-                        {projeto.motivoRejeicao}
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold">{projeto.nome}</h3>
+                        <span
+                          className={`flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border ${status.className}`}
+                        >
+                          {status.icon} {status.label}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-500 line-clamp-1">
+                        {projeto.descricao}
                       </p>
                     </div>
-                  </div>
-                )}
 
-                <div className="flex items-center justify-between p-4">
-                  <div>
-                    <h3 className="font-bold">{projeto.nome}</h3>
-                    <p className="mb-2 text-sm text-slate-500 line-clamp-1">
-                      {projeto.descricao}
-                    </p>
-
-                    <div className="flex flex-wrap gap-4 text-xs text-slate-600">
-                      {projeto.dataInicio && (
-                        <div className="flex items-center gap-1">
-                          <Calendar size={14} />
-                          {new Date(projeto.dataInicio).toLocaleDateString()}
-                        </div>
-                      )}
-                      {projeto.cargaHoraria && (
-                        <div className="flex items-center gap-1">
-                          <Clock size={14} />
-                          {projeto.cargaHoraria}h
-                        </div>
-                      )}
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${projeto.ativo
-                          ? "bg-green-100 text-green-700 border-green-200"
-                          : "bg-amber-100 text-amber-700 border-amber-200"
-                          }`}
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/detalhes-projeto/${projeto.id}`}
+                        className={styles.btnOutline}
                       >
-                        {projeto.ativo ? "ATIVO" : "PENDENTE/INATIVO"}
-                      </span>
+                        Ver Detalhes
+                      </Link>
+
+                      {projectTab === "created" && (
+                        <button
+                          onClick={() => handleDeleteProject(projeto.id)}
+                          className="p-2 text-red-600 transition-colors bg-white border border-red-200 rounded-md hover:bg-red-50 hover:border-red-300"
+                          title="Excluir Projeto"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
                     </div>
-
                   </div>
-
-                  <Link
-                    to={`/detalhes-projeto/${projeto.id}`}
-                    className={styles.btnOutline}
-                  >
-                    Ver Detalhes
-                  </Link>
-                </div>
-              </li>
-            ))}
-            {currentProjects.length === 0 && (
-              <li className="py-8 text-center text-slate-500 border-2 border-dashed rounded-lg">
-                Nenhum projeto encontrado.
-              </li>
-            )}
+                </li>
+              );
+            })}
           </ul>
         </div>
 
