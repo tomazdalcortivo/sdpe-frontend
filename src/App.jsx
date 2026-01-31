@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import AjudaButton from "./components/HelpButton.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
+import VLibras from "./components/VLibras.jsx";
 
 import Inicio from "./pages/Inicio.jsx";
 import Ajuda from "./pages/Ajuda.jsx";
@@ -23,6 +24,7 @@ function App() {
     <>
       <Navbar />
       <ScrollToTop />
+      <VLibras />
 
       <Routes>
         <Route path="/" element={<Inicio />} />
