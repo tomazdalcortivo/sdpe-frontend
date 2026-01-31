@@ -14,8 +14,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { Alert } from "flowbite-react";
-import { HiCheck, HiX } from "react-icons/hi";
+import Swal from "sweetalert2";
 import defaultImage from "../assets/imagem_perfil.png";
 import api from "../services/api";
 
@@ -65,9 +64,16 @@ export default function Perfil() {
   const isProfessor = role === "COORDENADOR" || role === "ADMIN";
 
   const showFeedback = (type, message) => {
-    setFeedback({ type, message });
-    setTimeout(() => setFeedback({ type: "", message: "" }), 5000);
-  };
+    Swal.fire({
+      icon: type,
+      title: type === "error" ? "Ops!" : "Sucesso!",
+      text: message,
+      confirmButtonColor: type === "success" ? "#059669" : "#dc2626",
+      timer: 3000,
+      timerProgressBar: true,
+    });
+  }
+
 
   useEffect(() => {
     api
@@ -157,25 +163,40 @@ export default function Perfil() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (
-      window.confirm(
-        "Tem certeza que deseja excluir sua conta? Essa ação não pode ser desfeita.",
-      )
-    ) {
-      try {
-        const endpoint =
-          role === "COORDENADOR" || role === "ADMIN"
-            ? `/api/coordenadores/${userData.id}`
-            : `/api/participantes/${userData.id}`;
+  const handleDeleteAccount = () => {
+    Swal.fire({
+      title: "Tem certeza?",
+      text: "Você deseja excluir sua conta? Essa ação não pode ser desfeita.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sim, excluir!",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const endpoint =
+            role === "COORDENADOR" || role === "ADMIN"
+              ? `/api/coordenadores/${userData.id}`
+              : `/api/participantes/${userData.id}`;
 
-        await api.delete(endpoint);
-        localStorage.removeItem("token");
-        navigate("/entrar");
-      } catch (error) {
-        showFeedback("error", "Erro ao excluir conta.");
+          await api.delete(endpoint);
+
+          localStorage.removeItem("token");
+
+          await Swal.fire(
+            "Excluído!",
+            "Sua conta foi excluída com sucesso.",
+            "success"
+          );
+
+          navigate("/entrar");
+        } catch (error) {
+          showFeedback("error", "Erro ao excluir conta.");
+        }
       }
-    }
+    });
   };
 
   const handleImageUpload = async (e) => {
