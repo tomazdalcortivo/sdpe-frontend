@@ -241,12 +241,12 @@ export default function ListaProjetos() {
   ];
 
   return (
-    <section className="min-h-screen px-4 md:px-8 pt-32 pb-20 bg-gray-50/50">
+    <section className="min-h-screen px-4 md:px-8 pt-40 pb-40 bg-gray-50/50">
       <div className="mx-auto max-w-7xl">
 
         <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            <h1 className="text-3xl font-bold tracking-tight text-emerald-700">
               Projetos de Extensão
             </h1>
             <p className="mt-2 text-sm text-gray-500">

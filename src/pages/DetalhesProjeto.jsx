@@ -5,13 +5,31 @@ import {
   Globe, Facebook, Instagram, Linkedin, Youtube, Upload, X, FileText,
   Image as ImageIcon, MessageSquare, Mail,
   Plus, Trash2, Search, UserPlus, Send, Check, User,
-  Laptop
+  Laptop, ArrowRight
 } from 'lucide-react';
 import Swal from "sweetalert2";
 import defaultImage from '../assets/capa-padrao-projeto.png';
 import api, { getLoggedUser } from '../services/api';
 
 export default function DetalhesProjeto() {
+
+
+  const FORMATO_MAP = {
+    PRESENCIAL: "Presencial",
+    REMOTO: "Remoto",
+    HIBRIDO: "Híbrido"
+  };
+
+  const FUNCAO_COORDENADOR_MAP = {
+    COORDENADOR_GERAL: "Coordenador Geral",
+    COORDENADOR_ADJUNTO: "Coordenador Adjunto",
+  };
+
+  const formatarFuncao = (funcao) => {
+    if (!funcao) return "Coordenador";
+    return FUNCAO_COORDENADOR_MAP[funcao] ||
+      funcao.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  };
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -47,25 +65,6 @@ export default function DetalhesProjeto() {
   const viewRecorded = useRef(false);
   const coordenadorPrincipal = project?.coordenadores?.[0];
 
-
-  const FORMATO_MAP = {
-    PRESENCIAL: "Presencial",
-    REMOTO: "Remoto",
-    HIBRIDO: "Híbrido"
-  };
-
-
-  const FUNCAO_COORDENADOR_MAP = {
-    COORDENADOR_GERAL: "Coordenador Geral",
-    COORDENADOR_ADJUNTO: "Coordenador Adjunto",
-  };
-
-  const formatarFuncao = (funcao) => {
-    if (!funcao) return "Coordenador";
-    return FUNCAO_COORDENADOR_MAP[funcao] ||
-      funcao.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-  };
-
   const [editData, setEditData] = useState({
     title: '',
     description: '',
@@ -73,10 +72,13 @@ export default function DetalhesProjeto() {
     startDate: '',
     endDate: '',
     workload: '',
-    format: 'Hibrido',
+    format: 'Presencial',
     participants: [],
     socialMedia: { website: '', facebook: '', instagram: '', linkedin: '', youtube: '' },
-    documents: []
+    instNome: '',
+    instCidade: '',
+    instEstado: '',
+    novosDocumentos: [],
   });
 
   const baseURL = api && api.defaults && api.defaults.baseURL ? api.defaults.baseURL : 'http://localhost:8080';
@@ -193,7 +195,7 @@ export default function DetalhesProjeto() {
           linkedin: data.redesSociais?.linkedin || '',
           youtube: data.redesSociais?.youtube || ''
         },
-        documents: []
+        novosDocumentos: []
       });
     } catch (err) {
       console.error('Erro ao buscar projeto:', err);
@@ -360,7 +362,7 @@ export default function DetalhesProjeto() {
         dataInicio: editData.startDate ? new Date(editData.startDate) : null,
         dataFim: editData.endDate ? new Date(editData.endDate) : null,
         cargaHoraria: editData.workload ? parseFloat(editData.workload) : null,
-        formato: editData.format?.toUpperCase(),
+        formato: editData.format,
         redesSociais: editData.socialMedia,
         instituicaoEnsino: {
           nome: editData.instNome,
@@ -377,6 +379,13 @@ export default function DetalhesProjeto() {
         formData.append("imagem", novaImagem);
       }
 
+
+      if (editData.novosDocumentos && editData.novosDocumentos.length > 0) {
+        editData.novosDocumentos.forEach((file) => {
+          formData.append("documentos", file);
+        });
+      }
+
       await api.put(`/api/projetos/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -389,7 +398,15 @@ export default function DetalhesProjeto() {
         showConfirmButton: false
       });
 
+      Swal.fire({
+        title: "Sucesso!",
+        text: "Projeto atualizado com sucesso!",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false
+      });
       setNovaImagem(null);
+      setEditData(prev => ({ ...prev, novosDocumentos: [] }));
       setIsEditing(false);
       fetchProject();
 
@@ -400,12 +417,40 @@ export default function DetalhesProjeto() {
   };
 
   const handleDocumentUpload = (e) => {
-    const files = e.target.files;
-    if (files && editData.documents.length < 10) {
-      const newDocs = Array.from(files).slice(0, 10 - editData.documents.length).map(f => f.name);
-      setEditData({ ...editData, documents: [...editData.documents, ...newDocs] });
+    const files = Array.from(e.target.files);
+    const totalDocs = (project?.documentos?.length || 0) + editData.novosDocumentos.length + files.length;
+
+    if (totalDocs > 10) {
+      alert("Limite total de 10 documentos atingido (Existentes + Novos).");
+      return;
     }
+
+    setEditData(prev => ({
+      ...prev,
+      novosDocumentos: [...prev.novosDocumentos, ...files]
+    }));
   };
+
+  const removeNovoDocumento = (index) => {
+    setEditData(prev => ({
+      ...prev,
+      novosDocumentos: prev.novosDocumentos.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleDeleteDocumento = async (docId) => {
+    if (!window.confirm("Deseja realmente excluir este documento?")) return;
+    try {
+      // Requer endpoint DELETE /api/documentos/{id} no backend
+      await api.delete(`/api/documentos/${docId}`);
+      alert("Documento removido!");
+      fetchProject();
+    } catch (e) {
+      console.error("Erro ao deletar documento", e);
+      alert("Erro ao excluir documento. Verifique se a rota existe no backend.");
+    }
+  }
+
 
   const removeItem = (type, index) => {
     setEditData({ ...editData, [type]: editData[type].filter((_, i) => i !== index) });
@@ -580,7 +625,6 @@ export default function DetalhesProjeto() {
                           </select>
                         ) : (
                           <p className="text-gray-600">
-                            {/* Usa o mapa para exibir "Híbrido" se o backend mandou "HIBRIDO" */}
                             {FORMATO_MAP[project.formato || editData.format] || project.formato}
                           </p>
                         )}
@@ -796,23 +840,45 @@ export default function DetalhesProjeto() {
                 )}
 
                 {isEditing && (
-                  <div className="border-t border-gray-200 pt-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Documentos e Editais <span className="text-sm text-gray-500">(máx. 10 arquivos, 10MB cada)</span></h2>
-                    <div className="space-y-4">
-                      <label className="flex items-center justify-center gap-2 w-full p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-emerald-500 transition-colors">
-                        <FileText className="w-6 h-6 text-gray-400" />
-                        <span className="text-gray-600">Adicionar Documentos (PDF, DOC, DOCX)</span>
-                        <input type="file" accept=".pdf,.doc,.docx" multiple onChange={handleDocumentUpload} className="hidden" disabled={editData.documents.length >= 10} />
-                      </label>
-                      <div className="space-y-2">
-                        {editData.documents.map((doc, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div className="flex items-center gap-2"><FileText className="w-5 h-5 text-emerald-600" /><span className="text-gray-700 text-sm">{doc}</span></div>
-                            <button onClick={() => removeItem('documents', idx)} className="p-1 text-red-500 hover:bg-red-50 rounded"><X className="w-4 h-4" /></button>
+                  <div className="pt-8 border-t border-gray-200 mt-8">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-emerald-600" />
+                      Anexar Documentos e Editais
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      Selecione arquivos PDF, DOC ou DOCX (Máx. 10MB cada). Limite de 10 arquivos no total.
+                    </p>
+
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-emerald-100 border-dashed rounded-xl cursor-pointer bg-emerald-50/30 hover:bg-emerald-50 transition-colors">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-8 h-8 mb-2 text-emerald-500" />
+                        <p className="mb-1 text-sm text-gray-700"><span className="font-semibold">Clique para enviar</span> ou arraste</p>
+                      </div>
+                      <input
+                        type="file"
+                        className="hidden"
+                        multiple
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleDocumentUpload}
+                        disabled={((project?.documentos?.length || 0) + editData.novosDocumentos.length) >= 10}
+                      />
+                    </label>
+
+                    {/* Lista de Pré-visualização do Upload */}
+                    {editData.novosDocumentos && editData.novosDocumentos.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase">Arquivos para enviar:</h4>
+                        {editData.novosDocumentos.map((file, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-emerald-600" />
+                              <span className="text-sm font-medium text-emerald-800 truncate">{file.name}</span>
+                            </div>
+                            <button onClick={() => removeNovoDocumento(idx)} className="text-emerald-600 hover:text-red-500"><X size={18} /></button>
                           </div>
                         ))}
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
 
@@ -950,16 +1016,34 @@ export default function DetalhesProjeto() {
               </div>
             )}
 
+            {/* --- ABA DOCUMENTOS (SOMENTE VISUALIZAÇÃO/EXCLUSÃO) --- */}
             {activeTab === 'documents' && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2"><FileText className="w-6 h-6 text-emerald-600" />Documentos e Editais</h2>
-                {project.documentos && project.documentos.length > 0 ? (
-                  <div className="space-y-3">{project.documentos.map((d, i) => (
-                    <a key={i} href={d.url || '#'} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors group"><div className="flex items-center gap-3"><FileText className="w-5 h-5 text-emerald-600" /><span className="text-gray-700 group-hover:text-emerald-700">{d.nome || d}</span></div><span className="text-sm text-gray-400 group-hover:text-emerald-600">Download</span></a>
-                  ))}</div>
-                ) : (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg"><FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-500">Nenhum documento disponível no momento</p></div>
-                )}
+              <div className="space-y-8 animate-in fade-in">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-emerald-600" /> Documentos Disponíveis</h2>
+                  {project.documentos && project.documentos.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-3">
+                      {project.documentos.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all group">
+                          <div className="flex items-center gap-4">
+                            <div className="p-2 bg-red-50 rounded-lg"><FileText className="w-6 h-6 text-red-500" /></div>
+                            <div>
+                              <p className="font-medium text-gray-800">{doc.nome}</p>
+                              <a href={doc.url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1">Visualizar PDF <ArrowRight size={10} /></a>
+                            </div>
+                          </div>
+                          {isOwner && isEditing && (
+                            <button onClick={() => handleDeleteDocumento(doc.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Excluir documento"><Trash2 size={18} /></button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                      <p className="text-gray-500">Nenhum documento cadastrado.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1111,6 +1195,6 @@ export default function DetalhesProjeto() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
