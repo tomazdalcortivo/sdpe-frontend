@@ -4,7 +4,8 @@ import {
   ArrowLeft, Edit2, Calendar, Clock, Users, Target, BookOpen, MapPin,
   Globe, Facebook, Instagram, Linkedin, Youtube, Upload, X, FileText,
   Image as ImageIcon, MessageSquare, Mail,
-  Plus, Trash2, Search, UserPlus, Send, Check, User
+  Plus, Trash2, Search, UserPlus, Send, Check, User,
+  Laptop
 } from 'lucide-react';
 import Swal from "sweetalert2";
 import defaultImage from '../assets/capa-padrao-projeto.png';
@@ -26,6 +27,9 @@ export default function DetalhesProjeto() {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
+  const [estados, setEstados] = useState([]);
+  const [cidades, setCidades] = useState([]);
+
   const [posts, setPosts] = useState([]);
   const [newPostContent, setNewPostContent] = useState("");
   const [newPostFile, setNewPostFile] = useState(null);
@@ -43,6 +47,13 @@ export default function DetalhesProjeto() {
   const viewRecorded = useRef(false);
   const coordenadorPrincipal = project?.coordenadores?.[0];
 
+
+  const FORMATO_MAP = {
+    PRESENCIAL: "Presencial",
+    REMOTO: "Remoto",
+    HIBRIDO: "Híbrido"
+  };
+
   const [editData, setEditData] = useState({
     title: '',
     description: '',
@@ -51,7 +62,6 @@ export default function DetalhesProjeto() {
     endDate: '',
     workload: '',
     format: 'Hibrido',
-    planning: '',
     participants: [],
     socialMedia: { website: '', facebook: '', instagram: '', linkedin: '', youtube: '' },
     documents: []
@@ -65,12 +75,48 @@ export default function DetalhesProjeto() {
   };
 
   useEffect(() => {
-    if (id) {
-      fetchProject();
-      fetchFeedbacks();
-      registerView();
+    async function loadAllData() {
+      if (id) {
+        setLoading(true);
+        try {
+
+          try {
+            const resEstados = await api.get("/api/localidades/estados");
+            setEstados(resEstados.data);
+          } catch (e) {
+            console.warn("API de Localidades instável ou fora do ar:", e);
+            setEstados([]);
+          }
+
+          await fetchProject();
+          await fetchFeedbacks();
+          registerView();
+        } catch (e) {
+          console.error("Erro ao carregar dados:", e);
+        } finally {
+          setLoading(false);
+        }
+      }
     }
+    loadAllData();
   }, [activeTab, id]);
+
+  useEffect(() => {
+    async function carregarCidades() {
+      if (isEditing && editData.instEstado) {
+        try {
+          const res = await api.get(`/api/localidades/estados/${editData.instEstado}/cidades`);
+          setCidades(res.data);
+        } catch (e) {
+          console.error("Erro ao carregar cidades", e);
+          setCidades([]);
+        }
+      } else if (!editData.instEstado) {
+        setCidades([]);
+      }
+    }
+    carregarCidades();
+  }, [editData.instEstado, isEditing]);
 
   const registerView = async () => {
     if (viewRecorded.current) return;
@@ -123,8 +169,10 @@ export default function DetalhesProjeto() {
         startDate: data.dataInicio ? data.dataInicio.split('T')[0] : '',
         endDate: data.dataFim ? data.dataFim.split('T')[0] : '',
         workload: data.cargaHoraria ? String(data.cargaHoraria) : '',
-        format: data.formato || 'Híbrido',
-        planning: '',
+        format: data.formato || 'Presencial',
+        instNome: data.instituicaoEnsino?.nome || "",
+        instCidade: data.instituicaoEnsino?.cidade || "",
+        instEstado: data.instituicaoEnsino?.estado || "",
         participants: data.participantes || [],
         socialMedia: {
           website: data.redesSociais?.website || '',
@@ -146,7 +194,7 @@ export default function DetalhesProjeto() {
   async function fetchFeedbacks() {
     try {
       setLoadingComentarios(true);
-      
+
       const res = await api.get(`/api/projetos/${id}/feedbacks`);
 
       if (Array.isArray(res.data)) {
@@ -289,7 +337,12 @@ export default function DetalhesProjeto() {
         dataFim: editData.endDate ? new Date(editData.endDate) : null,
         cargaHoraria: editData.workload ? parseFloat(editData.workload) : null,
         formato: editData.format?.toUpperCase(),
-        redesSociais: editData.socialMedia
+        redesSociais: editData.socialMedia,
+        instituicaoEnsino: {
+          nome: editData.instNome,
+          cidade: editData.instCidade,
+          estado: editData.instEstado
+        }
       };
 
       formData.append("projeto", new Blob([JSON.stringify(projetoPayload)], {
@@ -484,17 +537,91 @@ export default function DetalhesProjeto() {
 
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-emerald-600 mt-1 flex-shrink-0" />
+                      <Laptop className="w-5 h-5 text-emerald-600 mt-1 flex-shrink-0" />
                       <div>
                         <h3 className="font-semibold text-gray-900">Formato</h3>
                         {isEditing ? (
                           <select value={editData.format} onChange={(e) => setEditData({ ...editData, format: e.target.value })} className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <option>Presencial</option>
-                            <option>Remoto</option>
-                            <option>Híbrido</option>
+
+                            <option value="">Selecione...</option>
+                            <option value="PRESENCIAL">Presencial</option>
+                            <option value="REMOTO">Remoto</option>
+                            <option value="HIBRIDO">Híbrido</option>
                           </select>
                         ) : (
-                          <p className="text-gray-600">{project.formato || editData.format}</p>
+                          <p className="text-gray-600">
+                            {/* Usa o mapa para exibir "Híbrido" se o backend mandou "HIBRIDO" */}
+                            {FORMATO_MAP[project.formato || editData.format] || project.formato}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 col-span-1 md:col-span-2">
+                      <MapPin className="w-5 h-5 text-emerald-600 mt-1 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">Instituição de Ensino</h3>
+
+                        {isEditing ? (
+                          <div className="flex flex-col gap-3 mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div>
+                              <label className="text-xs font-bold text-gray-500 uppercase">Nome</label>
+                              <input
+                                type="text"
+                                placeholder="Ex: IFPR"
+                                value={editData.instNome}
+                                onChange={(e) => setEditData({ ...editData, instNome: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                              />
+                            </div>
+
+                            <div className="flex gap-3">
+                              <div className="w-1/3">
+                                <label className="text-xs font-bold text-gray-500 uppercase">UF</label>
+                                <select
+                                  value={editData.instEstado}
+                                  onChange={(e) => setEditData({
+                                    ...editData,
+                                    instEstado: e.target.value,
+                                    instCidade: ""
+                                  })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                >
+                                  <option value="">--</option>
+                                  {estados.map((uf) => (
+                                    <option key={uf.id} value={uf.sigla}>{uf.sigla}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div className="w-2/3">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Cidade</label>
+                                <select
+                                  value={editData.instCidade}
+                                  onChange={(e) => setEditData({ ...editData, instCidade: e.target.value })}
+                                  disabled={!editData.instEstado}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white disabled:bg-gray-100"
+                                >
+                                  <option value="">Selecione...</option>
+                                  {cidades.map((c) => (
+                                    <option key={c.id} value={c.nome}>{c.nome}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-1">
+                            <p className="font-medium text-gray-800">
+                              {project.instituicaoEnsino?.nome || "Não informada"}
+                            </p>
+                            {project.instituicaoEnsino?.cidade && (
+                              <p className="text-sm text-gray-500">
+                                {project.instituicaoEnsino.cidade}
+                                {project.instituicaoEnsino.estado && ` - ${project.instituicaoEnsino.estado}`}
+                              </p>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
