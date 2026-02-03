@@ -418,36 +418,63 @@ export default function DetalhesProjeto() {
 
   const handleDocumentUpload = (e) => {
     const files = Array.from(e.target.files);
-    const totalDocs = (project?.documentos?.length || 0) + editData.novosDocumentos.length + files.length;
+
+    const pdfFiles = files.filter(file => file.type === "application/pdf");
+
+    if (pdfFiles.length !== files.length) {
+      Swal.fire("Erro", "Apenas arquivos PDF são permitidos.", "error");
+    }
+
+    if (pdfFiles.length === 0) return;
+
+    const totalDocs = (project?.documentos?.length || 0) + editData.novosDocumentos.length + pdfFiles.length;
 
     if (totalDocs > 10) {
-      alert("Limite total de 10 documentos atingido (Existentes + Novos).");
+      Swal.fire("Erro", "Limite total de 10 documentos atingido.", "error");
       return;
     }
 
     setEditData(prev => ({
       ...prev,
-      novosDocumentos: [...prev.novosDocumentos, ...files]
+      novosDocumentos: [...prev.novosDocumentos, ...pdfFiles]
     }));
-  };
 
-  const removeNovoDocumento = (index) => {
-    setEditData(prev => ({
-      ...prev,
-      novosDocumentos: prev.novosDocumentos.filter((_, i) => i !== index)
-    }));
+    e.target.value = "";
   };
 
   const handleDeleteDocumento = async (docId) => {
-    if (!window.confirm("Deseja realmente excluir este documento?")) return;
+
+    const result = await Swal.fire({
+      title: "Tem certeza?",
+      text: "Este documento será excluído permanentemente.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sim, excluir!",
+      cancelButtonText: "Cancelar"
+    });
+
+    if (!result.isConfirmed) return;
+
+    console.log("Tentando excluir documento ID:", docId);
+
     try {
-      // Requer endpoint DELETE /api/documentos/{id} no backend
       await api.delete(`/api/documentos/${docId}`);
-      alert("Documento removido!");
+
+      await Swal.fire({
+        title: "Documento excluído!",
+        text: "O documento foi removido com sucesso.",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false
+      });
+
       fetchProject();
+
     } catch (e) {
       console.error("Erro ao deletar documento", e);
-      alert("Erro ao excluir documento. Verifique se a rota existe no backend.");
+      Swal.fire("Erro", "Não foi possível excluir o documento.", "error");
     }
   }
 
@@ -846,7 +873,7 @@ export default function DetalhesProjeto() {
                       Anexar Documentos e Editais
                     </h3>
                     <p className="text-sm text-gray-500 mb-4">
-                      Selecione arquivos PDF, DOC ou DOCX (Máx. 10MB cada). Limite de 10 arquivos no total.
+                      Selecione arquivos <strong>apenas em formato PDF</strong> (Máx. 10MB cada). Limite de 10 arquivos no total.
                     </p>
 
                     <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-emerald-100 border-dashed rounded-xl cursor-pointer bg-emerald-50/30 hover:bg-emerald-50 transition-colors">
@@ -1016,7 +1043,6 @@ export default function DetalhesProjeto() {
               </div>
             )}
 
-            {/* --- ABA DOCUMENTOS (SOMENTE VISUALIZAÇÃO/EXCLUSÃO) --- */}
             {activeTab === 'documents' && (
               <div className="space-y-8 animate-in fade-in">
                 <div>
@@ -1033,7 +1059,13 @@ export default function DetalhesProjeto() {
                             </div>
                           </div>
                           {isOwner && isEditing && (
-                            <button onClick={() => handleDeleteDocumento(doc.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Excluir documento"><Trash2 size={18} /></button>
+                            <button
+                              onClick={() => handleDeleteDocumento(doc.id)}
+                              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Excluir documento"
+                            >
+                              <Trash2 size={18} />
+                            </button>
                           )}
                         </div>
                       ))}
