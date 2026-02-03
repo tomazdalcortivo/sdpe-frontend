@@ -1,7 +1,129 @@
-import { Search, SlidersHorizontal, Building2, User, ChevronDown, Check } from "lucide-react";
+import { Search, SlidersHorizontal, Building2, User, ChevronDown, Check, Calendar, ImageOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useMemo, useRef } from "react";
 import api from "../services/api";
+
+const formatarInstituicao = (inst) => {
+  if (!inst) return "";
+  let texto = inst.nome;
+  if (inst.cidade) {
+    texto += ` - ${inst.cidade}`;
+    if (inst.estado) texto += `/${inst.estado}`;
+  }
+  return texto;
+};
+
+const getStatusProjeto = (projeto) => {
+  if (projeto.ativo === false) return "INATIVO";
+  if (!projeto.dataFim) return "EM_ANDAMENTO";
+
+  const dataFim = new Date(projeto.dataFim);
+  const hoje = new Date();
+  dataFim.setHours(0, 0, 0, 0);
+  hoje.setHours(0, 0, 0, 0);
+
+  return dataFim < hoje ? "FINALIZADO" : "EM_ANDAMENTO";
+};
+
+const formatarData = (dataString) => {
+  if (!dataString) return "--/--/----";
+  const data = new Date(dataString);
+  return data.toLocaleDateString('pt-BR');
+};
+
+const ProjetoCard = ({ projeto }) => {
+  const [imgError, setImgError] = useState(false);
+
+  const statusLabel = getStatusProjeto(projeto);
+  const baseURL = api.defaults.baseURL || "http://localhost:8080";
+  const imageUrl = `${baseURL}/api/projetos/${projeto.id}/imagem`;
+
+  const nomeCompleto = projeto.coordenadores?.[0]?.nome || "Coordenação";
+  const instituicaoTexto = formatarInstituicao(projeto.instituicaoEnsino);
+
+  return (
+    <Link
+      to={`/detalhes-projeto/${projeto.id}`}
+      className="group relative flex flex-col bg-white rounded-xl border border-gray-200/60 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300 overflow-hidden"
+    >
+      <div className={`relative h-36 overflow-hidden ${imgError ? 'bg-emerald-50 flex items-center justify-center' : 'bg-gray-50'}`}>
+
+        {!imgError ? (
+          <img
+            src={imageUrl}
+            alt={projeto.nome}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center text-emerald-300">
+            <ImageOff size={32} />
+          </div>
+        )}
+
+        <div className="absolute top-2 right-2 z-10">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase shadow-sm backdrop-blur-md ${statusLabel === "EM_ANDAMENTO" ? "bg-emerald-500/90 text-white" :
+              statusLabel === "FINALIZADO" ? "bg-blue-500/90 text-white" :
+                "bg-gray-500/90 text-white"
+            }`}>
+            {statusLabel === "EM_ANDAMENTO" ? "Ativo" : statusLabel === "FINALIZADO" ? "Finalizado" : "Inativo"}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col flex-1 p-3.5">
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 whitespace-normal leading-tight">
+            {projeto.area}
+          </span>
+          {projeto.formato && (
+            <span className="text-[10px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 whitespace-nowrap">
+              {projeto.formato.toLowerCase()}
+            </span>
+          )}
+        </div>
+
+        <h3 className="text-sm font-bold text-gray-800 leading-snug line-clamp-2 mb-1 group-hover:text-emerald-700 transition-colors">
+          {projeto.nome}
+        </h3>
+
+        <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">
+          {projeto.descricao}
+        </p>
+
+        <div className="mt-auto pt-3 border-t border-gray-50 flex flex-col gap-2">
+
+          <div className="flex items-center justify-between text-xs text-gray-400">
+            <div className="flex items-center gap-1.5 w-full" title={`Professor(a): ${nomeCompleto}`}>
+              <User size={12} className="text-gray-300 shrink-0" />
+              <span className="font-medium text-gray-600 truncate flex-1">{nomeCompleto}</span>
+            </div>
+          </div>
+
+          {projeto.instituicaoEnsino?.nome && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400" title={instituicaoTexto}>
+              <Building2 size={12} className="text-gray-300 shrink-0" />
+              <span className="truncate flex-1">
+                {instituicaoTexto}
+              </span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <Calendar size={12} className={`shrink-0 ${statusLabel === "FINALIZADO" ? "text-blue-400" : "text-gray-300"}`} />
+            <span className="truncate flex-1">
+              {statusLabel === "FINALIZADO"
+                ? `Finalizado em: ${formatarData(projeto.dataFim)}`
+                : `Início: ${formatarData(projeto.dataInicio)}`
+              }
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </Link>
+  );
+};
 
 export default function ListaProjetos() {
   const [projetos, setProjetos] = useState([]);
@@ -43,30 +165,28 @@ export default function ListaProjetos() {
 
   const listaInstituicoes = useMemo(() => {
     const instituicoes = projetos
-      .map(p => p.instituicaoEnsino?.nome)
-      .filter(nome => nome && nome.trim().length > 0);
+      .filter(p => p.instituicaoEnsino?.nome)
+      .map(p => formatarInstituicao(p.instituicaoEnsino));
     return [...new Set(instituicoes)].sort();
   }, [projetos]);
 
-  const getStatusProjeto = (projeto) => {
-    if (projeto.status === false) return "INATIVO";
-    const dataFim = new Date(projeto.dataFim);
-    const hoje = new Date();
-    return dataFim < hoje ? "FINALIZADO" : "EM_ANDAMENTO";
-  };
-
   const projetosFiltrados = projetos.filter((p) => {
     const statusCalculado = getStatusProjeto(p);
+    const instituicaoFormatada = p.instituicaoEnsino ? formatarInstituicao(p.instituicaoEnsino) : "";
+
     if (busca) {
       const termo = busca.toLowerCase();
       const matchNome = p.nome?.toLowerCase().includes(termo);
       const matchCoordenador = p.coordenadores?.some(c => c.nome?.toLowerCase().includes(termo));
-      if (!matchNome && !matchCoordenador) return false;
+      const matchInst = instituicaoFormatada.toLowerCase().includes(termo);
+      if (!matchNome && !matchCoordenador && !matchInst) return false;
     }
+
     if (statusFiltro && statusCalculado !== statusFiltro) return false;
     if (areaFiltro && p.area !== areaFiltro) return false;
     if (modalidadeFiltro && p.formato !== modalidadeFiltro) return false;
-    if (instituicaoFiltro && p.instituicaoEnsino?.nome !== instituicaoFiltro) return false;
+    if (instituicaoFiltro && instituicaoFormatada !== instituicaoFiltro) return false;
+
     return true;
   });
 
@@ -139,7 +259,7 @@ export default function ListaProjetos() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-600 w-4 h-4 transition-colors" />
               <input
                 type="text"
-                placeholder="Buscar projeto ou professor"
+                placeholder="Buscar projeto, professor ou cidade"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 className="w-full h-10 pl-9 pr-4 text-sm bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
@@ -237,92 +357,16 @@ export default function ListaProjetos() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 relative z-0">
-            {projetosFiltrados.map((projeto) => {
-              const statusLabel = getStatusProjeto(projeto);
-              const imageUrl = `http://localhost:8080/api/projetos/${projeto.id}/imagem`;
-              const nomeCompleto = projeto.coordenadores?.[0]?.nome || "Coordenação";
-
-              return (
-                <Link
-                  to={`/detalhes-projeto/${projeto.id}`}
-                  key={projeto.id}
-                  className="group relative flex flex-col bg-white rounded-xl border border-gray-200/60 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300 overflow-hidden"
-                >
-                  <div className="relative h-36 overflow-hidden bg-gray-50">
-                    <img
-                      src={imageUrl}
-                      alt={projeto.nome}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.style.display = 'none';
-                        const parent = e.target.parentNode;
-                        parent.classList.remove('bg-gray-50');
-                        parent.classList.add('bg-emerald-50', 'flex', 'items-center', 'justify-center');
-                        parent.innerHTML += `
-                          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
-                            <line x1="2" x2="22" y1="2" y2="22"/>
-                            <path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"/>
-                            <path d="M21 15V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/>
-                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-                          </svg>
-                        `;
-                      }}
-                    />
-
-                    <div className="absolute top-2 right-2">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase shadow-sm backdrop-blur-md ${statusLabel === "EM_ANDAMENTO" ? "bg-emerald-500/90 text-white" :
-                        statusLabel === "FINALIZADO" ? "bg-blue-500/90 text-white" :
-                          "bg-gray-500/90 text-white"
-                        }`}>
-                        {statusLabel === "EM_ANDAMENTO" ? "Ativo" : statusLabel === "FINALIZADO" ? "Fim" : "Inativo"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col flex-1 p-3.5">
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 whitespace-normal leading-tight">
-                        {projeto.area}
-                      </span>
-                      {projeto.formato && (
-                        <span className="text-[10px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 whitespace-nowrap">
-                          {projeto.formato.toLowerCase()}
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className="text-sm font-bold text-gray-800 leading-snug line-clamp-2 mb-1 group-hover:text-emerald-700 transition-colors">
-                      {projeto.nome}
-                    </h3>
-
-                    <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">
-                      {projeto.descricao}
-                    </p>
-
-                    <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
-                      <div className="flex items-center gap-1.5 w-full" title={`Professor(a): ${nomeCompleto}`}>
-                        <User size={12} className="text-gray-300 shrink-0" />
-                        <span className="font-medium text-gray-600 truncate flex-1">{nomeCompleto}</span>
-                      </div>
-                    </div>
-                    {projeto.instituicaoEnsino?.nome && (
-                      <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400" title={projeto.instituicaoEnsino.nome}>
-                        <Building2 size={12} className="text-gray-300 shrink-0" />
-                        <span className="truncate flex-1">{projeto.instituicaoEnsino.nome}</span>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
+            {projetosFiltrados.map((projeto) => (
+              <ProjetoCard key={projeto.id} projeto={projeto} />
+            ))}
           </div>
         )}
 
         {!loading && projetosFiltrados.length === 0 && (
           <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200 mt-8">
             <p className="text-gray-500 text-sm">Nenhum projeto encontrado.</p>
-            <button onClick={() => { setBusca(""); setStatusFiltro(""); setAreaFiltro(""); }} className="mt-2 text-sm text-emerald-600 font-medium hover:underline">
+            <button onClick={() => { setBusca(""); setStatusFiltro(""); setAreaFiltro(""); setInstituicaoFiltro(""); }} className="mt-2 text-sm text-emerald-600 font-medium hover:underline">
               Limpar filtros
             </button>
           </div>
