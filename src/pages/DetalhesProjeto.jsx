@@ -54,6 +54,18 @@ export default function DetalhesProjeto() {
     HIBRIDO: "Híbrido"
   };
 
+
+  const FUNCAO_COORDENADOR_MAP = {
+    COORDENADOR_GERAL: "Coordenador Geral",
+    COORDENADOR_ADJUNTO: "Coordenador Adjunto",
+  };
+
+  const formatarFuncao = (funcao) => {
+    if (!funcao) return "Coordenador";
+    return FUNCAO_COORDENADOR_MAP[funcao] ||
+      funcao.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   const [editData, setEditData] = useState({
     title: '',
     description: '',
@@ -667,7 +679,7 @@ export default function DetalhesProjeto() {
                           </div>
                           <div>
                             <p className="font-semibold text-gray-900">{coord.nome}</p>
-                            <p className="text-xs text-blue-600">{coord.funcao || 'Coordenador'}</p>
+                            <p className="text-xs text-blue-600">{formatarFuncao(coord.funcao)}</p>
                           </div>
                         </div>
                         {isOwner && isEditing && (
