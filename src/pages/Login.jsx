@@ -108,7 +108,7 @@ export default function Login() {
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="••••••••"
                 required
-                className={`${styles.input} pl-10 pr-10`}
+                className={`${styles.input} pl-10 pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden`}
               />
               <button
                 type="button"

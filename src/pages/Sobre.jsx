@@ -39,9 +39,9 @@ export default function Sobre() {
   }, []);
 
   const stats = [
-    { icon: Eye, value: totalVisualizacoes, label: "Visualizações Totais", suffix: "+" },
-    { icon: FolderOpen, value: totalProjetos, label: "Projetos Cadastrados", suffix: "" },
-    { icon: UserCheck, value: totalParticipantes, label: "Participantes Ativos", suffix: "+" },
+    { icon: Eye, value: totalVisualizacoes, label: "Visualizações Totais"},
+    { icon: FolderOpen, value: totalProjetos, label: "Projetos Cadastrados"},
+    { icon: UserCheck, value: totalParticipantes, label: "Participantes Ativos"},
   ];
 
   const aboutItems = [
@@ -161,10 +161,10 @@ export default function Sobre() {
             {stats.map((stat, index) => (
               <div
                 key={index}
-                className="p-8 bg-white border shadow-lg rounded-2xl border-emerald-100 transition-transform hover:-translate-y-1"
+                className="p-8 transition-transform bg-white border shadow-lg rounded-2xl border-emerald-100 hover:-translate-y-1"
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="flex items-center justify-center mb-4 w-14 h-14 bg-emerald-700 rounded-xl shadow-md">
+                  <div className="flex items-center justify-center mb-4 shadow-md w-14 h-14 bg-emerald-700 rounded-xl">
                     <stat.icon className="text-white w-7 h-7" />
                   </div>
                   <div className="text-4xl font-bold text-gray-900">

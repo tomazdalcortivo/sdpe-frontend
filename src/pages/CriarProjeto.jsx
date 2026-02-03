@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import Alert from "../components/Alert";
 
+const DESC_MAX = 500;
+const NOME_MAX = 100;
+
 export default function CriarProjeto() {
   const navigate = useNavigate();
 
@@ -22,7 +25,9 @@ export default function CriarProjeto() {
   const [participantesSelecionados, setParticipantesSelecionados] = useState(
     [],
   );
-  const wrapperRefPart = useRef(null);
+
+  const [estados, setEstados] = useState([]);
+  const [cidades, setCidades] = useState([]);
 
   const formFieldBorder =
     "w-full px-4 py-2 rounded-md outline-none border-3 border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all";
@@ -30,58 +35,188 @@ export default function CriarProjeto() {
 
   const [formData, setFormData] = useState({
     nome: "",
-    descricao: "",
     area: "",
     dataInicio: "",
     dataFim: "",
     cargaHoraria: "",
     instNome: "",
     instCidade: "",
-    instDescricao: "",
-    planejamento: "",
+    instEstado: "",
     formato: "",
-    tipoDocumento: "",
+    descricao: "",
   });
 
   useEffect(() => {
-    async function carregar() {
+    async function carregarDadosIniciais() {
       try {
-        const res = await api.get("/api/instituicao-ensino");
-        setInstituicoesExistentes(res.data);
+        const [resInst, resEstados] = await Promise.all([
+          api.get("/api/instituicao-ensino"),
+          api.get("/api/localidades/estados"),
+        ]);
+        const instData = resInst.data;
+
+        if (Array.isArray(instData)) {
+          setInstituicoesExistentes(instData);
+        } else if (Array.isArray(instData.content)) {
+          setInstituicoesExistentes(instData.content);
+        } else {
+          setInstituicoesExistentes([]);
+        }
+        setEstados(resEstados.data);
       } catch (e) {
-        console.error(e);
+        console.error("Erro ao carregar dados iniciais", e);
       }
     }
-    carregar();
+    carregarDadosIniciais();
   }, []);
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (
-        wrapperRefInst.current &&
-        !wrapperRefInst.current.contains(event.target)
-      ) {
-        setSugestoesInstituicao([]);
-      }
-      if (
-        wrapperRefPart.current &&
-        !wrapperRefPart.current.contains(event.target)
-      ) {
-        setSugestoesPart([]);
-      }
+  const handleEstadoChange = async (e) => {
+    const estadoSelecionado = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      instEstado: estadoSelecionado,
+      instCidade: "",
+    }));
+    if (!estadoSelecionado) {
+      setCidades([]);
+      return;
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    try {
+      const res = await api.get(
+        `/api/localidades/estados/${estadoSelecionado}/cidades`,
+      );
+      setCidades(res.data);
+    } catch {
+      setErros(["Erro ao carregar cidades."]);
+    }
+  };
+
+  const handleCidadeChange = (e) =>
+    setFormData((prev) => ({ ...prev, instCidade: e.target.value }));
+
+  const selecionarInstituicao = (inst) => {
+    setBuscaInst(inst.nome);
+    setFormData((prev) => ({
+      ...prev,
+      instId: inst.id,
+      instNome: inst.nome,
+      instCidade: inst.cidade || "",
+      instEstado: inst.estado || "",
+    }));
+    setSugestoesInstituicao([]);
+    setMostrarCamposNovaInst(false);
+  };
+
+  const handleEnviar = async (e) => {
+    e.preventDefault();
+    setErros([]);
+    setSucesso("");
+
+    const novosErros = [];
+
+    // Validações de campos obrigatórios e limites
+    if (!formData.nome.trim())
+      novosErros.push("O nome do projeto é obrigatório.");
+    if (formData.nome.length > NOME_MAX)
+      novosErros.push(`O nome deve ter no máximo ${NOME_MAX} caracteres.`);
+    if (!formData.area) novosErros.push("Selecione uma área para o projeto.");
+    if (!formData.descricao.trim())
+      novosErros.push("A descrição é obrigatória.");
+    if (formData.descricao.length > DESC_MAX)
+      novosErros.push("A descrição ultrapassou o limite de 500 caracteres.");
+    if (!formData.instNome || !formData.instCidade || !formData.instEstado)
+      novosErros.push("Dados da instituição incompletos.");
+    if (!arquivo) novosErros.push("O arquivo PDF comprobatório é obrigatório.");
+    if (!formData.cargaHoraria || parseFloat(formData.cargaHoraria) <= 0) {
+      novosErros.push("A carga horária deve ser um valor maior que zero.");
+    }
+    if (arquivo && arquivo.size > 10 * 1024 * 1024)
+      novosErros.push("O arquivo PDF deve ter no máximo 10MB.");
+
+    if (formData.dataFim < formData.dataInicio) {
+      novosErros.push(
+        "A data de término não pode ser anterior à data de início.",
+      );
+    }
+
+    if (!formData.dataInicio || !formData.dataFim) {
+      novosErros.push("As datas de início e término são obrigatórias.");
+    }
+
+    if (novosErros.length > 0) {
+      setErros(novosErros);
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        nome: formData.nome.toUpperCase(),
+        area: formData.area,
+        dataInicio: formData.dataInicio,
+        dataFim: formData.dataFim,
+        cargaHoraria: parseFloat(formData.cargaHoraria),
+        formato: formData.formato,
+        descricao: formData.descricao,
+        instituicaoEnsino: {
+          id: formData.instId || null,
+          nome: formData.instNome.toUpperCase(),
+          cidade: formData.instCidade,
+          estado: formData.instEstado,
+        },
+        participantes: participantesSelecionados.map((p) => ({ id: p.id })),
+      };
+
+      const submitData = new FormData();
+      submitData.append(
+        "projeto",
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
+      );
+      submitData.append("arquivo", arquivo);
+
+      await api.post("/api/projetos", submitData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setSucesso("Projeto criado com sucesso! Redirecionando...");
+      setTimeout(() => navigate("/perfil"), 2000);
+    } catch (error) {
+      setErros([
+        "Erro ao criar projeto. Verifique os campos e tente novamente.",
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAlteracao = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleAlterarArquivo = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type !== "application/pdf") {
+      setErros(["Apenas arquivos PDF são permitidos."]);
+      setArquivo(null);
+    } else {
+      setArquivo(file);
+    }
+  };
 
   const handleBuscaInstituicao = (e) => {
     const valor = e.target.value;
     setBuscaInst(valor);
-    setFormData((prev) => ({ ...prev, instNome: valor }));
+    setFormData((prev) => ({ ...prev, instNome: valor, instId: null }));
+
+    if (!Array.isArray(instituicoesExistentes)) {
+      setSugestoesInstituicao([]);
+      setMostrarCamposNovaInst(false);
+      return;
+    }
 
     if (valor.length > 0) {
       const filtradas = instituicoesExistentes.filter((inst) =>
-        inst.nome.toLowerCase().includes(valor.toLowerCase()),
+        inst.nome?.toLowerCase().includes(valor.toLowerCase()),
       );
       setSugestoesInstituicao(filtradas);
       setMostrarCamposNovaInst(true);
@@ -91,22 +226,9 @@ export default function CriarProjeto() {
     }
   };
 
-  const selecionarInstituicao = (inst) => {
-    setBuscaInst(inst.nome);
-    setFormData((prev) => ({
-      ...prev,
-      instNome: inst.nome,
-      instCidade: inst.cidade || "",
-      instDescricao: inst.descricao || "",
-    }));
-    setSugestoesInstituicao([]);
-    setMostrarCamposNovaInst(false);
-  };
-
   const handleBuscaParticipante = async (e) => {
     const valor = e.target.value;
     setBuscaPart(valor);
-
     if (valor.length > 2) {
       try {
         const response = await api.get(
@@ -117,82 +239,18 @@ export default function CriarProjeto() {
         );
         setSugestoesPart(naoSelecionados);
       } catch (error) {
-        console.error("Erro busca participante", error);
+        console.error(error);
       }
     } else {
       setSugestoesPart([]);
     }
   };
 
-  const adicionarParticipante = (participante) => {
-    setParticipantesSelecionados([...participantesSelecionados, participante]);
+  const adicionarParticipante = (p) => {
+    setParticipantesSelecionados([...participantesSelecionados, p]);
     setBuscaPart("");
     setSugestoesPart([]);
   };
-
-  const removerParticipante = (id) => {
-    setParticipantesSelecionados(
-      participantesSelecionados.filter((p) => p.id !== id),
-    );
-  };
-
-  const handleEnviar = async (e) => {
-    e.preventDefault();
-    setErros([]);
-    const novosErros = [];
-
-    if (!formData.instNome) novosErros.push("Informe a instituição.");
-    if (!arquivo) novosErros.push("Documento obrigatório.");
-
-    if (novosErros.length > 0) {
-      setErros(novosErros);
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const payload = {
-        nome: formData.nome,
-        descricao: formData.descricao,
-        area: formData.area,
-        dataInicio: formData.dataInicio,
-        dataFim: formData.dataFim,
-        cargaHoraria: parseFloat(formData.cargaHoraria),
-        formato: formData.formato ? formData.formato.toUpperCase() : null,
-
-        instituicaoEnsino: {
-          nome: formData.instNome,
-          cidade: formData.instCidade,
-          descricao: formData.instDescricao,
-        },
-        participantes: participantesSelecionados.map((p) => ({ id: p.id })),
-      };
-
-      const submitData = new FormData();
-      submitData.append(
-        "projeto",
-        new Blob([JSON.stringify(payload)], { type: "application/json" }),
-      );
-      if (arquivo) submitData.append("arquivo", arquivo);
-
-      await api.post("/api/projetos", submitData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      setSucesso("Projeto criado com sucesso!");
-      setTimeout(() => navigate("/perfil"), 2000);
-    } catch (error) {
-      console.error(error);
-      setErros(["Erro ao criar projeto."]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAlteracao = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  const handleAlterarArquivo = (e) => setArquivo(e.target.files[0]);
 
   return (
     <section className="min-h-screen px-8 pt-24 pb-24 bg-linear-to-br from-emerald-100 via-white to-amber-100">
@@ -206,19 +264,36 @@ export default function CriarProjeto() {
         <form
           onSubmit={handleEnviar}
           className="w-full max-w-xl p-8 space-y-4 bg-white rounded-lg shadow-lg"
+          noValidate
         >
-          {erros.length > 0 && <Alert type="error">{erros[0]}</Alert>}
-          <Alert type="success">{sucesso}</Alert>
+          {erros.length > 0 && (
+            <Alert type="error">
+              <ul className="pl-5 list-disc">
+                {erros.map((errorMessage, i) => (
+                  <li key={i} className="text-sm">
+                    {errorMessage}
+                  </li>
+                ))}
+              </ul>
+            </Alert>
+          )}
+          {sucesso && <Alert type="success">{sucesso}</Alert>}
 
-          <label className={formFieldName}>Nome do Projeto</label>
-          <input
-            required
-            name="nome"
-            value={formData.nome}
-            onChange={handleAlteracao}
-            className={formFieldBorder}
-            placeholder="Digite o nome do projeto"
-          />
+          <div>
+            <label className={formFieldName}>Nome do Projeto</label>
+            <input
+              required
+              name="nome"
+              maxLength={NOME_MAX}
+              value={formData.nome}
+              onChange={handleAlteracao}
+              className={formFieldBorder + " uppercase"}
+              placeholder="NOME DO PROJETO"
+            />
+            <p className="mt-1 text-xs text-right text-slate-400">
+              {formData.nome.length} / {NOME_MAX}
+            </p>
+          </div>
 
           <div className="relative" ref={wrapperRefInst}>
             <label className={formFieldName}>Instituição de Ensino</label>
@@ -226,127 +301,176 @@ export default function CriarProjeto() {
               name="instNome"
               value={buscaInst}
               onChange={handleBuscaInstituicao}
-              className={formFieldBorder}
+              className={formFieldBorder + " uppercase"}
               placeholder="Digite a sigla (Ex: IFPR)"
               autoComplete="off"
               required
             />
             {sugestoesInstituicao.length > 0 && (
-              <ul className="absolute z-10 w-full mt-1 overflow-auto bg-white border rounded shadow max-h-48">
+              <ul className="absolute z-20 w-full mt-1 overflow-auto bg-white border rounded shadow max-h-48">
                 {sugestoesInstituicao.map((inst) => (
                   <li
                     key={inst.id}
                     onClick={() => selecionarInstituicao(inst)}
                     className="px-4 py-2 cursor-pointer hover:bg-emerald-50"
                   >
-                    {inst.nome} - {inst.cidade}
+                    {inst.nome} - {inst.cidade} / {inst.estado}
                   </li>
                 ))}
               </ul>
             )}
+
             {mostrarCamposNovaInst && (
-              <div className="p-3 mt-2 border rounded bg-emerald-50 border-emerald-200">
-                <input
-                  name="instCidade"
-                  placeholder="Cidade *"
+              <div className="p-3 mt-2 space-y-2 border rounded bg-emerald-50 border-emerald-200">
+                <p className="mb-2 text-xs font-semibold text-emerald-700">
+                  Complete os dados da instituição:
+                </p>
+                <select
+                  name="instEstado"
+                  value={formData.instEstado}
+                  onChange={handleEstadoChange}
+                  className="w-full p-2 bg-white border rounded"
                   required
+                >
+                  <option value="">Selecione o Estado</option>
+                  {estados.map((e) => (
+                    <option key={e.sigla} value={e.sigla}>
+                      {e.nome} ({e.sigla})
+                    </option>
+                  ))}
+                </select>
+                <select
+                  name="instCidade"
                   value={formData.instCidade}
-                  onChange={handleAlteracao}
-                  className="w-full p-2 mb-2 border rounded"
-                />
-                <textarea
-                  name="instDescricao"
-                  placeholder="Descrição"
-                  value={formData.instDescricao}
-                  onChange={handleAlteracao}
-                  className="w-full p-2 border rounded"
-                />
+                  onChange={handleCidadeChange}
+                  className="w-full p-2 bg-white border rounded"
+                  disabled={!formData.instEstado}
+                  required
+                >
+                  <option value="">Selecione a Cidade</option>
+                  {cidades.map((c) => (
+                    <option key={c.nome} value={c.nome}>
+                      {c.nome}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
           </div>
 
           <div className="space-y-2">
-            <label className={formFieldName}>
-              Adicionar Participantes (Alunos)
-            </label>
-
-            <div className="relative" ref={wrapperRefPart}>
+            <label className={formFieldName}>Participantes (Opcional)</label>
+            <div className="relative">
               <input
                 type="text"
                 value={buscaPart}
                 onChange={handleBuscaParticipante}
-                placeholder="Digite o nome do aluno"
+                placeholder="Buscar aluno..."
                 className={formFieldBorder}
-                autoComplete="off"
               />
-
               {sugestoesPart.length > 0 && (
-                <ul className="absolute z-10 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-md shadow-lg max-h-48">
-                  {sugestoesPart.map((part) => (
+                <ul className="absolute z-10 w-full mt-1 overflow-y-auto bg-white border rounded shadow max-h-48">
+                  {sugestoesPart.map((p) => (
                     <li
-                      key={part.id}
-                      onClick={() => adicionarParticipante(part)}
-                      className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-emerald-50 text-slate-700"
+                      key={p.id}
+                      onClick={() => adicionarParticipante(p)}
+                      className="flex justify-between px-4 py-2 cursor-pointer hover:bg-emerald-50"
                     >
-                      <span>{part.nome}</span>
-                      <span className="text-xs text-gray-400">Adicionar +</span>
+                      {p.nome}{" "}
+                      <span className="text-xs text-emerald-500">Add +</span>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
-
-            <div className="flex flex-wrap gap-2 mt-2">
-              {participantesSelecionados.map((part) => (
-                <div
-                  key={part.id}
-                  className="flex items-center gap-2 px-3 py-1 text-sm border rounded-full bg-emerald-100 text-emerald-800 border-emerald-200"
+            <div className="flex flex-wrap gap-2">
+              {participantesSelecionados.map((p) => (
+                <span
+                  key={p.id}
+                  className="flex items-center gap-1 px-3 py-1 text-sm rounded-full bg-emerald-100 text-emerald-800"
                 >
-                  <span>{part.nome}</span>
+                  {p.nome}{" "}
                   <button
                     type="button"
-                    onClick={() => removerParticipante(part.id)}
-                    className="flex items-center justify-center w-5 h-5 font-bold rounded-full hover:bg-emerald-200 text-emerald-900"
+                    onClick={() =>
+                      setParticipantesSelecionados(
+                        participantesSelecionados.filter((x) => x.id !== p.id),
+                      )
+                    }
+                    className="font-bold"
                   >
                     &times;
                   </button>
-                </div>
+                </span>
               ))}
-              {participantesSelecionados.length === 0 && (
-                <p className="text-xs italic text-slate-400">
-                  Nenhum participante adicionado.
-                </p>
-              )}
             </div>
           </div>
 
-          <label className={formFieldName}>Descrição</label>
-          <textarea
-            required
-            name="descricao"
-            value={formData.descricao}
-            onChange={handleAlteracao}
-            className={formFieldBorder}
-          />
+          <div>
+            <label className={formFieldName}>Descrição do Projeto</label>
+            <div className="flex flex-col">
+              <textarea
+                name="descricao"
+                value={formData.descricao}
+                onChange={handleAlteracao}
+                maxLength={DESC_MAX}
+                className={formFieldBorder + " h-32 resize-none"}
+                placeholder="Descreva os objetivos..."
+              />
+              <span className="mt-1 text-xs text-right text-slate-500">
+                {formData.descricao.length} / {DESC_MAX}
+              </span>
+            </div>
+          </div>
 
-          <label className={formFieldName}>Área</label>
-          <select
-            required
-            name="area"
-            value={formData.area}
-            onChange={handleAlteracao}
-            className={formFieldBorder}
-          >
-            <option value="">Selecione</option>
-            <option>Ciências Agrárias</option>
-            <option>Ciências Biológicas</option>
-            <option>Ciências Exatas e da Terra</option>
-            <option>Ciências Humanas</option>
-            <option>Ciências da Saúde</option>
-            <option>Ciências Sociais Aplicadas</option>
-            <option>Engenharias</option>
-            <option>Linguística, Letras e Artes</option>
-          </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={formFieldName}>Área</label>
+              <select
+                required
+                name="area"
+                value={formData.area}
+                onChange={handleAlteracao}
+                className={formFieldBorder}
+              >
+                <option value="">Selecione</option>
+                <option>Ciências Agrárias</option>
+                <option>Ciências Biológicas</option>
+                <option>Ciências Exatas e da Terra</option>
+                <option>Ciências Humanas</option>
+                <option>Ciências da Saúde</option>
+                <option>Ciências Sociais Aplicadas</option>
+                <option>Engenharias</option>
+                <option>Linguística, Letras e Artes</option>
+              </select>
+              <p className="mt-1 text-xs text-slate-500">
+                Está em dúvida? <br />
+                <a
+                  href="https://lattes.cnpq.br/web/dgp/arvore-do-conhecimento"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline text-emerald-600"
+                >
+                  Áreas do Conhecimento - CNPq
+                </a>
+              </p>
+            </div>
+            <div>
+              <label className={formFieldName}>Formato</label>
+              <select
+                required
+                name="formato"
+                value={formData.formato}
+                onChange={handleAlteracao}
+                className={formFieldBorder}
+              >
+                <option value="">Selecione</option>
+                <option value="PRESENCIAL">Presencial</option>
+                <option value="REMOTO">Remoto</option>
+                <option value="HIBRIDO">Híbrido</option>
+              </select>
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -365,6 +489,7 @@ export default function CriarProjeto() {
               <input
                 type="date"
                 required
+                min={formData.dataInicio}
                 name="dataFim"
                 value={formData.dataFim}
                 onChange={handleAlteracao}
@@ -373,46 +498,39 @@ export default function CriarProjeto() {
             </div>
           </div>
 
-          <label className={formFieldName}>Carga Horária</label>
-          <input
-            type="number"
-            required
-            name="cargaHoraria"
-            value={formData.cargaHoraria}
-            onChange={handleAlteracao}
-            className={formFieldBorder}
-          />
+          <div>
+            <label className={formFieldName}>Carga Horária Total (Horas)</label>
+            <input
+              type="number"
+              required
+              name="cargaHoraria"
+              value={formData.cargaHoraria}
+              min="1"
+              placeholder="Digite a carga horária"
+              onChange={handleAlteracao}
+              className={formFieldBorder}
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              Para minutos, use valores decimais (ex: 3h 30min = <b>3.5</b> | 2h
+              15min = <b>2.25</b>).
+            </p>
+          </div>
 
-          <label className={formFieldName}>Formato</label>
-          <select
-            required
-            name="formato"
-            value={formData.formato}
-            onChange={handleAlteracao}
-            className={formFieldBorder}
-          >
-            <option value="">Selecione</option>
-            <option value="Presencial">Presencial</option>
-            <option value="Remoto">Remoto</option>
-            <option value="Híbrido">Híbrido</option>
-          </select>
-
-          <label className={formFieldName}>Arquivo comprobatório (PDF)</label>
-          <input
-            type="file"
-            accept="application/pdf"
-            required
-            onChange={handleAlterarArquivo}
-            className={
-              formFieldBorder +
-              " file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-emerald-50 file:text-emerald-700 file:border-0 hover:file:bg-emerald-100"
-            }
-          />
+          <div>
+            <label className={formFieldName}>Arquivo Comprobatório (PDF)</label>
+            <input
+              type="file"
+              accept="application/pdf"
+              required
+              onChange={handleAlterarArquivo}
+              className={formFieldBorder}
+            />
+          </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 mt-4 font-medium text-white rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-100"
+            className="w-full py-3 mt-4 font-medium text-white transition-colors rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-100"
           >
             {loading ? "Criando..." : "Criar Projeto"}
           </button>

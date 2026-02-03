@@ -1,4 +1,10 @@
-import { Search, SlidersHorizontal, MapPin, Monitor, Building2 } from "lucide-react";
+import {
+  Search,
+  SlidersHorizontal,
+  MapPin,
+  Monitor,
+  Building2,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import api from "../services/api";
@@ -10,8 +16,8 @@ export default function ListaProjetos() {
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState("");
   const [areaFiltro, setAreaFiltro] = useState("");
-  const [modalidadeFiltro, setModalidadeFiltro] = useState(""); 
-  const [instituicaoFiltro, setInstituicaoFiltro] = useState(""); 
+  const [modalidadeFiltro, setModalidadeFiltro] = useState("");
+  const [instituicaoFiltro, setInstituicaoFiltro] = useState("");
 
   const [abrirFiltro, setAbrirFiltro] = useState(false);
 
@@ -32,9 +38,9 @@ export default function ListaProjetos() {
 
   const listaInstituicoes = useMemo(() => {
     const instituicoes = projetos
-      .map(p => p.instituicaoEnsino?.nome)
-      .filter(nome => nome); 
-    return [...new Set(instituicoes)].sort(); 
+      .map((p) => p.instituicaoEnsino?.nome)
+      .filter((nome) => nome);
+    return [...new Set(instituicoes)].sort();
   }, [projetos]);
 
   const getStatusProjeto = (projeto) => {
@@ -50,8 +56,8 @@ export default function ListaProjetos() {
     if (busca) {
       const termo = busca.toLowerCase();
       const matchNome = p.nome?.toLowerCase().includes(termo);
-      const matchCoordenador = p.coordenadores?.some(c =>
-        c.nome?.toLowerCase().includes(termo)
+      const matchCoordenador = p.coordenadores?.some((c) =>
+        c.nome?.toLowerCase().includes(termo),
       );
 
       if (!matchNome && !matchCoordenador) {
@@ -63,7 +69,8 @@ export default function ListaProjetos() {
     if (areaFiltro && p.area !== areaFiltro) return false;
 
     if (modalidadeFiltro && p.formato !== modalidadeFiltro) return false;
-    if (instituicaoFiltro && p.instituicaoEnsino?.nome !== instituicaoFiltro) return false;
+    if (instituicaoFiltro && p.instituicaoEnsino?.nome !== instituicaoFiltro)
+      return false;
 
     return true;
   });
@@ -76,10 +83,11 @@ export default function ListaProjetos() {
         </h1>
 
         <p className="mb-10 text-center text-slate-600">
-          Explore os projetos cadastrados, filtre por área, professor ou modalidade.
+          Explore os projetos cadastrados, filtre por área, professor ou
+          modalidade.
         </p>
 
-        <div className="relative flex flex-col gap-4 mb-12 md:flex-row z-10">
+        <div className="relative z-10 flex flex-col gap-4 mb-12 md:flex-row">
           <div className="relative flex-1">
             <Search className="absolute -translate-y-1/2 left-4 top-1/2 text-slate-400" />
             <input
@@ -93,23 +101,33 @@ export default function ListaProjetos() {
 
           <button
             onClick={() => setAbrirFiltro(!abrirFiltro)}
-            className={`flex items-center justify-center gap-2 px-6 py-3 border rounded-full transition-all shadow-sm ${abrirFiltro
-              ? "bg-emerald-100 border-emerald-500 text-emerald-800"
-              : "bg-white border-slate-300 hover:bg-slate-50"
-              }`}
+            className={`flex items-center justify-center gap-2 px-6 py-3 border rounded-full transition-all shadow-sm ${
+              abrirFiltro
+                ? "bg-emerald-100 border-emerald-500 text-emerald-800"
+                : "bg-white border-slate-300 hover:bg-slate-50"
+            }`}
           >
             <SlidersHorizontal size={18} />
             Filtros
-            {(statusFiltro || areaFiltro || modalidadeFiltro || instituicaoFiltro) && (
+            {(statusFiltro ||
+              areaFiltro ||
+              modalidadeFiltro ||
+              instituicaoFiltro) && (
               <span className="flex items-center justify-center w-5 h-5 text-xs text-white rounded-full bg-emerald-600">
-                {[statusFiltro, areaFiltro, modalidadeFiltro, instituicaoFiltro].filter(Boolean).length}
+                {
+                  [
+                    statusFiltro,
+                    areaFiltro,
+                    modalidadeFiltro,
+                    instituicaoFiltro,
+                  ].filter(Boolean).length
+                }
               </span>
             )}
           </button>
 
           {abrirFiltro && (
             <div className="absolute right-0 p-5 bg-white border shadow-xl w-full md:w-[600px] rounded-xl top-16 border-slate-100 animate-in fade-in slide-in-from-top-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-
               <div className="space-y-4">
                 <div>
                   <label className="block mb-1.5 text-sm font-semibold text-slate-700">
@@ -132,13 +150,12 @@ export default function ListaProjetos() {
                     Modalidade
                   </label>
                   <div className="relative">
-                    <Monitor size={16} className="absolute text-slate-400 left-3 top-3" />
                     <select
                       value={modalidadeFiltro}
                       onChange={(e) => setModalidadeFiltro(e.target.value)}
-                      className="w-full p-2.5 pl-9 text-sm border rounded-lg outline-none border-slate-200 focus:border-emerald-500 bg-slate-50"
+                      className="w-full p-2.5 text-sm border rounded-lg outline-none border-slate-200 focus:border-emerald-500 bg-slate-50"
                     >
-                      <option value="">Todas</option>
+                      <option value="">Todas as modalidades</option>
                       <option value="PRESENCIAL">Presencial</option>
                       <option value="ONLINE">Remoto</option>
                       <option value="HIBRIDO">Híbrido</option>
@@ -174,22 +191,23 @@ export default function ListaProjetos() {
                     Instituição
                   </label>
                   <div className="relative">
-                    <Building2 size={16} className="absolute text-slate-400 left-3 top-3" />
                     <select
                       value={instituicaoFiltro}
                       onChange={(e) => setInstituicaoFiltro(e.target.value)}
-                      className="w-full p-2.5 pl-9 text-sm border rounded-lg outline-none border-slate-200 focus:border-emerald-500 bg-slate-50"
+                      className="w-full p-2.5 text-sm border rounded-lg outline-none border-slate-200 focus:border-emerald-500 bg-slate-50"
                     >
                       <option value="">Todas as instituições</option>
                       {listaInstituicoes.map((inst, index) => (
-                        <option key={index} value={inst}>{inst}</option>
+                        <option key={index} value={inst}>
+                          {inst}
+                        </option>
                       ))}
                     </select>
                   </div>
                 </div>
               </div>
 
-              <div className="md:col-span-2 pt-2 flex justify-end border-t border-slate-100 mt-2">
+              <div className="flex justify-end pt-2 mt-2 border-t md:col-span-2 border-slate-100">
                 <button
                   onClick={() => {
                     setStatusFiltro("");
@@ -197,7 +215,7 @@ export default function ListaProjetos() {
                     setModalidadeFiltro("");
                     setInstituicaoFiltro("");
                   }}
-                  className="text-sm text-emerald-600 hover:text-emerald-800 hover:underline px-2"
+                  className="px-2 text-sm text-emerald-600 hover:text-emerald-800 hover:underline"
                 >
                   Limpar Filtros
                 </button>
@@ -216,7 +234,8 @@ export default function ListaProjetos() {
               const statusLabel = getStatusProjeto(projeto);
               const imageUrl = `http://localhost:8080/api/projetos/${projeto.id}/imagem`;
 
-              const nomeCoordenador = projeto.coordenadores?.[0]?.nome || "Coordenação não informada";
+              const nomeCoordenador =
+                projeto.coordenadores?.[0]?.nome || "Coordenação não informada";
 
               return (
                 <div
@@ -230,15 +249,20 @@ export default function ListaProjetos() {
                       className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.style.display = 'none';
-                        e.target.parentNode.classList.add('bg-emerald-600');
+                        e.target.style.display = "none";
+                        e.target.parentNode.classList.add("bg-emerald-600");
                       }}
                     />
                     <div className="absolute top-3 right-3">
-                      <span className={`px-2 py-1 text-xs font-bold rounded-md shadow-sm ${statusLabel === "EM_ANDAMENTO" ? "bg-emerald-500 text-white" :
-                          statusLabel === "FINALIZADO" ? "bg-blue-500 text-white" :
-                            "bg-gray-500 text-white"
-                        }`}>
+                      <span
+                        className={`px-2 py-1 text-xs font-bold rounded-md shadow-sm ${
+                          statusLabel === "EM_ANDAMENTO"
+                            ? "bg-emerald-500 text-white"
+                            : statusLabel === "FINALIZADO"
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-500 text-white"
+                        }`}
+                      >
                         {statusLabel.replace("_", " ")}
                       </span>
                     </div>
@@ -256,7 +280,10 @@ export default function ListaProjetos() {
                       )}
                     </div>
 
-                    <h3 className="mb-2 text-xl font-bold text-slate-800 line-clamp-2" title={projeto.nome}>
+                    <h3
+                      className="mb-2 text-xl font-bold text-slate-800 line-clamp-2"
+                      title={projeto.nome}
+                    >
                       {projeto.nome}
                     </h3>
 
@@ -266,14 +293,18 @@ export default function ListaProjetos() {
 
                     <div className="pt-4 mt-auto border-t border-slate-50">
                       <div className="flex items-center gap-2 mb-3 text-xs text-slate-500">
-                        <span className="font-semibold text-emerald-700">Prof. Responsável:</span>
+                        <span className="font-semibold text-emerald-700">
+                          Prof. Responsável:
+                        </span>
                         <span className="truncate">{nomeCoordenador}</span>
                       </div>
 
                       {projeto.instituicaoEnsino?.nome && (
                         <div className="flex items-center gap-2 mb-4 text-xs text-slate-400">
                           <MapPin size={12} />
-                          <span className="truncate">{projeto.instituicaoEnsino.nome}</span>
+                          <span className="truncate">
+                            {projeto.instituicaoEnsino.nome}
+                          </span>
                         </div>
                       )}
 

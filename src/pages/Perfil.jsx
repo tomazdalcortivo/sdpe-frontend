@@ -26,14 +26,22 @@ const styles = {
   sectionCard: "p-8 mb-10 bg-white rounded-lg shadow",
   headerBanner: "h-40 bg-linear-to-r from-emerald-700 to-emerald-500",
   label: "block mb-1 font-medium text-slate-700",
-  input: "w-full px-4 py-2 border rounded-md outline-none focus:border-emerald-500 transition-all",
-  inputSmall: "w-full px-2 py-1 border rounded-md outline-none focus:border-emerald-500",
-  btnPrimary: "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50",
-  btnDark: "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-900 hover:bg-emerald-700",
-  btnDanger: "flex items-center gap-2 px-6 py-2 text-white transition-all bg-red-600 rounded-md shadow hover:bg-red-700",
-  btnGhost: "flex items-center gap-2 px-4 py-2 transition-all bg-gray-200 rounded-md hover:bg-gray-300",
-  btnOutline: "px-4 py-2 text-sm font-medium text-center transition-colors border rounded-md text-emerald-700 border-emerald-200 hover:bg-emerald-50",
-  badge: "px-2 py-0.5 text-xs font-semibold rounded-full border bg-emerald-100 text-emerald-800 border-emerald-200",
+  input:
+    "w-full px-4 py-2 border rounded-md outline-none focus:border-emerald-500 transition-all",
+  inputSmall:
+    "w-full px-2 py-1 border rounded-md outline-none focus:border-emerald-500",
+  btnPrimary:
+    "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50",
+  btnDark:
+    "flex items-center gap-2 px-5 py-2 text-white transition-all rounded-md shadow bg-emerald-900 hover:bg-emerald-700",
+  btnDanger:
+    "flex items-center gap-2 px-6 py-2 text-white transition-all bg-red-600 rounded-md shadow hover:bg-red-700",
+  btnGhost:
+    "flex items-center gap-2 px-4 py-2 transition-all bg-gray-200 rounded-md hover:bg-gray-300",
+  btnOutline:
+    "px-4 py-2 text-sm font-medium text-center transition-colors border rounded-md text-emerald-700 border-emerald-200 hover:bg-emerald-50",
+  badge:
+    "px-2 py-0.5 text-xs font-semibold rounded-full border bg-emerald-100 text-emerald-800 border-emerald-200",
 };
 
 export default function Perfil() {
@@ -70,13 +78,6 @@ export default function Perfil() {
   };
 
   useEffect(() => {
-    api
-      .get("/api/localidades/estados")
-      .then((res) => setEstados(res.data))
-      .catch((err) => console.error("Erro ao carregar estados", err));
-  }, []);
-
-  useEffect(() => {
     async function fetchUserData() {
       try {
         const token = localStorage.getItem("token");
@@ -99,28 +100,43 @@ export default function Perfil() {
           fotoPerfil: data.fotoPerfil || null,
         });
 
-        if (data.estado) fetchCidades(data.estado);
+        if (data.estado) {
+          fetchCidades(data.estado);
+        }
+
         if (data.perfil) {
           setRole(data.perfil);
-          if (data.perfil === "COORDENADOR" || data.perfil === "ADMIN")
+          if (data.perfil === "COORDENADOR" || data.perfil === "ADMIN") {
             setProjectTab("created");
+          }
         }
 
         const [resCriados, resParticipados] = await Promise.all([
-          data.perfil === "COORDENADOR" || data.perfil === "ADMIN"
-            ? api.get("/api/projetos/meus-criados")
-            : { data: [] },
-          api.get("/api/projetos/meus-participados"),
+          data.perfil === "ADMIN"
+            ? api.get("/api/admin/projetos") 
+            : data.perfil === "COORDENADOR"
+              ? api.get("/api/projetos/meus-criados")
+              : Promise.resolve({ data: [] }),
+          data.perfil === "PARTICIPANTE" || data.perfil === "ADMIN"
+            ? api.get("/api/projetos/meus-participados")
+            : Promise.resolve({ data: [] }),
         ]);
 
-        setCreatedProjects(resCriados.data);
-        setParticipatedProjects(resParticipados.data);
+        setCreatedProjects(
+          Array.isArray(resCriados.data) ? resCriados.data : [],
+        );
+        setParticipatedProjects(
+          Array.isArray(resParticipados.data) ? resParticipados.data : [],
+        );
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
+        setCreatedProjects([]);
+        setParticipatedProjects([]);
       } finally {
         setIsLoading(false);
       }
     }
+
     fetchUserData();
   }, [navigate]);
 
@@ -431,10 +447,11 @@ export default function Perfil() {
             {currentProjects.map((projeto) => (
               <li
                 key={projeto.id}
-                className={`border rounded-lg overflow-hidden ${!projeto.ativo && projeto.motivoRejeicao
-                  ? "border-red-200 bg-red-50"
-                  : "border-slate-200 bg-slate-50"
-                  }`}
+                className={`border rounded-lg overflow-hidden ${
+                  !projeto.ativo && projeto.motivoRejeicao
+                    ? "border-red-200 bg-red-50"
+                    : "border-slate-200 bg-slate-50"
+                }`}
               >
                 {!projeto.ativo && projeto.motivoRejeicao && (
                   <div className="flex items-start gap-3 p-4 border-b border-red-100">
@@ -474,15 +491,15 @@ export default function Perfil() {
                         </div>
                       )}
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${projeto.ativo
-                          ? "bg-green-100 text-green-700 border-green-200"
-                          : "bg-amber-100 text-amber-700 border-amber-200"
-                          }`}
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                          projeto.ativo
+                            ? "bg-green-100 text-green-700 border-green-200"
+                            : "bg-amber-100 text-amber-700 border-amber-200"
+                        }`}
                       >
                         {projeto.ativo ? "ATIVO" : "PENDENTE/INATIVO"}
                       </span>
                     </div>
-
                   </div>
 
                   <Link
@@ -495,7 +512,7 @@ export default function Perfil() {
               </li>
             ))}
             {currentProjects.length === 0 && (
-              <li className="py-8 text-center text-slate-500 border-2 border-dashed rounded-lg">
+              <li className="py-8 text-center border-2 border-dashed rounded-lg text-slate-500">
                 Nenhum projeto encontrado.
               </li>
             )}

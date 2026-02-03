@@ -141,7 +141,7 @@ export default function Ajuda() {
 
           <div>
             <label className={styles.label}>Mensagem</label>
-            <div className="relative">
+            <div className="flex flex-col">
               <textarea
                 name="mensagem"
                 value={formData.mensagem}
@@ -151,7 +151,7 @@ export default function Ajuda() {
                 placeholder="Descreva sua mensagem"
                 className={`${styles.input} pr-16 resize-none`}
               />
-              <span className="absolute text-sm bottom-2 right-4 text-slate-500">
+              <span className="mt-1 text-xs text-right text-slate-500">
                 {formData.mensagem.length} / {message_max}
               </span>
             </div>
