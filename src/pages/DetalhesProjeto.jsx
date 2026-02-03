@@ -295,13 +295,19 @@ export default function DetalhesProjeto() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      alert("Post criado!");
+      Swal.fire({
+        title: "Sucesso!",
+        text: "Post criado com sucesso!",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false
+      });
       setNewPostContent("");
       setNewPostFile(null);
       fetchProject();
     } catch (err) {
       console.error("Erro ao postar", err);
-      alert("Erro ao criar post");
+      Swal.fire("Erro", "Não foi possível criar o post.", "error");
     }
   };
 
@@ -313,12 +319,18 @@ export default function DetalhesProjeto() {
 
       await api.post(endpoint);
 
-      alert(`${memberType === 'participante' ? 'Participante' : 'Coordenador'} adicionado com sucesso!`);
+      Swal.fire({
+        title: "Sucesso!",
+        text: `${memberType === 'participante' ? 'Participante' : 'Coordenador'} adicionado com sucesso!`,
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false
+      });
       setShowMemberModal(false);
       fetchProject();
     } catch (err) {
       console.error("Erro ao adicionar membro:", err);
-      alert("Erro ao adicionar membro. Verifique se ele já não faz parte do projeto.");
+      Swal.fire("Erro", "Não foi possível adicionar o membro. Verifique se ele já não faz parte do projeto.", "error");
     }
   };
 
@@ -333,7 +345,7 @@ export default function DetalhesProjeto() {
       fetchProject();
     } catch (err) {
       console.error("Erro ao remover:", err);
-      alert("Erro ao remover membro.");
+      Swal.fire("Erro", "Não foi possível remover o membro.", "error");
     }
   };
 
@@ -369,7 +381,13 @@ export default function DetalhesProjeto() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      alert('Projeto atualizado com sucesso!');
+      Swal.fire({
+        title: "Sucesso!",
+        text: "Projeto atualizado com sucesso!",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false
+      });
 
       setNovaImagem(null);
       setIsEditing(false);
@@ -377,7 +395,7 @@ export default function DetalhesProjeto() {
 
     } catch (err) {
       console.error('Erro ao atualizar projeto:', err);
-      alert('Erro ao atualizar o projeto. Verifique o console.');
+      Swal.fire("Erro", "Não foi possível atualizar o projeto.", "error");
     }
   };
 
