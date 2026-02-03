@@ -22,6 +22,12 @@ export default function CriarProjeto() {
   const [participantesSelecionados, setParticipantesSelecionados] = useState(
     [],
   );
+
+  const [listaEstados, setListaEstados] = useState([]);
+  const [listaCidades, setListaCidades] = useState([]);
+  const [estadoSelecionado, setEstadoSelecionado] = useState("");
+
+
   const wrapperRefPart = useRef(null);
 
   const formFieldBorder =
@@ -37,6 +43,7 @@ export default function CriarProjeto() {
     cargaHoraria: "",
     instNome: "",
     instCidade: "",
+    instEstado: "",
     instDescricao: "",
     planejamento: "",
     formato: "",
@@ -44,16 +51,44 @@ export default function CriarProjeto() {
   });
 
   useEffect(() => {
-    async function carregar() {
+    async function carregarEstados() {
       try {
-        const res = await api.get("/api/instituicao-ensino");
-        setInstituicoesExistentes(res.data);
-      } catch (e) {
-        console.error(e);
+        const response = await api.get("/api/localidades/estados");
+        const estadosOrdenados = response.data.sort((a, b) => a.nome.localeCompare(b.nome));
+        setListaEstados(estadosOrdenados);
+      } catch (error) {
+        console.error("Erro ao carregar estados:", error);
       }
     }
-    carregar();
+    carregarEstados();
   }, []);
+
+  useEffect(() => {
+    async function carregarCidades() {
+      if (!estadoSelecionado) {
+        setListaCidades([]);
+        return;
+      }
+      try {
+        const response = await api.get(`/api/localidades/estados/${estadoSelecionado}/cidades`);
+        setListaCidades(response.data);
+      } catch (error) {
+        console.error("Erro ao carregar cidades:", error);
+      }
+    }
+    carregarCidades();
+  }, [estadoSelecionado]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "instEstado") {
+      setEstadoSelecionado(value);
+      setFormData({ ...formData, [name]: value, instCidade: "" });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -164,7 +199,7 @@ export default function CriarProjeto() {
         instituicaoEnsino: {
           nome: formData.instNome,
           cidade: formData.instCidade,
-          descricao: formData.instDescricao,
+          estado: formData.instEstado,
         },
         participantes: participantesSelecionados.map((p) => ({ id: p.id })),
       };
@@ -245,24 +280,51 @@ export default function CriarProjeto() {
               </ul>
             )}
             {mostrarCamposNovaInst && (
-              <div className="p-3 mt-2 border rounded bg-emerald-50 border-emerald-200">
-                <input
-                  name="instCidade"
-                  placeholder="Cidade *"
-                  required
-                  value={formData.instCidade}
-                  onChange={handleAlteracao}
-                  className="w-full p-2 mb-2 border rounded"
-                />
-                <textarea
-                  name="instDescricao"
-                  placeholder="Descrição"
-                  value={formData.instDescricao}
-                  onChange={handleAlteracao}
-                  className="w-full p-2 border rounded"
-                />
+              <div className="p-4 mt-3 rounded-md bg-emerald-50 border border-emerald-100 animate-fade-in">
+                <p className="text-sm text-emerald-700 mb-2 font-semibold">Nova Instituição detectada. Por favor, preencha a localização:</p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-emerald-800">Estado</label>
+                    <select
+                      name="instEstado"
+                      value={formData.instEstado}
+                      onChange={handleChange}
+                      className="w-full p-2 mt-1 border rounded bg-white text-sm"
+                      required
+                    >
+                      <option value="">Selecione...</option>
+                      {listaEstados.map((uf) => (
+                        <option key={uf.id} value={uf.sigla}>
+                          {uf.sigla} - {uf.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-emerald-800">Cidade</label>
+                    <select
+                      name="instCidade"
+                      value={formData.instCidade}
+                      onChange={handleChange}
+                      className="w-full p-2 mt-1 border rounded bg-white text-sm disabled:bg-gray-100"
+                      disabled={!formData.instEstado}
+                      required
+                    >
+                      <option value="">Selecione...</option>
+                      {listaCidades.map((cidade) => (
+                        <option key={cidade.id} value={cidade.nome}>
+                          {cidade.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
             )}
+
+
           </div>
 
           <div className="space-y-2">
