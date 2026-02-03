@@ -488,7 +488,7 @@ export default function PainelAdministrativo() {
                         {activeSection === "solicitacaoSuporte" &&
                           renderContatoBadge(item.tipoContato)}
                         {activeSection === "gerenciamentoProjetos" &&
-                          (item.status ? (
+                          (item.ativo ? (
                             <span className="px-2 py-1 text-xs font-bold text-green-600 bg-green-100 rounded">
                               ATIVO
                             </span>
@@ -770,11 +770,10 @@ export default function PainelAdministrativo() {
         </div>
       </div>
 
-      {/* --- MODAL DE VISUALIZAÇÃO DE DOCUMENTO --- */}
       {documentoVisivel && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-5xl h-[85vh] rounded-lg shadow-2xl flex flex-col overflow-hidden animate-fade-in">
-            {/* Cabeçalho do Modal */}
+          <div className="w-full max-w-5xl overflow-hidden bg-white rounded-lg shadow-2xl flex flex-col h-[85vh] animate-fade-in">
+
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
               <h3 className="flex items-center gap-2 font-bold text-gray-700">
                 <FileText size={20} /> Visualização do Documento
@@ -788,19 +787,21 @@ export default function PainelAdministrativo() {
               </button>
             </div>
 
-            {/* Corpo do Modal (Iframe) */}
             <div className="relative flex-1 bg-gray-100">
               <iframe
-                src={documentoVisivel}
+                src={documentoVisivel.startsWith('http')
+                  ? documentoVisivel
+                  : `${api.defaults.baseURL}${documentoVisivel}`}
                 className="w-full h-full border-none"
                 title="Documento"
               />
             </div>
 
-            {/* Rodapé Opcional */}
             <div className="p-3 text-right bg-white border-t border-gray-200">
               <a
-                href={documentoVisivel}
+                href={documentoVisivel.startsWith('http')
+                  ? documentoVisivel
+                  : `${api.defaults.baseURL}${documentoVisivel}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-blue-600 hover:underline"
