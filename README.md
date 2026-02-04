@@ -1,10 +1,3 @@
----
-
-### 2. Documentação do Frontend (`sdpe-frontend/README.md`)
-
-Esta versão substitui o template padrão do Vite por informações específicas do seu projeto, listando as páginas que identifiquei na estrutura de arquivos e as bibliotecas de UI utilizadas.
-
-```markdown
 # SDPE - Frontend
 
 Este é o cliente web do **Sistema de Divulgação de Projetos de Extensão (SDPE)**. A interface foi desenvolvida focando em usabilidade, acessibilidade e design responsivo para facilitar o acesso de alunos e a gestão por parte dos coordenadores.
