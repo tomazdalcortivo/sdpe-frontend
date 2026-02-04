@@ -1,16 +1,85 @@
-# React + Vite
+---
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### 2. Documentação do Frontend (`sdpe-frontend/README.md`)
 
-Currently, two official plugins are available:
+Esta versão substitui o template padrão do Vite por informações específicas do seu projeto, listando as páginas que identifiquei na estrutura de arquivos e as bibliotecas de UI utilizadas.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```markdown
+# SDPE - Frontend
 
-## React Compiler
+Este é o cliente web do **Sistema de Divulgação de Projetos de Extensão (SDPE)**. A interface foi desenvolvida focando em usabilidade, acessibilidade e design responsivo para facilitar o acesso de alunos e a gestão por parte dos coordenadores.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 Tecnologias
 
-## Expanding the ESLint configuration
+O frontend foi desenvolvido como uma SPA (Single Page Application) moderna utilizando:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+* **Core:** [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
+* **Estilização:** [Tailwind CSS v4](https://tailwindcss.com/) + [Flowbite React](https://flowbite-react.com/)
+* **Roteamento:** React Router DOM v7
+* **Consumo de API:** Axios
+* **Gráficos:** Chart.js e React-Chartjs-2
+* **Alertas e Feedback:** SweetAlert2
+* **Ícones:** Lucide React e React Icons
+* **Segurança:** Altcha (Widget anti-spam)
+
+## 🖥️ Funcionalidades da Interface
+
+O sistema é dividido em áreas públicas e privadas:
+
+* **Área Pública:**
+    * **Início/Lista de Projetos:** Vitrine de projetos de extensão com busca.
+    * **Detalhes do Projeto:** Informações completas sobre cada projeto.
+    * **Autenticação:** Páginas de Login, Cadastro e Recuperação de Senha.
+    * **Acessibilidade:** Componente VLibras integrado.
+
+* **Área do Participante:**
+    * **Perfil:** Gerenciamento de dados cadastrais.
+    * **Minhas Inscrições:** Acompanhamento de participação em projetos.
+
+* **Área Administrativa/Coordenação:**
+    * **Dashboard (Estatísticas):** Visualização gráfica de dados do sistema.
+    * **Gestão de Projetos:** Criação e edição de projetos.
+    * **Painel Administrativo:** Controle de usuários e aprovações.
+
+## 📋 Pré-requisitos
+
+* **Node.js** (Versão 18 ou superior recomendada).
+* **NPM** (Gerenciador de pacotes).
+
+## 📦 Instalação e Execução
+
+1.  **Clone o repositório:**
+    ```bash
+    git clone [https://github.com/tomazdalcortivo/sdpe-frontend.git](https://github.com/tomazdalcortivo/sdpe-frontend.git)
+    cd sdpe-frontend
+    ```
+
+2.  **Instale as dependências:**
+    ```bash
+    npm install
+    ```
+
+3.  **Configure o Ambiente:**
+    Verifique se a URL da API backend está configurada corretamente (geralmente em `src/services/api.js` ou via variáveis de ambiente `.env` se aplicável).
+
+4.  **Execute em modo de desenvolvimento:**
+    ```bash
+    npm run dev
+    ```
+    O servidor iniciará (geralmente em `http://localhost:5173`).
+
+5.  **Build para Produção:**
+    Para gerar os arquivos estáticos otimizados:
+    ```bash
+    npm run build
+    ```
+
+## 📂 Estrutura de Pastas Importantes
+
+* `/src/pages`: Contém as views principais (Login, Home, Dashboard, etc).
+* `/src/components`: Componentes reutilizáveis (Navbar, Footer, Alerts).
+* `/src/services`: Configuração do Axios e chamadas à API.
+* `/src/assets`: Imagens e recursos estáticos.
+
+---
+*Interface desenvolvida com React e Tailwind para o IFPR.*
