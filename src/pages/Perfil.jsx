@@ -264,7 +264,7 @@ export default function Perfil() {
         };
       }
       return {
-        label: "Em Análise", // Admin está olhando
+        label: "Em Análise",
         className: "bg-amber-100 text-amber-700 border-amber-200",
         icon: <Clock size={12} />,
       };
