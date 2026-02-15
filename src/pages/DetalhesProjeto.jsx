@@ -454,7 +454,7 @@ export default function DetalhesProjeto() {
 
   const handleAddMember = async (memberId) => {
     try {
-      
+
       const params =
         memberType === "coordenador" ? `?funcao=${selectedFunction}` : "";
 
@@ -474,7 +474,7 @@ export default function DetalhesProjeto() {
       });
 
       setShowMemberModal(false);
-      fetchProject(); 
+      fetchProject();
     } catch (err) {
       console.error("Erro ao adicionar membro:", err);
       Swal.fire("Erro", "Não foi possível adicionar o membro.", "error");
@@ -482,14 +482,36 @@ export default function DetalhesProjeto() {
   };
 
   const handleRemoveMember = async (memberId, type) => {
-    if (!window.confirm("Tem certeza que deseja remover este membro?")) return;
+    const label = type === 'participante' ? 'participante' : 'coordenador';
+
+    const result = await Swal.fire({
+      title: "Tem certeza?",
+      text: `Deseja realmente remover este ${label} do projeto?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sim, remover!",
+      cancelButtonText: "Cancelar"
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
-      const endpoint =
-        type === "participante"
-          ? `/api/projetos/${id}/participantes/${memberId}`
-          : `/api/projetos/${id}/coordenadores/${memberId}`;
+      const endpoint = type === 'participante'
+        ? `/api/projetos/${id}/participantes/${memberId}`
+        : `/api/projetos/${id}/coordenadores/${memberId}`;
 
       await api.delete(endpoint);
+
+      Swal.fire({
+        title: "Removido!",
+        text: "O membro foi removido com sucesso.",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false
+      });
+
       fetchProject();
     } catch (err) {
       console.error("Erro ao remover:", err);
@@ -545,14 +567,7 @@ export default function DetalhesProjeto() {
         timer: 2000,
         showConfirmButton: false,
       });
-
-      Swal.fire({
-        title: "Sucesso!",
-        text: "Projeto atualizado com sucesso!",
-        icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
-      });
+      
       setNovaImagem(null);
       setEditData((prev) => ({ ...prev, novosDocumentos: [] }));
       setIsEditing(false);
@@ -862,14 +877,14 @@ export default function DetalhesProjeto() {
                           <p className="text-gray-600 capitalize">
                             {project.dataInicio
                               ? new Date(project.dataInicio).toLocaleDateString(
-                                  "pt-BR",
-                                )
+                                "pt-BR",
+                              )
                               : "Data indef."}
                             {" - "}
                             {project.dataFim
                               ? new Date(project.dataFim).toLocaleDateString(
-                                  "pt-BR",
-                                )
+                                "pt-BR",
+                              )
                               : "Data indef."}
                           </p>
                         )}
@@ -1150,10 +1165,10 @@ export default function DetalhesProjeto() {
                     ))}
                     {(!project.participantes ||
                       project.participantes.length === 0) && (
-                      <p className="text-sm italic text-gray-500">
-                        Nenhum participante registrado.
-                      </p>
-                    )}
+                        <p className="text-sm italic text-gray-500">
+                          Nenhum participante registrado.
+                        </p>
+                      )}
                   </div>
                 </div>
 
@@ -1347,7 +1362,7 @@ export default function DetalhesProjeto() {
                         onChange={handleDocumentUpload}
                         disabled={
                           (project?.documentos?.length || 0) +
-                            editData.novosDocumentos.length >=
+                          editData.novosDocumentos.length >=
                           10
                         }
                       />
@@ -1471,7 +1486,7 @@ export default function DetalhesProjeto() {
                                   </select>
                                 )}
 
-                              
+
                                 <button
                                   onClick={() => handleAddMember(user.id)}
                                   className="p-2 transition-colors rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
@@ -1833,8 +1848,8 @@ export default function DetalhesProjeto() {
                                           <Clock size={10} />
                                           {comentario.dataEnvio
                                             ? new Date(
-                                                comentario.dataEnvio,
-                                              ).toLocaleDateString()
+                                              comentario.dataEnvio,
+                                            ).toLocaleDateString()
                                             : "Recentemente"}
                                         </span>
                                       </div>
