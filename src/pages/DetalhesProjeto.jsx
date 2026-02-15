@@ -42,22 +42,6 @@ export default function DetalhesProjeto() {
     HIBRIDO: "Híbrido",
   };
 
-  const FUNCAO_COORDENADOR_MAP = {
-    COORDENADOR_GERAL: "Coordenador Geral",
-    COORDENADOR_ADJUNTO: "Coordenador Adjunto",
-  };
-
-  const formatarFuncao = (funcao) => {
-    if (!funcao) return "Coordenador";
-    return (
-      FUNCAO_COORDENADOR_MAP[funcao] ||
-      funcao
-        .replace(/_/g, " ")
-        .toLowerCase()
-        .replace(/\b\w/g, (l) => l.toUpperCase())
-    );
-  };
-
   const MAX_CHAR = 500;
 
   const { id } = useParams();
@@ -98,9 +82,6 @@ export default function DetalhesProjeto() {
   const viewRecorded = useRef(false);
   const coordenadorPrincipal = project?.coordenadores?.[0];
 
-  const [selectedFunction, setSelectedFunction] = useState(
-    "COORDENADOR_ADJUNTO",
-  );
 
   const [editData, setEditData] = useState({
     title: "",
@@ -454,25 +435,19 @@ export default function DetalhesProjeto() {
 
   const handleAddMember = async (memberId) => {
     try {
-
-      const params =
-        memberType === "coordenador" ? `?funcao=${selectedFunction}` : "";
-
-      const endpoint =
-        memberType === "participante"
-          ? `/api/projetos/${id}/participantes/${memberId}`
-          : `/api/projetos/${id}/coordenadores/${memberId}${params}`;
+      const endpoint = memberType === 'participante'
+        ? `/api/projetos/${id}/participantes/${memberId}`
+        : `/api/projetos/${id}/coordenadores/${memberId}`;
 
       await api.post(endpoint);
 
       Swal.fire({
         title: "Sucesso!",
-        text: `${memberType === "participante" ? "Participante" : "Coordenador"} adicionado com sucesso!`,
+        text: `${memberType === 'participante' ? 'Participante' : 'Coordenador'} adicionado com sucesso!`,
         icon: "success",
         timer: 2000,
-        showConfirmButton: false,
+        showConfirmButton: false
       });
-
       setShowMemberModal(false);
       fetchProject();
     } catch (err) {
@@ -567,7 +542,7 @@ export default function DetalhesProjeto() {
         timer: 2000,
         showConfirmButton: false,
       });
-      
+
       setNovaImagem(null);
       setEditData((prev) => ({ ...prev, novosDocumentos: [] }));
       setIsEditing(false);
@@ -1107,12 +1082,8 @@ export default function DetalhesProjeto() {
                             {(coord.nome || "C").slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900">
-                              {coord.nome}
-                            </p>
-                            <p className="text-xs text-blue-600">
-                              {formatarFuncao(coord.funcao)}
-                            </p>
+                            <p className="font-semibold text-gray-900">{coord.nome}</p>
+                            <p className="text-xs text-blue-600">Coordenador</p>
                           </div>
                         </div>
                         {isOwner && isEditing && (
@@ -1468,24 +1439,6 @@ export default function DetalhesProjeto() {
                               </div>
 
                               <div className="flex items-center gap-3">
-                                {/* Selecionar funcao de coord. */}
-                                {memberType === "coordenador" && (
-                                  <select
-                                    value={selectedFunction}
-                                    onChange={(e) =>
-                                      setSelectedFunction(e.target.value)
-                                    }
-                                    className="text-xs border border-gray-300 rounded-md p-1.5 bg-white focus:ring-1 focus:ring-emerald-500 outline-none text-gray-600 font-medium"
-                                  >
-                                    <option value="COORDENADOR_GERAL">
-                                      Geral
-                                    </option>
-                                    <option value="COORDENADOR_ADJUNTO">
-                                      Adjunto
-                                    </option>
-                                  </select>
-                                )}
-
 
                                 <button
                                   onClick={() => handleAddMember(user.id)}

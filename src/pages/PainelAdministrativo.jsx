@@ -610,21 +610,6 @@ export default function PainelAdministrativo() {
                                       </span>
                                     </div>
 
-                                    {(item.cargoInstituicao || item.funcao) && (
-                                      <div className="md:col-span-2 mt-2 pt-2 border-t border-slate-200">
-                                        <p className="text-xs font-bold text-emerald-600 mb-2 uppercase">Dados Institucionais (Coordenador)</p>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                          <div>
-                                            <span className="block text-xs font-bold text-slate-400 uppercase">Cargo</span>
-                                            <span className="text-slate-700">{item.cargoInstituicao || "—"}</span>
-                                          </div>
-                                          <div>
-                                            <span className="block text-xs font-bold text-slate-400 uppercase">Função</span>
-                                            <span className="text-slate-700">{item.funcao || "—"}</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )}
                                   </div>
 
                                   {item.resumo && (
