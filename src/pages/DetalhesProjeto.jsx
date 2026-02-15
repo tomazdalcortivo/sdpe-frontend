@@ -118,7 +118,7 @@ export default function DetalhesProjeto() {
   useEffect(() => {
     async function loadAllData() {
       if (id) {
-        setLoading(true);
+        // setLoading(true);
         try {
           try {
             const resEstados = await api.get("/api/localidades/estados");
@@ -139,7 +139,7 @@ export default function DetalhesProjeto() {
       }
     }
     loadAllData();
-  }, [activeTab, id]);
+  }, [id]);
 
   useEffect(() => {
     async function carregarCidades() {
@@ -173,7 +173,7 @@ export default function DetalhesProjeto() {
 
   async function fetchProject() {
     try {
-      setLoading(true);
+      // setLoading(true);
       const response = await api.get(`/api/projetos/${id}`);
       const data = response.data;
 
@@ -183,22 +183,19 @@ export default function DetalhesProjeto() {
       const user = getLoggedUser();
       const currentUserEmail = user?.sub;
 
-      const owner = data.coordenadores?.some(
-        (c) => c.conta?.email === currentUserEmail,
-      );
+      const owner = data.coordenadores?.some((c) => c.conta?.email === currentUserEmail);
       setIsOwner(owner);
 
       const foundParticipant = data.participantes?.find(
-        (p) => p.conta?.email === currentUserEmail,
+        (p) => p.conta?.email === currentUserEmail
       );
 
       if (foundParticipant) {
         setIsParticipant(true);
-        setNewComment((prev) => ({
+        setNewComment(prev => ({
           ...prev,
           nome: foundParticipant.nome,
-          email: currentUserEmail,
-          mensagem: "",
+          email: currentUserEmail
         }));
       } else {
         setIsParticipant(false);
@@ -229,7 +226,7 @@ export default function DetalhesProjeto() {
       console.error("Erro ao buscar projeto:", err);
       setError("Não foi possível carregar o projeto.");
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   }
 
@@ -651,17 +648,24 @@ export default function DetalhesProjeto() {
     });
   };
 
-  if (loading) return <p className="p-10">Carregando...</p>;
-
-  if (error || !project)
+  if (loading) {
     return (
-      <div className="p-10 text-center">
-        <p>{error || "Projeto não encontrado"}</p>
-        <button onClick={handleBack} className="mt-4 text-emerald-600">
-          Voltar
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-12 h-12 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-gray-600">
+        <h1 className="text-2xl font-bold">Projeto não encontrado</h1>
+        <button onClick={() => navigate('/projetos')} className="mt-4 text-blue-600 hover:underline">
+          Voltar para lista
         </button>
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-16 bg-gradient-to-br from-emerald-50 via-white to-orange-50">
@@ -1345,8 +1349,8 @@ export default function DetalhesProjeto() {
 
                     {/* Área de Upload com Drag & Drop */}
                     <div
-                      onDrop={handleDrop}        
-                      onDragOver={handleDragOver}  
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
                       className="relative w-full h-32 transition-colors border-2 border-dashed rounded-xl bg-emerald-50/30 border-emerald-100 hover:bg-emerald-50"
                     >
                       <input
