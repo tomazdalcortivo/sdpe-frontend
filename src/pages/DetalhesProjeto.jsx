@@ -553,9 +553,7 @@ export default function DetalhesProjeto() {
     }
   };
 
-  const handleDocumentUpload = (e) => {
-    const files = Array.from(e.target.files);
-
+  const processarArquivos = (files) => {
     const pdfFiles = files.filter((file) => file.type === "application/pdf");
 
     if (pdfFiles.length !== files.length) {
@@ -578,8 +576,38 @@ export default function DetalhesProjeto() {
       ...prev,
       novosDocumentos: [...prev.novosDocumentos, ...pdfFiles],
     }));
+  };
 
+  const handleDocumentUpload = (e) => {
+    const files = Array.from(e.target.files);
+    processarArquivos(files);
     e.target.value = "";
+  };
+
+  // 2. Manipulador do Drop (Arrastar e Soltar)
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = Array.from(e.dataTransfer.files);
+    processarArquivos(files);
+  };
+
+  // 3. Permite o arrastar (Necessário para o Drop funcionar)
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const removeNovoDocumento = (index, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    setEditData((prev) => ({
+      ...prev,
+      novosDocumentos: prev.novosDocumentos.filter((_, i) => i !== index),
+    }));
   };
 
   const handleDeleteDocumento = async (docId) => {
@@ -1315,57 +1343,65 @@ export default function DetalhesProjeto() {
                       (Máx. 10MB cada). Limite de 10 arquivos no total.
                     </p>
 
-                    <label className="flex flex-col items-center justify-center w-full h-32 transition-colors border-2 border-dashed cursor-pointer border-emerald-100 rounded-xl bg-emerald-50/30 hover:bg-emerald-50">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-8 h-8 mb-2 text-emerald-500" />
-                        <p className="mb-1 text-sm text-gray-700">
-                          <span className="font-semibold">
-                            Clique para enviar
-                          </span>{" "}
-                          ou arraste
-                        </p>
-                      </div>
+                    {/* Área de Upload com Drag & Drop */}
+                    <div
+                      onDrop={handleDrop}        
+                      onDragOver={handleDragOver}  
+                      className="relative w-full h-32 transition-colors border-2 border-dashed rounded-xl bg-emerald-50/30 border-emerald-100 hover:bg-emerald-50"
+                    >
                       <input
                         type="file"
+                        id="doc-upload"
                         className="hidden"
                         multiple
-                        accept=".pdf,.doc,.docx"
+                        accept=".pdf"
                         onChange={handleDocumentUpload}
                         disabled={
                           (project?.documentos?.length || 0) +
-                          editData.novosDocumentos.length >=
-                          10
+                          editData.novosDocumentos.length >= 10
                         }
                       />
-                    </label>
 
-                    {editData.novosDocumentos &&
-                      editData.novosDocumentos.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                          <h4 className="text-xs font-bold text-gray-500 uppercase">
-                            Arquivos para enviar:
-                          </h4>
-                          {editData.novosDocumentos.map((file, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-center justify-between p-3 border rounded-lg bg-emerald-50 border-emerald-100"
-                            >
-                              <div className="flex items-center gap-2">
-                                <FileText className="w-4 h-4 text-emerald-600" />
-                                <span className="text-sm font-medium truncate text-emerald-800">
-                                  {file.name}
-                                </span>
-                              </div>
-                              <button
-                                onClick={() => removeNovoDocumento(idx)}
-                                className="text-emerald-600 hover:text-red-500"
-                              >
-                                <X size={18} />
-                              </button>
-                            </div>
-                          ))}
+                      <label
+                        htmlFor="doc-upload"
+                        className="flex flex-col items-center justify-center w-full h-full cursor-pointer"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Upload className="w-8 h-8 mb-2 text-emerald-500" />
+                          <p className="mb-1 text-sm text-gray-700">
+                            <span className="font-semibold">Clique para enviar</span> ou arraste
+                          </p>
                         </div>
-                      )}
+                      </label>
+                    </div>
+
+                    {editData.novosDocumentos && editData.novosDocumentos.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase">
+                          Arquivos para enviar:
+                        </h4>
+                        {editData.novosDocumentos.map((file, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between p-3 border rounded-lg bg-emerald-50 border-emerald-100"
+                          >
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-emerald-600" />
+                              <span className="text-sm font-medium truncate text-emerald-800">
+                                {file.name}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => removeNovoDocumento(idx, e)}
+                              className="p-1 text-emerald-600 hover:text-red-500 hover:bg-emerald-100 rounded transition-colors"
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1781,7 +1817,7 @@ export default function DetalhesProjeto() {
                                 key={comentario.id || index}
                                 className="p-5 transition-shadow bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md"
                               >
-                                {/* CABEÇALHO DO FEEDBACK - justify-between garante que os botões fiquem na direita */}
+                                {/* CABEÇALHO DO FEEDBACK */}
                                 <div className="flex items-start justify-between mb-3">
                                   <div className="flex items-center gap-3">
                                     <div className="flex items-center justify-center w-10 h-10 text-sm font-bold uppercase rounded-full bg-emerald-100 text-emerald-700">
