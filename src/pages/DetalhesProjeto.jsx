@@ -118,7 +118,6 @@ export default function DetalhesProjeto() {
   useEffect(() => {
     async function loadAllData() {
       if (id) {
-        // setLoading(true);
         try {
           try {
             const resEstados = await api.get("/api/localidades/estados");
@@ -171,9 +170,19 @@ export default function DetalhesProjeto() {
     }
   };
 
+  const maskCPF = (cpf) => {
+    if (!cpf) return "CPF não informado";
+
+    const v = cpf.replace(/\D/g, "");
+
+    if (v.length !== 11) return cpf;
+
+    // Formato final: 123.***.***-99
+    return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.***-$4");
+  };
+
   async function fetchProject() {
     try {
-      // setLoading(true);
       const response = await api.get(`/api/projetos/${id}`);
       const data = response.data;
 
@@ -226,7 +235,6 @@ export default function DetalhesProjeto() {
       console.error("Erro ao buscar projeto:", err);
       setError("Não foi possível carregar o projeto.");
     } finally {
-      // setLoading(false);
     }
   }
 
@@ -1473,8 +1481,9 @@ export default function DetalhesProjeto() {
                                 <p className="font-semibold text-gray-800">
                                   {user.nome}
                                 </p>
+
                                 <p className="text-xs text-gray-500">
-                                  {user.email || user.cpf || "Sem contato"}
+                                  {user.email || maskCPF(user.cpf) || "Sem contato"}
                                 </p>
                               </div>
 
