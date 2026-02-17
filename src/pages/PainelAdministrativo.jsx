@@ -244,15 +244,49 @@ export default function PainelAdministrativo() {
       inputPlaceholder: 'Ex: Documento ilegível...',
       showCancelButton: true,
       confirmButtonText: 'Rejeitar e Enviar E-mail',
-      confirmButtonColor: '#d33'
+      confirmButtonColor: '#d33',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Você precisa escrever um motivo!'
+        }
+      }
     });
 
     if (motivo) {
+      Swal.fire({
+        title: 'Processando...',
+        html: 'Enviando e-mail de notificação e removendo cadastro.<br>Por favor, aguarde.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
       try {
         await api.post(`/api/admin/usuarios/${id}/rejeitar`, { motivo });
-        Swal.fire('Rejeitado!', 'O usuário foi notificado.', 'success');
+
+        if (typeof buscarDados === 'function') {
+            await buscarDados(); 
+        }
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Rejeitado!',
+          text: 'O usuário foi notificado e o cadastro removido.',
+          timer: 3000,
+          showConfirmButton: false
+        });
+
+
       } catch (error) {
-        Swal.fire('Erro', 'Erro ao rejeitar usuário.', 'error');
+        console.error(error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro',
+          text: 'Não foi possível rejeitar o usuário. Tente novamente.'
+        });
       }
     }
   }
@@ -624,12 +658,6 @@ export default function PainelAdministrativo() {
                                       </span>
                                     </div>
 
-                                    <div>
-                                      <span className="block text-xs font-bold text-slate-400 uppercase">Vínculo Institucional</span>
-                                      <span className={`font-semibold ${item.vinculoInstitucional ? "text-green-600" : "text-gray-500"}`}>
-                                        {item.vinculoInstitucional ? "Sim, possui vínculo" : "Não informado"}
-                                      </span>
-                                    </div>
 
                                   </div>
 
