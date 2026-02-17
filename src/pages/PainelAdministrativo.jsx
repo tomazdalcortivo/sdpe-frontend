@@ -236,6 +236,27 @@ export default function PainelAdministrativo() {
     }
   }
 
+  const handleReject = async (id) => {
+    const { value: motivo } = await Swal.fire({
+      title: 'Motivo da Rejeição',
+      input: 'textarea',
+      inputLabel: 'Informe por que o cadastro está sendo rejeitado',
+      inputPlaceholder: 'Ex: Documento ilegível...',
+      showCancelButton: true,
+      confirmButtonText: 'Rejeitar e Enviar E-mail',
+      confirmButtonColor: '#d33'
+    });
+
+    if (motivo) {
+      try {
+        await api.post(`/api/admin/usuarios/${id}/rejeitar`, { motivo });
+        Swal.fire('Rejeitado!', 'O usuário foi notificado.', 'success');
+      } catch (error) {
+        Swal.fire('Erro', 'Erro ao rejeitar usuário.', 'error');
+      }
+    }
+  }
+
   async function handleResponderContato(item) {
     const { value: textoResposta } = await Swal.fire({
       title: `Responder a ${item.nome || 'Usuário'}`,
@@ -655,7 +676,7 @@ export default function PainelAdministrativo() {
                                       <Check size={16} /> Aprovar
                                     </button>
                                     <button
-                                      onClick={() => handleExcluir(accountId)}
+                                      onClick={() => handleReject(accountId)}
                                       className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50"
                                     >
                                       <X size={16} /> Rejeitar
