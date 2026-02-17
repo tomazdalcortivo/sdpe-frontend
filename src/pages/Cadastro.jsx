@@ -164,10 +164,27 @@ export default function Cadastro() {
       setSuccess("Cadastro realizado com sucesso! Redirecionando...");
       setTimeout(() => navigate("/entrar"), 2000);
     } catch (error) {
-      const msg = error.response?.data;
-      setErros(
-        typeof msg === "string" ? [msg] : ["Erro ao processar a solicitação."],
-      );
+      console.error("Erro no registro:", error);
+
+      if (error.response && error.response.data) {
+        const dadosErro = error.response.data;
+
+        if (typeof dadosErro === 'string') {
+          setErros([dadosErro]);
+        }
+        
+        else if (typeof dadosErro === 'object') {
+          const mensagens = Object.values(dadosErro);
+
+          if (mensagens.length > 0) {
+            setErros(mensagens);
+          } else {
+            setErros(["Erro desconhecido ao processar dados."]);
+          }
+        }
+      } else {
+        setErros(["Não foi possível conectar ao servidor. Tente novamente mais tarde."]);
+      }
     } finally {
       setLoading(false);
     }
