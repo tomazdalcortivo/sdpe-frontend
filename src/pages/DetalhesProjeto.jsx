@@ -340,17 +340,16 @@ export default function DetalhesProjeto() {
     setSearchLoading(true);
     try {
       let response;
-      if (memberType === "participante") {
-        response = await api.get(
-          `/api/participantes/buscar?nome=${searchTerm}`,
-        );
-        setSearchResults(
-          Array.isArray(response.data) ? response.data : [response.data],
-        );
+      if (memberType === 'participante') {
+        response = await api.get(`/api/participantes/buscar?nome=${searchTerm}`);
+        setSearchResults(Array.isArray(response.data) ? response.data : [response.data]);
       } else {
         try {
           response = await api.get(`/api/coordenadores/nome/${searchTerm}`);
-          setSearchResults(response.data ? [response.data] : []);
+
+          const data = response.data;
+          setSearchResults(Array.isArray(data) ? data : (data ? [data] : []));
+
         } catch (e) {
           setSearchResults([]);
         }
@@ -589,7 +588,6 @@ export default function DetalhesProjeto() {
     e.target.value = "";
   };
 
-  // 2. Manipulador do Drop (Arrastar e Soltar)
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -597,7 +595,6 @@ export default function DetalhesProjeto() {
     processarArquivos(files);
   };
 
-  // 3. Permite o arrastar (Necessário para o Drop funcionar)
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -1478,13 +1475,19 @@ export default function DetalhesProjeto() {
                               className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50"
                             >
                               <div className="flex-1">
-                                <p className="font-semibold text-gray-800">
-                                  {user.nome}
-                                </p>
+                                <p className="font-semibold text-gray-800">{user.nome}</p>
 
-                                <p className="text-xs text-gray-500">
-                                  {user.email || maskCPF(user.cpf) || "Sem contato"}
-                                </p>
+                                <div className="flex flex-col gap-1 mt-1">
+                                  <span className="text-sm text-gray-500 flex items-center gap-2">
+                                    <Mail size={14} className="text-gray-400" />
+                                    {user.email || user.conta?.email || user.contato || 'E-mail não informado'}
+                                  </span>
+
+                                  <span className="text-sm text-gray-500 flex items-center gap-2">
+                                    <User size={14} className="text-gray-400" />
+                                    CPF: {user.cpf ? (typeof maskCPF === 'function' ? maskCPF(user.cpf) : user.cpf) : '—'}
+                                  </span>
+                                </div>
                               </div>
 
                               <div className="flex items-center gap-3">

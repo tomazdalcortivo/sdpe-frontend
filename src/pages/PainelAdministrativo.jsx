@@ -163,6 +163,7 @@ export default function PainelAdministrativo() {
         Swal.fire("Rejeitado", "Projeto rejeitado e notificação enviada.", "success");
         buscarDados();
       } catch (error) {
+        console.error(error); 
         Swal.fire("Erro", "Erro ao rejeitar projeto.", "error");
       }
     }
@@ -268,7 +269,7 @@ export default function PainelAdministrativo() {
         await api.post(`/api/admin/usuarios/${id}/rejeitar`, { motivo });
 
         if (typeof buscarDados === 'function') {
-            await buscarDados(); 
+          await buscarDados();
         }
 
         await Swal.fire({
