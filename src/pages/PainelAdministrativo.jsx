@@ -163,7 +163,7 @@ export default function PainelAdministrativo() {
         Swal.fire("Rejeitado", "Projeto rejeitado e notificação enviada.", "success");
         buscarDados();
       } catch (error) {
-        console.error(error); 
+        console.error(error);
         Swal.fire("Erro", "Erro ao rejeitar projeto.", "error");
       }
     }
@@ -640,10 +640,12 @@ export default function PainelAdministrativo() {
                                       </span>
                                     </div>
 
-                                    <div>
-                                      <span className="block text-xs font-bold text-slate-400 uppercase">Telefone</span>
-                                      <span className="text-slate-700">{item.telefone || "—"}</span>
-                                    </div>
+                                    {item.conta?.perfil === "COORDENADOR" && (
+                                      <div>
+                                        <span className="block text-xs font-bold text-slate-400 uppercase">Telefone</span>
+                                        <span className="text-slate-700">{item.telefone || "—"}</span>
+                                      </div>
+                                    )}
 
                                     <div>
                                       <span className="block text-xs font-bold text-slate-400 uppercase">Localidade</span>
