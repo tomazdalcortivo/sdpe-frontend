@@ -6,7 +6,6 @@ export default function Footer() {
     <footer className="text-gray-300 bg-gradient-to-b from-slate-900 to-slate-950">
       <div className="grid grid-cols-1 gap-10 py-12 md:grid-cols-3">
 
-        {/* Coluna 1 - Logo */}
         <div className="pl-8 text-left md:justify-self-start">
           <div className="flex items-center gap-3 mb-4">
             <div className="flex items-center justify-center w-10 h-10 font-bold text-white rounded-lg bg-emerald-600">
@@ -21,7 +20,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Coluna 2 - Links Rápidos */}
         <div className="pl-8 text-left md:pl-0 md:justify-self-center">
           <h4 className="mb-4 font-semibold text-white">Links Rápidos</h4>
           <ul className="space-y-2 text-sm">
@@ -53,7 +51,6 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Coluna 3 - Faça Parte */}
         <div className="pl-8 pr-8 text-left md:pl-0 md:pr-8 md:justify-self-end md:text-right">
           <h4 className="mb-2 font-semibold text-white md:justify-self-start">Faça Parte</h4>
           <p className="mb-8 text-sm text-gray-400">
@@ -79,7 +76,6 @@ export default function Footer() {
 
       </div>
 
-      {/* Direitos autorais */}
       <div className="border-t border-slate-800">
         <div className="px-6 py-6 mx-auto text-sm text-center text-gray-500 max-w-7xl">
           <span>

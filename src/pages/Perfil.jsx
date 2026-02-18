@@ -11,7 +11,7 @@ import {
   Phone,
   AlertTriangle,
   Clock,
-  CheckCircle, 
+  CheckCircle,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -264,7 +264,7 @@ export default function Perfil() {
         };
       }
       return {
-        label: "Em Análise", // Admin está olhando
+        label: "Em Análise",
         className: "bg-amber-100 text-amber-700 border-amber-200",
         icon: <Clock size={12} />,
       };
@@ -373,19 +373,21 @@ export default function Perfil() {
                 <Mail className="text-emerald-600 shrink-0" size={18} />
                 <span className="truncate">{userData.email || "-"}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="text-emerald-600 shrink-0" size={18} />
-                {!isEditing ? (
-                  <span>{userData.telefone || "-"}</span>
-                ) : (
-                  <input
-                    className={styles.inputSmall}
-                    value={userData.telefone}
-                    onChange={handleTelefoneMask}
-                    placeholder="(00) 00000-0000"
-                  />
-                )}
-              </div>
+              {isProfessor && (
+                <div className="flex items-center gap-2">
+                  <Phone className="text-emerald-600 shrink-0" size={18} />
+                  {!isEditing ? (
+                    <span>{userData.telefone || "-"}</span>
+                  ) : (
+                    <input
+                      className={styles.inputSmall}
+                      value={userData.telefone}
+                      onChange={handleTelefoneMask}
+                      placeholder="(00) 00000-0000"
+                    />
+                  )}
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <MapPin className="text-emerald-600 shrink-0" size={18} />
                 {!isEditing ? (

@@ -47,14 +47,20 @@ export default function Login() {
         const perfilResponse = await api.get("/auth/perfil");
         const usuario = perfilResponse.data;
 
+        localStorage.setItem("user", JSON.stringify(usuario));
+
         if (usuario.perfil === "ADMIN") {
           navigate("/painel-administrativo");
+        } else if (usuario.perfil === "COORDENADOR") {
+          navigate("/perfil");
         } else {
           navigate("/perfil");
         }
       } catch (err) {
-        navigate("/perfil");
+        console.error("Erro ao buscar perfil pós-login", err);
+        navigate("/");
       }
+
     } catch (error) {
       console.error("Erro no login:", error);
 
@@ -65,6 +71,8 @@ export default function Login() {
       } else {
         setErro("Falha ao entrar. Verifique sua conexão.");
       }
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
     } finally {
       setIsLoading(false);
     }

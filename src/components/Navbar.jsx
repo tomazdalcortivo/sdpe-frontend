@@ -28,6 +28,7 @@ export default function Navbar() {
           setUserData({
             email: response.data.email,
             perfil: response.data.perfil,
+            fotoPerfil: response.data.fotoPerfil,
           });
         })
         .catch(() => {
@@ -60,7 +61,6 @@ export default function Navbar() {
       <div className="relative px-4 mx-auto max-w-8xl sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
 
-          {/* LOGO */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
             <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-600">
               <BookOpenText className="w-6 h-6 text-white" />
@@ -73,7 +73,6 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* LINKS CENTRAIS */}
           <div className={`hidden md:flex absolute left-1/2 transform -translate-x-1/2 gap-10 font-medium text-[16px] ${textColor}`}>
             <Link to="/" className="transition-opacity hover:opacity-75">Início</Link>
             <Link to="/sobre" className="transition-opacity hover:opacity-75">Sobre</Link>
@@ -81,7 +80,6 @@ export default function Navbar() {
             <Link to="/estatisticas" className="transition-opacity hover:opacity-75">Estatísticas</Link>
           </div>
 
-          {/* ÁREA DA DIREITA */}
           <div className="flex items-center gap-6">
             {userData ? (
               <div className="flex items-center gap-6">
@@ -95,11 +93,24 @@ export default function Navbar() {
 
                   <Link
                     to={profileLink}
-                    className={"p-2 rounded-full transition-colors bg-emerald-100 text-emerald-600 hover:bg-emerald-200" 
-                    }
                     title={profileTitle}
+                    className={`
+                      relative rounded-full overflow-hidden transition-all shrink-0
+                      ${userData.fotoPerfil
+                        ? "w-10 h-10 border-2 border-emerald-500 hover:border-emerald-400 shadow-sm" 
+                        : "p-2 bg-emerald-100 text-emerald-600 hover:bg-emerald-200" 
+                      }
+                    `}
                   >
-                    {isAdmin ? <LayoutDashboard size={20} /> : <User size={20} />}
+                    {userData.fotoPerfil ? (
+                      <img
+                        src={userData.fotoPerfil}
+                        alt="Perfil"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      isAdmin ? <LayoutDashboard size={20} /> : <User size={20} />
+                    )}
                   </Link>
                 </div>
 

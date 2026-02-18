@@ -1,5 +1,5 @@
 import React from "react";
-import testee from "../assets/testee.jpg";
+import capaPadraoHome from "../assets/capa-padrao-home.jpg";
 import { Users, Lightbulb, ChartColumn } from "lucide-react";
 
 export default function Home() {
@@ -8,7 +8,7 @@ export default function Home() {
       <section className="relative flex items-center min-h-screen pb-8">
         <div className="absolute inset-0">
           <img
-            src={testee}
+            src={capaPadraoHome}
             alt="Fundo"
             className="object-cover w-full h-full"
           />

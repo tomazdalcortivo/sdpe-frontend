@@ -163,6 +163,7 @@ export default function PainelAdministrativo() {
         Swal.fire("Rejeitado", "Projeto rejeitado e notificação enviada.", "success");
         buscarDados();
       } catch (error) {
+        console.error(error);
         Swal.fire("Erro", "Erro ao rejeitar projeto.", "error");
       }
     }
@@ -233,6 +234,61 @@ export default function PainelAdministrativo() {
     } catch (error) {
       console.error(error);
       Swal.fire("Erro", "Erro ao excluir conta.", "error");
+    }
+  }
+
+  const handleReject = async (id) => {
+    const { value: motivo } = await Swal.fire({
+      title: 'Motivo da Rejeição',
+      input: 'textarea',
+      inputLabel: 'Informe por que o cadastro está sendo rejeitado',
+      inputPlaceholder: 'Ex: Documento ilegível...',
+      showCancelButton: true,
+      confirmButtonText: 'Rejeitar e Enviar E-mail',
+      confirmButtonColor: '#d33',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Você precisa escrever um motivo!'
+        }
+      }
+    });
+
+    if (motivo) {
+      Swal.fire({
+        title: 'Processando...',
+        html: 'Enviando e-mail de notificação e removendo cadastro.<br>Por favor, aguarde.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      try {
+        await api.post(`/api/admin/usuarios/${id}/rejeitar`, { motivo });
+
+        if (typeof buscarDados === 'function') {
+          await buscarDados();
+        }
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Rejeitado!',
+          text: 'O usuário foi notificado e o cadastro removido.',
+          timer: 3000,
+          showConfirmButton: false
+        });
+
+
+      } catch (error) {
+        console.error(error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro',
+          text: 'Não foi possível rejeitar o usuário. Tente novamente.'
+        });
+      }
     }
   }
 
@@ -584,10 +640,12 @@ export default function PainelAdministrativo() {
                                       </span>
                                     </div>
 
-                                    <div>
-                                      <span className="block text-xs font-bold text-slate-400 uppercase">Telefone</span>
-                                      <span className="text-slate-700">{item.telefone || "—"}</span>
-                                    </div>
+                                    {item.conta?.perfil === "COORDENADOR" && (
+                                      <div>
+                                        <span className="block text-xs font-bold text-slate-400 uppercase">Telefone</span>
+                                        <span className="text-slate-700">{item.telefone || "—"}</span>
+                                      </div>
+                                    )}
 
                                     <div>
                                       <span className="block text-xs font-bold text-slate-400 uppercase">Localidade</span>
@@ -603,28 +661,7 @@ export default function PainelAdministrativo() {
                                       </span>
                                     </div>
 
-                                    <div>
-                                      <span className="block text-xs font-bold text-slate-400 uppercase">Vínculo Institucional</span>
-                                      <span className={`font-semibold ${item.vinculoInstitucional ? "text-green-600" : "text-gray-500"}`}>
-                                        {item.vinculoInstitucional ? "Sim, possui vínculo" : "Não informado"}
-                                      </span>
-                                    </div>
 
-                                    {(item.cargoInstituicao || item.funcao) && (
-                                      <div className="md:col-span-2 mt-2 pt-2 border-t border-slate-200">
-                                        <p className="text-xs font-bold text-emerald-600 mb-2 uppercase">Dados Institucionais (Coordenador)</p>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                          <div>
-                                            <span className="block text-xs font-bold text-slate-400 uppercase">Cargo</span>
-                                            <span className="text-slate-700">{item.cargoInstituicao || "—"}</span>
-                                          </div>
-                                          <div>
-                                            <span className="block text-xs font-bold text-slate-400 uppercase">Função</span>
-                                            <span className="text-slate-700">{item.funcao || "—"}</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )}
                                   </div>
 
                                   {item.resumo && (
@@ -640,7 +677,6 @@ export default function PainelAdministrativo() {
 
 
                               <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-100">
-                                {/* PROJETOS */}
                                 {activeSection === "gerenciamentoProjetos" && (
                                   <>
                                     <Link
@@ -660,7 +696,6 @@ export default function PainelAdministrativo() {
                                   </>
                                 )}
 
-                                {/* CADASTROS PENDENTES */}
                                 {activeSection === "solicitacaoCadastros" && (
                                   <>
                                     <button
@@ -670,7 +705,7 @@ export default function PainelAdministrativo() {
                                       <Check size={16} /> Aprovar
                                     </button>
                                     <button
-                                      onClick={() => handleExcluir(accountId)}
+                                      onClick={() => handleReject(accountId)}
                                       className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50"
                                     >
                                       <X size={16} /> Rejeitar
@@ -678,7 +713,6 @@ export default function PainelAdministrativo() {
                                   </>
                                 )}
 
-                                {/* PROJETOS PENDENTES*/}
                                 {activeSection === "solicitacaoProjetos" && (
                                   <>
                                     <Link
@@ -728,7 +762,6 @@ export default function PainelAdministrativo() {
                                   </>
                                 )}
 
-                                {/* GERENCIAMENTO CONTAS */}
                                 {activeSection === "gerenciamentoContas" && (
                                   <>
                                     {item.conta?.ativo ? (
