@@ -1848,8 +1848,7 @@ export default function DetalhesProjeto() {
                             const userLogado = getLoggedUser();
                             const isAuthor =
                               userLogado?.sub === comentario.email;
-                            const canDelete =
-                              isAuthor || (isOwner && isEditing);
+                            const canDelete = isAuthor || isOwner;
 
                             return (
                               <div
