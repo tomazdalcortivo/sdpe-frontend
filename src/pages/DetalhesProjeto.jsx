@@ -52,6 +52,7 @@ export default function DetalhesProjeto() {
   const [isOwner, setIsOwner] = useState(false);
 
   const [isParticipant, setIsParticipant] = useState(false);
+  const [currentUserPhoto, setCurrentUserPhoto] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -177,7 +178,6 @@ export default function DetalhesProjeto() {
 
     if (v.length !== 11) return cpf;
 
-    // Formato final: 123.***.***-99
     return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.***-$4");
   };
 
@@ -201,6 +201,7 @@ export default function DetalhesProjeto() {
 
       if (foundParticipant) {
         setIsParticipant(true);
+        setCurrentUserPhoto(foundParticipant.fotoPerfil);
         setNewComment(prev => ({
           ...prev,
           nome: foundParticipant.nome,
@@ -208,6 +209,7 @@ export default function DetalhesProjeto() {
         }));
       } else {
         setIsParticipant(false);
+        setCurrentUserPhoto(null);
       }
 
       setEditData({
@@ -1857,11 +1859,17 @@ export default function DetalhesProjeto() {
                                 {/* CABEÇALHO DO FEEDBACK */}
                                 <div className="flex items-start justify-between mb-3">
                                   <div className="flex items-center gap-3">
-                                    <div className="flex items-center justify-center w-10 h-10 text-sm font-bold uppercase rounded-full bg-emerald-100 text-emerald-700">
-                                      {comentario.nome
-                                        ? comentario.nome.substring(0, 2)
-                                        : "AN"}
-                                    </div>
+                                    {comentario.fotoPerfil ? (
+                                      <img
+                                        src={comentario.fotoPerfil}
+                                        alt={comentario.nome}
+                                        className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                                      />
+                                    ) : (
+                                      <div className="flex items-center justify-center w-10 h-10 text-sm font-bold uppercase rounded-full bg-emerald-100 text-emerald-700">
+                                        {comentario.nome ? comentario.nome.substring(0, 2) : "AN"}
+                                      </div>
+                                    )}
                                     <div>
                                       <p className="text-sm font-bold text-gray-900">
                                         {comentario.nome}
