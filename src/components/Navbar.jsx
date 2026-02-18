@@ -61,7 +61,6 @@ export default function Navbar() {
       <div className="relative px-4 mx-auto max-w-8xl sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
 
-          {/* LOGO */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
             <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-600">
               <BookOpenText className="w-6 h-6 text-white" />

@@ -42,7 +42,6 @@ export default function DetalhesProjeto() {
     HIBRIDO: "Híbrido",
   };
 
-  const MAX_CHAR = 500;
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -648,12 +647,6 @@ export default function DetalhesProjeto() {
     }
   };
 
-  const removeItem = (type, index) => {
-    setEditData({
-      ...editData,
-      [type]: editData[type].filter((_, i) => i !== index),
-    });
-  };
 
   if (loading) {
     return (
@@ -1368,7 +1361,6 @@ export default function DetalhesProjeto() {
                       (Máx. 10MB cada). Limite de 10 arquivos no total.
                     </p>
 
-                    {/* Área de Upload com Drag & Drop */}
                     <div
                       onDrop={handleDrop}
                       onDragOver={handleDragOver}
@@ -1649,53 +1641,6 @@ export default function DetalhesProjeto() {
                       <p>Ainda não há publicações neste feed.</p>
                     </div>
                   )}
-                  {/* {posts && posts.length > 0 ? (
-                    posts.map((post) => (
-                      <div
-                        key={post.id}
-                        className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-xl"
-                      >
-                        <div className="flex items-center gap-3 p-4 border-b border-gray-50">
-                          <div className="flex items-center justify-center w-10 h-10 font-bold text-white rounded-full bg-emerald-600">
-                            {post.autor?.nome?.slice(0, 2).toUpperCase() ||
-                              "AD"}
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">
-                              {post.autor?.nome || "Coordenador"}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(
-                                post.dataPublicacao,
-                              ).toLocaleDateString()}{" "}
-                              às{" "}
-                              {new Date(post.dataPublicacao)
-                                .toLocaleTimeString()
-                                .slice(0, 5)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="p-4 leading-relaxed text-gray-800 whitespace-pre-wrap">
-                          {post.conteudo}
-                        </div>
-
-                        {post.mediaUrl && (
-                          <div className="w-full bg-gray-100">
-                            <img
-                              src={post.mediaUrl}
-                              alt="Mídia"
-                              className="w-full max-h-[500px] object-contain"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="py-12 text-center text-gray-500 border border-gray-300 border-dashed bg-gray-50 rounded-xl">
-                      <p>Ainda não há publicações neste feed.</p>
-                    </div>
-                  )} */}
                 </div>
               </div>
             )}
@@ -1855,7 +1800,6 @@ export default function DetalhesProjeto() {
                                 key={comentario.id || index}
                                 className="p-5 transition-shadow bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md"
                               >
-                                {/* CABEÇALHO DO FEEDBACK */}
                                 <div className="flex items-start justify-between mb-3">
                                   <div className="flex items-center gap-3">
                                     {comentario.fotoPerfil ? (

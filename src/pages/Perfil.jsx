@@ -373,7 +373,6 @@ export default function Perfil() {
                 <Mail className="text-emerald-600 shrink-0" size={18} />
                 <span className="truncate">{userData.email || "-"}</span>
               </div>
-              {/* Só exibe telefone se for Professor/Coordenador */}
               {isProfessor && (
                 <div className="flex items-center gap-2">
                   <Phone className="text-emerald-600 shrink-0" size={18} />

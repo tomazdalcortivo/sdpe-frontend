@@ -677,7 +677,6 @@ export default function PainelAdministrativo() {
 
 
                               <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-100">
-                                {/* PROJETOS */}
                                 {activeSection === "gerenciamentoProjetos" && (
                                   <>
                                     <Link
@@ -697,7 +696,6 @@ export default function PainelAdministrativo() {
                                   </>
                                 )}
 
-                                {/* CADASTROS PENDENTES */}
                                 {activeSection === "solicitacaoCadastros" && (
                                   <>
                                     <button
@@ -715,7 +713,6 @@ export default function PainelAdministrativo() {
                                   </>
                                 )}
 
-                                {/* PROJETOS PENDENTES*/}
                                 {activeSection === "solicitacaoProjetos" && (
                                   <>
                                     <Link
@@ -765,7 +762,6 @@ export default function PainelAdministrativo() {
                                   </>
                                 )}
 
-                                {/* GERENCIAMENTO CONTAS */}
                                 {activeSection === "gerenciamentoContas" && (
                                   <>
                                     {item.conta?.ativo ? (
