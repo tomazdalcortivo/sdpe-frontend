@@ -1105,9 +1105,7 @@ export default function DetalhesProjeto() {
                     )}
                   </div>
 
-                  <h3 className="mb-3 text-sm font-semibold tracking-wider text-gray-500 uppercase">
-                    Coordenadores
-                  </h3>
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Coordenadores</h3>
                   <div className="mb-6 space-y-2">
                     {(project.coordenadores || []).map((coord) => (
                       <div
@@ -1115,9 +1113,17 @@ export default function DetalhesProjeto() {
                         className="flex items-center justify-between p-3 border border-blue-100 rounded-lg bg-blue-50/50"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 font-bold text-white bg-blue-600 rounded-full">
-                            {(coord.nome || "C").slice(0, 2).toUpperCase()}
-                          </div>
+                          {coord.fotoPerfil ? (
+                            <img
+                              src={coord.fotoPerfil}
+                              alt={coord.nome}
+                              className="w-10 h-10 rounded-full object-cover border border-blue-200"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center w-10 h-10 font-bold text-white bg-blue-600 rounded-full">
+                              {(coord.nome || "C").slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
                           <div>
                             <p className="font-semibold text-gray-900">{coord.nome}</p>
                             <p className="text-xs text-blue-600">Coordenador</p>
@@ -1147,9 +1153,17 @@ export default function DetalhesProjeto() {
                         className="flex items-center justify-between p-3 rounded-lg bg-gray-50"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 font-bold text-white rounded-full bg-emerald-600">
-                            {(member.nome || "P").slice(0, 2).toUpperCase()}
-                          </div>
+                          {member.fotoPerfil ? (
+                            <img
+                              src={member.fotoPerfil}
+                              alt={member.nome}
+                              className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center w-10 h-10 font-bold text-white rounded-full bg-emerald-600">
+                              {(member.nome || "P").slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
                           <div>
                             <p className="font-semibold text-gray-900">
                               {member.nome}
@@ -1566,10 +1580,17 @@ export default function DetalhesProjeto() {
                       >
                         <div className="flex items-center justify-between p-4 border-b border-gray-50">
                           <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-10 h-10 font-bold text-white rounded-full bg-emerald-600">
-                              {post.autor?.nome?.slice(0, 2).toUpperCase() ||
-                                "AD"}
-                            </div>
+                            {post.autor?.fotoPerfil ? (
+                              <img
+                                src={post.autor.fotoPerfil}
+                                alt={post.autor.nome}
+                                className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center w-10 h-10 font-bold text-white rounded-full bg-emerald-600">
+                                {post.autor?.nome?.slice(0, 2).toUpperCase() || "AD"}
+                              </div>
+                            )}
                             <div>
                               <p className="font-bold text-gray-900">
                                 {post.autor?.nome || "Coordenador"}

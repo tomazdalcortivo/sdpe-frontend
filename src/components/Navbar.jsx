@@ -28,6 +28,7 @@ export default function Navbar() {
           setUserData({
             email: response.data.email,
             perfil: response.data.perfil,
+            fotoPerfil: response.data.fotoPerfil,
           });
         })
         .catch(() => {
@@ -93,13 +94,27 @@ export default function Navbar() {
                     </span>
                   </div>
 
+                  {/* 2. Lógica para mostrar Imagem OU Ícone */}
                   <Link
                     to={profileLink}
-                    className={"p-2 rounded-full transition-colors bg-emerald-100 text-emerald-600 hover:bg-emerald-200" 
-                    }
                     title={profileTitle}
+                    className={`
+                      relative rounded-full overflow-hidden transition-all shrink-0
+                      ${userData.fotoPerfil
+                        ? "w-10 h-10 border-2 border-emerald-500 hover:border-emerald-400 shadow-sm" 
+                        : "p-2 bg-emerald-100 text-emerald-600 hover:bg-emerald-200" 
+                      }
+                    `}
                   >
-                    {isAdmin ? <LayoutDashboard size={20} /> : <User size={20} />}
+                    {userData.fotoPerfil ? (
+                      <img
+                        src={userData.fotoPerfil}
+                        alt="Perfil"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      isAdmin ? <LayoutDashboard size={20} /> : <User size={20} />
+                    )}
                   </Link>
                 </div>
 
