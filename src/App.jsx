@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import AjudaButton from "./components/HelpButton.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
+import PrivateRoute from "./components/PrivateRoute.jsx";
 
 import Inicio from "./pages/Inicio.jsx";
 import Ajuda from "./pages/Ajuda.jsx";
@@ -15,7 +16,6 @@ import Estatisticas from "./pages/Estatisticas.jsx";
 import ListaProjetos from "./pages/ListaProjetos.jsx";
 import DetalhesProjeto from "./pages/DetalhesProjeto.jsx";
 import PainelAdministrativo from "./pages/PainelAdministrativo.jsx";
-import RotaAdmin from "./pages/RotaAdmin.jsx";
 import Sobre from "./pages/Sobre.jsx";
 
 function App() {
@@ -30,22 +30,27 @@ function App() {
         <Route path="/entrar" element={<Entrar />} />
         <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/cadastro" element={<Cadastro />} />
-        <Route path="/perfil" element={<Perfil />} />
         <Route path="/sobre" element={<Sobre />} />
-
         <Route path="/estatisticas" element={<Estatisticas />} />
-        <Route path="/criar-projeto" element={<CriarProjeto />} />
         <Route path="/projetos" element={<ListaProjetos />} />
         <Route path="/detalhes-projeto/:id" element={<DetalhesProjeto />} />
-        <Route path="/sobre" element={<Sobre />} />
-        <Route element={<RotaAdmin />}>
+
+        <Route element={<PrivateRoute />}>
+          <Route path="/perfil" element={<Perfil />} />
+        </Route>
+
+        <Route element={<PrivateRoute allowedRoles={['COORDENADOR']} />}>
+          <Route path="/criar-projeto" element={<CriarProjeto />} />
+        </Route>
+
+        <Route element={<PrivateRoute allowedRoles={['ADMIN']} />}>
           <Route path="/painel-administrativo" element={<PainelAdministrativo />} />
         </Route>
+
       </Routes>
 
       <Footer />
       <AjudaButton />
-
     </>
   );
 }

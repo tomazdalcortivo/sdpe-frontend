@@ -1951,14 +1951,15 @@ export default function DetalhesProjeto() {
                           </div>
                         </div>
                         <div className="flex items-start gap-3">
-                          <Mail className="w-5 h-5 text-emerald-600 mt-0.5" />
-                          <div className="w-full overflow-hidden">
+                          <Mail className="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
+
+                          <div className="flex-1 min-w-0">
                             <span className="block text-[10px] font-bold text-gray-400 uppercase">
                               Contato
                             </span>
                             {coordenadorPrincipal?.conta?.email ? (
-                              <span className="block text-sm font-medium text-gray-700 break-all select-all">
-                                {coordenadorPrincipal.conta?.email}
+                              <span className="block text-sm font-medium text-gray-700 break-words whitespace-normal">
+                                {coordenadorPrincipal.conta.email}
                               </span>
                             ) : (
                               <span className="text-sm italic text-gray-400">

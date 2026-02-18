@@ -74,7 +74,6 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* LINKS CENTRAIS */}
           <div className={`hidden md:flex absolute left-1/2 transform -translate-x-1/2 gap-10 font-medium text-[16px] ${textColor}`}>
             <Link to="/" className="transition-opacity hover:opacity-75">Início</Link>
             <Link to="/sobre" className="transition-opacity hover:opacity-75">Sobre</Link>
@@ -82,7 +81,6 @@ export default function Navbar() {
             <Link to="/estatisticas" className="transition-opacity hover:opacity-75">Estatísticas</Link>
           </div>
 
-          {/* ÁREA DA DIREITA */}
           <div className="flex items-center gap-6">
             {userData ? (
               <div className="flex items-center gap-6">
@@ -94,7 +92,6 @@ export default function Navbar() {
                     </span>
                   </div>
 
-                  {/* 2. Lógica para mostrar Imagem OU Ícone */}
                   <Link
                     to={profileLink}
                     title={profileTitle}
